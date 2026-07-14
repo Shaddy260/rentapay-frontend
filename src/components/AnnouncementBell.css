@@ -1,0 +1,192 @@
+.announcement-bell {
+  position: relative;
+  display: inline-flex;
+}
+
+.announcement-bell__button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--color-text, #333);
+  cursor: pointer;
+}
+
+.announcement-bell__button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.announcement-bell__badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #e11d48;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.announcement-bell__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+}
+
+.announcement-bell__dropdown {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 201;
+}
+
+.announcement-bell__header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  font-weight: 700;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  z-index: 1;
+}
+
+.announcement-bell__close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.announcement-bell__empty {
+  padding: 24px 16px;
+  color: #888;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.announcement-bell__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.announcement-bell__item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f2f2f2;
+  cursor: pointer;
+}
+
+.announcement-bell__item:last-child {
+  border-bottom: none;
+}
+
+.announcement-bell__item p {
+  margin: 0 0 4px 0;
+  font-size: 0.9rem;
+  color: #222;
+}
+
+.announcement-bell__item--unread {
+  background: #fff7ed;
+  border-left: 3px solid #f97316;
+}
+
+.announcement-bell__item--unread p {
+  font-weight: 600;
+}
+
+.announcement-bell__time {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.announcement-bell__item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+/* Sender tag (item 4) - "Landlord" / "Property Manager" / "Caretaker" /
+   "System" / "RentaPay", color-coded so it's scannable at a glance. */
+.announcement-bell__sender {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.announcement-bell__sender--landlord { background: #eef2ff; color: #4338ca; }
+.announcement-bell__sender--manager { background: #ecfdf5; color: #047857; }
+.announcement-bell__sender--caretaker { background: #fffbeb; color: #b45309; }
+.announcement-bell__sender--system { background: #f1f5f9; color: #475569; }
+.announcement-bell__sender--platform { background: #fdf2f8; color: #be185d; }
+
+.announcement-bell__delete-btn {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.announcement-bell__delete-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #444;
+}
+
+/* Item 3 clarification: never automatic delete-for-all - landlord/
+   manager/caretaker get an explicit choice every time. */
+.announcement-bell__delete-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 10px;
+  background: #f8f8f8;
+  border-radius: 8px;
+}
+
+.announcement-bell__delete-menu button {
+  text-align: left;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.announcement-bell__delete-menu-danger {
+  color: #b3261e;
+  border-color: #f3c6c3 !important;
+}
