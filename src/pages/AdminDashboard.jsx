@@ -75,6 +75,8 @@ export default function AdminDashboard() {
     return h.requester_type || 'guest';
   }
 
+  const [helpRequests, setHelpRequests] = useState([]);
+  const [helpCategory, setHelpCategory] = useState('all');
   const helpCategoryFiltered = useMemo(
     () => (helpCategory === 'all' ? helpRequests : helpRequests.filter((h) => helpCategoryOf(h) === helpCategory)),
     [helpRequests, helpCategory]
@@ -188,7 +190,6 @@ export default function AdminDashboard() {
   const [selectedExpiring, setSelectedExpiring] = useState([]);
 
   // Help requests tab
-  const [helpRequests, setHelpRequests] = useState([]);
   const [helpFilter, setHelpFilter] = useState('open');
   const [helpLoading, setHelpLoading] = useState(false);
   // FIX (direct request): "help requests should be categorized under
@@ -197,7 +198,6 @@ export default function AdminDashboard() {
   // tenant/guest already; manager vs caretaker both come through as
   // requester_type 'manager' so requester_role_level (see
   // help.controller.js submitHelpRequest) splits them further.
-  const [helpCategory, setHelpCategory] = useState('all'); // 'all' | 'tenant' | 'landlord' | 'manager' | 'caretaker' | 'guest'
   const [expandedHelpDays, setExpandedHelpDays] = useState([]);
   const [pendingHelpDelete, setPendingHelpDelete] = useState(null); // help request id | null
   const [helpDeleteBusy, setHelpDeleteBusy] = useState(false);
