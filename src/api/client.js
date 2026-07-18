@@ -149,7 +149,15 @@ export const api = {
   getSubscriptionStatus: (token) => request('/subscriptions/status', { token }),
   renewSubscription: (payload, token) => request('/subscriptions/renew', { method: 'POST', body: payload, token }),
   addUnitsMidPeriod: (payload, token) => request('/subscriptions/add-units', { method: 'POST', body: payload, token }),
+  submitManualSubscriptionPayment: (payload, token) => request('/subscriptions/manual-payment', { method: 'POST', body: payload, token }),
+  getMyLatestManualSubscriptionPayment: (token) => request('/subscriptions/manual-payment/mine', { token }),
+  listManualSubscriptionPayments: (status, token) => request(`/admin/landlord-manual-subscription-payments?status=${encodeURIComponent(status || 'pending')}`, { token }),
+  confirmManualSubscriptionPayment: (id, token) => request(`/admin/landlord-manual-subscription-payments/${id}/confirm`, { method: 'POST', token }),
+  rejectManualSubscriptionPayment: (id, reason, token) => request(`/admin/landlord-manual-subscription-payments/${id}/reject`, { method: 'POST', body: { reason }, token }),
+  deleteManualSubscriptionPayment: (id, token) => request(`/admin/landlord-manual-subscription-payments/${id}`, { method: 'DELETE', token }),
   getDashboard: (token, propertyId) => request(`/dashboard${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
+  getAttentionFeed: (token) => request('/dashboard/attention', { token }),
+  getDueDatesCalendar: (token) => request('/dashboard/due-dates', { token }),
   getLandlordStatistics: (token, propertyId) => request(`/dashboard/statistics${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
   getPaymentHistoryFull: (token, propertyId) => request(`/payments/history${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
   getPaymentsThisMonth: (token, propertyId) => request(`/dashboard/payments-this-month${propertyId ? `?propertyId=${propertyId}` : ''}`, { token }),
@@ -171,6 +179,7 @@ export const api = {
   getTenant: (tenantId, token) => request(`/tenants/${tenantId}`, { token }),
   editTenantDetails: (tenantId, payload, token) => request(`/tenants/${tenantId}`, { method: 'PATCH', body: payload, token }),
   editTenantBalance: (tenantId, payload, token) => request(`/tenants/${tenantId}/balance`, { method: 'PATCH', body: payload, token }),
+  settleTenantDeposit: (tenantId, payload, token) => request(`/tenants/${tenantId}/deposit`, { method: 'PATCH', body: payload, token }),
   remindTenant: (tenantId, token) => request(`/tenants/${tenantId}/remind`, { method: 'POST', token }),
   sendBulkReminders: (token) => request('/tenants/bulk-remind', { method: 'POST', token }),
   transferTenant: (tenantId, payload, token) => request(`/tenants/${tenantId}/transfer`, { method: 'POST', body: payload, token }),
@@ -230,6 +239,13 @@ export const api = {
 
   // Help
   submitHelpRequest: (payload, token) => request('/help', { method: 'POST', body: payload, token }),
+  submitMaintenanceRequest: (payload, token) => request('/maintenance', { method: 'POST', body: payload, token }),
+  getMyMaintenanceRequests: (token) => request('/maintenance/mine', { token }),
+  getMaintenanceRequests: (token, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/maintenance${qs ? `?${qs}` : ''}`, { token });
+  },
+  updateMaintenanceStatus: (requestId, payload, token) => request(`/maintenance/${requestId}/status`, { method: 'PATCH', body: payload, token }),
   getMyHelpRequests: (token) => request('/help/mine', { token }),
 
   // Chat ("Chat with an agent" / "Text your landlord" / "Text your tenant")

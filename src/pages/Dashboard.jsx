@@ -8,6 +8,7 @@ import AccountMenu from '../components/AccountMenu.jsx';
 import TenantContactCard from '../components/TenantContactCard.jsx';
 import Countdown from '../components/Countdown.jsx';
 import PortalSidebar from '../components/PortalSidebar.jsx';
+import BottomNav from '../components/BottomNav.jsx';
 import AddPropertyModal from '../components/AddPropertyModal.jsx';
 import LandlordStatistics from '../components/LandlordStatistics.jsx';
 import PaymentHistoryPanel from '../components/PaymentHistoryPanel.jsx';
@@ -24,6 +25,9 @@ import ArchivedTenantsPanel from '../components/ArchivedTenantsPanel.jsx';
 import FirstTimeCredentialsPanel from '../components/FirstTimeCredentialsPanel.jsx';
 import PendingPaymentConfirmations from '../components/PendingPaymentConfirmations.jsx';
 import ComplaintsPanel from '../components/ComplaintsPanel.jsx';
+import AttentionFeed from '../components/AttentionFeed.jsx';
+import MaintenanceManagePanel from '../components/MaintenanceManagePanel.jsx';
+import DueDatesCalendar from '../components/DueDatesCalendar.jsx';
 import '../components/Countdown.css';
 import './Dashboard.css';
 
@@ -102,7 +106,7 @@ export default function Dashboard() {
     }
   }
 
-  function load(propertyId) {
+  function load(propertyId, { retriedAfterNotAssigned = false } = {}) {
     if (!token) {
       navigate('/login');
       return;
@@ -165,19 +169,23 @@ export default function Dashboard() {
           navigate('/login');
           return;
         }
-        // FIX ("a manager/caretaker with access to a non-primary
-        // apartment gets told they don't have access, instead of
-        // landing on the apartment they DO have access to"): if the
-        // requested property was rejected specifically because this
-        // account isn't assigned to it (as opposed to some other
+        // FIX (direct request: "a manager/caretaker keeps seeing 'you
+        // don't have access to this property' until they're given
+        // access to the first apartment the landlord added" - it
+        // should never matter WHICH property they're assigned to):
+        // if the requested property was rejected specifically because
+        // this account isn't assigned to it (as opposed to some other
         // failure), drop the stale remembered id and retry ONE time
-        // with no propertyId at all, which falls through to "pick my
-        // first actually-assigned property" above. Guarded so a
-        // second rejection (e.g. no assignments at all) shows the
-        // real error instead of looping.
-        if (err instanceof ApiError && err.raw?.notAssigned && propertyId) {
+        // with no propertyId at all, which falls through to "resolve
+        // my own actually-assigned property" server-side. Guarded by
+        // an explicit flag (not by whether propertyId happened to be
+        // truthy - that used to mean a request that was ALREADY
+        // running with no propertyId, and still got rejected, never
+        // got a retry at all) so this always gives one honest retry
+        // and never loops a second time.
+        if (err instanceof ApiError && err.raw?.notAssigned && !retriedAfterNotAssigned) {
           sessionStorage.removeItem('rentapay_active_property_id');
-          load(undefined);
+          load(undefined, { retriedAfterNotAssigned: true });
           return;
         }
         setError(err.message || 'Failed to load dashboard.');
@@ -288,6 +296,7 @@ export default function Dashboard() {
         activeKey={activeView}
         items={[
           { key: 'dashboard', label: 'Dashboard', icon: '🏠', onClick: () => setActiveView('dashboard') },
+          { key: 'due-dates', label: 'Due Dates', icon: '📅', onClick: () => setActiveView('due-dates') },
           { key: 'statistics', label: 'Financial Statistics', icon: '📊', onClick: () => setActiveView('statistics') },
           { key: 'payment-history', label: 'Payment History', icon: '📄', onClick: () => setActiveView('payment-history') },
           { key: 'pending-confirmations', label: 'Pending Payments', icon: '✅', onClick: () => setActiveView('pending-confirmations') },
@@ -301,6 +310,7 @@ export default function Dashboard() {
           // just was never actually rendered anywhere outside
           // TenantPortal.jsx. Same component, same admin-side "Help
           // Requests" tab it already lands in - just wired up here too.
+          { key: 'maintenance', label: 'Maintenance', icon: '🔧', onClick: () => setActiveView('maintenance') },
           { key: 'complaints', label: 'Help / Complaints', icon: '🆘', onClick: () => setActiveView('complaints') },
           { key: 'messages', label: 'Messages', icon: '💬', onClick: () => setChatOpen(true) },
           { key: 'broadcast', label: 'Broadcast', icon: '📣', onClick: () => setShowAnnouncementComposer(true) },
@@ -309,6 +319,16 @@ export default function Dashboard() {
           ...(isManager ? [] : [{ key: 'subscription', label: 'Manage subscription', icon: '💳', onClick: () => navigate('/subscription') }]),
           // FAQs always last (direct request, applies to every portal's sidebar).
           { key: 'faq', label: 'FAQs', icon: '❓', onClick: () => setActiveView('faq') },
+        ]}
+      />
+
+      <BottomNav
+        activeKey={activeView}
+        items={[
+          { key: 'dashboard', label: 'Home', icon: '🏠', onClick: () => setActiveView('dashboard') },
+          { key: 'pending-confirmations', label: 'Payments', icon: '✅', onClick: () => setActiveView('pending-confirmations') },
+          { key: 'maintenance', label: 'Maintenance', icon: '🔧', onClick: () => setActiveView('maintenance') },
+          { key: 'messages', label: 'Messages', icon: '💬', onClick: () => setChatOpen(true) },
         ]}
       />
 
@@ -452,7 +472,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      {activeView === 'statistics' ? (
+      {activeView === 'due-dates' ? (
+        <main className="dashboard-main">
+          <DueDatesCalendar token={token} />
+        </main>
+      ) : activeView === 'statistics' ? (
         <main className="dashboard-main">
           <LandlordStatistics token={token} propertyId={activePropertyId} />
         </main>
@@ -484,6 +508,10 @@ export default function Dashboard() {
             <p className="dashboard-main__empty">Select an apartment above to see its tenant lists.</p>
           )}
         </main>
+      ) : activeView === 'maintenance' ? (
+        <main className="dashboard-main">
+          <MaintenanceManagePanel token={token} propertyId={activePropertyId} />
+        </main>
       ) : activeView === 'complaints' ? (
         <main className="dashboard-main">
           <ComplaintsPanel token={token} name={summary?.viewerName} defaultPhone={sessionStorage.getItem('rentapay_phone')} />
@@ -494,6 +522,11 @@ export default function Dashboard() {
         </main>
       ) : (
       <main className="dashboard-main">
+        <AttentionFeed
+          token={token}
+          onOpenTenant={(tenantId, unitId) => { if (unitId) navigate(`/units/${unitId}`); }}
+          onOpenPendingPayments={() => setActiveView('pending-confirmations')}
+        />
         {/* Signature element: subscription countdown */}
         <section className={`subscription-bar ${isUrgent ? 'subscription-bar--urgent' : ''} ${isCritical ? 'subscription-bar--critical' : ''}`}>
           <div className="subscription-bar__info">

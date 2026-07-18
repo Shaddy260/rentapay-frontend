@@ -13,6 +13,7 @@ import LandlordEditModal from '../components/LandlordEditModal.jsx';
 import { downloadCsv } from '../utils/downloadCsv.js';
 import Faq from '../components/Faq.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import LandlordManualPaymentConfirmations from '../components/LandlordManualPaymentConfirmations.jsx';
 import { api, ApiError } from '../api/client.js';
 import './AdminDashboard.css';
 
@@ -497,6 +498,7 @@ export default function AdminDashboard() {
           { key: 'help', label: 'Help Requests', icon: '❓', onClick: () => setActiveTab('help') },
           { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
           { key: 'sql', label: 'SQL', icon: '🗄️', onClick: () => setActiveTab('sql') },
+          { key: 'manual-subscription-payments', label: 'Landlord Manual Payments', icon: '💳', onClick: () => setActiveTab('manual-subscription-payments') },
           { key: 'messages', label: 'Messages', icon: '💬', onClick: () => setActiveTab('messages') },
           { key: 'broadcast', label: 'Broadcast', icon: '📢', onClick: () => setShowBroadcastModal(true) },
           { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
@@ -629,6 +631,7 @@ export default function AdminDashboard() {
           <button className={activeTab === 'help' ? 'is-active' : ''} onClick={() => setActiveTab('help')}>Help Requests</button>
           <button className={activeTab === 'credentials' ? 'is-active' : ''} onClick={() => setActiveTab('credentials')}>First-Time Credentials</button>
           <button className={activeTab === 'sql' ? 'is-active' : ''} onClick={() => setActiveTab('sql')}>SQL</button>
+          <button className={activeTab === 'manual-subscription-payments' ? 'is-active' : ''} onClick={() => setActiveTab('manual-subscription-payments')}>Landlord Manual Payments</button>
           <button className={activeTab === 'messages' ? 'is-active' : ''} onClick={() => setActiveTab('messages')}>Messages</button>
           <button className={activeTab === 'activity' ? 'is-active' : ''} onClick={() => setActiveTab('activity')}>Activity Log</button>
           <button className={activeTab === 'faq' ? 'is-active' : ''} onClick={() => setActiveTab('faq')}>FAQs</button>
@@ -638,6 +641,7 @@ export default function AdminDashboard() {
         {activeTab === 'faq' && <Faq audience="admin" />}
         {activeTab === 'credentials' && <AdminCredentialsPanel token={token} />}
         {activeTab === 'sql' && <AdminSqlPanel token={token} />}
+        {activeTab === 'manual-subscription-payments' && <LandlordManualPaymentConfirmations token={token} />}
 
 
         {activeTab === 'overview' && (

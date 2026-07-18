@@ -30,6 +30,8 @@ export default function AddTenant() {
     dueDayOfMonth: '',
     emergencyContactName: '',
     emergencyContactPhone: '',
+    depositAmount: '',
+    depositPaidAt: new Date().toISOString().slice(0, 10),
   });
 
   useEffect(() => {
@@ -73,6 +75,8 @@ export default function AddTenant() {
           dueDayOfMonth: form.dueDayOfMonth ? Number(form.dueDayOfMonth) : undefined,
           emergencyContactName: form.emergencyContactName,
           emergencyContactPhone: form.emergencyContactPhone,
+          depositAmount: form.depositAmount ? Number(form.depositAmount) : undefined,
+          depositPaidAt: form.depositAmount ? form.depositPaidAt : undefined,
           confirmDuplicate: confirmDuplicate || undefined,
         },
         token
@@ -160,6 +164,17 @@ export default function AddTenant() {
             <label className="form-field__label">Due date override (day of month)</label>
             <input type="number" min="1" max="28" value={form.dueDayOfMonth} onChange={(e) => update('dueDayOfMonth', e.target.value)} placeholder={`Default: ${unit?.due_day_of_month}`} />
           </div>
+          <div className="form-field">
+            <label className="form-field__label">Security deposit paid (KES)</label>
+            <input type="number" min="0" value={form.depositAmount} onChange={(e) => update('depositAmount', e.target.value)} placeholder="Leave blank if none was collected" />
+            <p className="form-field__hint">Refundable at move-out, separate from rent - this is not added to what the tenant owes.</p>
+          </div>
+          {form.depositAmount ? (
+            <div className="form-field">
+              <label className="form-field__label">Deposit paid on</label>
+              <input type="date" value={form.depositPaidAt} onChange={(e) => update('depositPaidAt', e.target.value)} />
+            </div>
+          ) : null}
           <div className="form-field">
             <label className="form-field__label">Emergency contact name *</label>
             <input required value={form.emergencyContactName} onChange={(e) => update('emergencyContactName', e.target.value)} />

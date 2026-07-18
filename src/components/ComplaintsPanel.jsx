@@ -5,10 +5,14 @@ import { downloadCsv } from '../utils/downloadCsv.js';
 import './ComplaintsPanel.css';
 
 /**
- * "Complaints" tab from the reference design. Reuses the existing
- * help_requests table/endpoint under the hood (submitHelpRequest /
- * GET /help/mine) rather than building a parallel system - a
- * complaint IS a help request from the tenant's point of view.
+ * "Complaints" tab - reaches RentaPay's own support team (reuses the
+ * help_requests table/endpoint: submitHelpRequest / GET /help/mine),
+ * for account, billing, or platform issues. Property maintenance/
+ * repair issues have their own separate flow now (MaintenancePanel.jsx,
+ * /api/maintenance) that reaches the landlord/caretaker directly
+ * instead - that used to be funneled through here, which meant a
+ * tenant's "leaking tap" report only ever reached RentaPay support,
+ * never the person who could actually fix it.
  */
 export default function ComplaintsPanel({ token, name, defaultPhone }) {
   const [requests, setRequests] = useState([]);
@@ -84,7 +88,7 @@ export default function ComplaintsPanel({ token, name, defaultPhone }) {
             rows={4}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="e.g. Leaking tap in the bathroom, broken gate lock, noisy neighbours…"
+            placeholder="e.g. A payment I made isn't reflecting, or an account issue…"
           />
           <Button type="submit" variant="primary" loading={busy}>Submit complaint</Button>
         </form>

@@ -33,7 +33,7 @@ function describeError(err) {
         return { title: 'Incorrect phone number or password', detail: 'Double check both fields and try again.' };
       }
       if (err.status === 403) {
-        return { title: 'Account not verified', detail: err.message, action: 'verify' };
+        return { title: 'Account suspended', detail: err.message };
       }
       if (err.status === 423) {
         return { title: 'Account temporarily locked', detail: err.message };
@@ -411,6 +411,8 @@ export default function Login() {
           <Link to="/terms" className="ghost-link">Terms of Service</Link>
           {' · '}
           <Link to="/privacy" className="ghost-link">Privacy Policy</Link>
+          {' · '}
+          <Link to="/status" className="ghost-link">System Status</Link>
         </p>
       </div>
     </div>

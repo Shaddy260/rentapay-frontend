@@ -20,6 +20,51 @@ export default function SubscriptionManage() {
   const [submitting, setSubmitting] = useState(false);
   const [preRenewalSnapshot, setPreRenewalSnapshot] = useState(null); // status right before this renewal, to detect when it actually goes through
 
+  // "Didn't receive the popup? Pay manually" fallback state.
+  const [showManualPay, setShowManualPay] = useState(false);
+  const [manualForm, setManualForm] = useState({ transactionCode: '', amountPaid: '', mpesaPayerName: '', mpesaPayerPhone: '', mpesaSmsTimestamp: '' });
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+  const [manualError, setManualError] = useState('');
+  const [myManualPayment, setMyManualPayment] = useState(null);
+
+  function loadMyManualPayment() {
+    if (!token) return;
+    api.getMyLatestManualSubscriptionPayment(token).then(setMyManualPayment).catch(() => {});
+  }
+  useEffect(() => { loadMyManualPayment(); }, [token]);
+
+  async function handleManualSubmit(e) {
+    e.preventDefault();
+    setManualError('');
+    if (!manualForm.transactionCode || !manualForm.amountPaid || !manualForm.mpesaPayerName || !manualForm.mpesaPayerPhone) {
+      setManualError('Please fill in all fields exactly as shown on your M-Pesa confirmation SMS.');
+      return;
+    }
+    setManualSubmitting(true);
+    try {
+      await api.submitManualSubscriptionPayment(
+        {
+          transactionCode: manualForm.transactionCode.trim(),
+          amountPaid: Number(manualForm.amountPaid),
+          mpesaPayerName: manualForm.mpesaPayerName.trim(),
+          mpesaPayerPhone: manualForm.mpesaPayerPhone.trim(),
+          mpesaSmsTimestamp: manualForm.mpesaSmsTimestamp ? new Date(manualForm.mpesaSmsTimestamp).toISOString() : null,
+          periodMonths: Number(periodMonths),
+          unitsCount: Number(unitsCount),
+          propertyId: status?.scopedToPropertyId || null,
+        },
+        token
+      );
+      setManualForm({ transactionCode: '', amountPaid: '', mpesaPayerName: '', mpesaPayerPhone: '', mpesaSmsTimestamp: '' });
+      setShowManualPay(false);
+      loadMyManualPayment();
+    } catch (err) {
+      setManualError(err instanceof ApiError ? err.message : 'Failed to submit payment.');
+    } finally {
+      setManualSubmitting(false);
+    }
+  }
+
   useEffect(() => {
     if (!token) {
       navigate('/login');
@@ -147,6 +192,60 @@ export default function SubscriptionManage() {
         <p style={{ fontWeight: 700, marginBottom: '1rem' }}>Total: KES {totalCost.toLocaleString()} (KES {rate}/unit/month)</p>
         <Button type="submit" variant="mpesa" loading={submitting}>Pay via M-Pesa</Button>
       </form>
+
+      {/* Direct request: STK popups sometimes fail/delay/never arrive -
+          this fallback stays visible at all times (it's never hidden
+          behind a "pending" state - same fix as the tenant duplicate-
+          confirmation bug) so a landlord/manager/caretaker always has
+          a way to pay. */}
+      <button type="button" className="ghost-link" style={{ marginTop: '0.75rem' }} onClick={() => setShowManualPay((o) => !o)}>
+        {showManualPay ? 'Hide manual payment form' : "Didn't receive the popup? Pay manually"}
+      </button>
+
+      {myManualPayment?.status === 'pending' && (
+        <div className="stk-pending paybill-pending" style={{ marginTop: '1rem' }}>
+          <p>⏳ Manual payment submitted, waiting for admin approval.</p>
+          <div className="paybill-pending__details">
+            <div><span>Transaction code</span><span>{myManualPayment.transaction_code}</span></div>
+            <div><span>Amount</span><span>KES {Number(myManualPayment.amount_paid).toLocaleString()}</span></div>
+            <div><span>Submitted</span><span>{new Date(myManualPayment.submitted_at).toLocaleString('en-GB')}</span></div>
+          </div>
+        </div>
+      )}
+      {myManualPayment?.status === 'rejected' && (
+        <div className="paybill-rejected-banner" style={{ marginTop: '1rem' }}>
+          <p>❌ Your last manual payment submission was not approved.</p>
+          {myManualPayment.rejection_reason && <p className="paybill-rejected-banner__reason">Reason: {myManualPayment.rejection_reason}</p>}
+        </div>
+      )}
+
+      {showManualPay && (
+        <div className="add-tenant-form" style={{ marginTop: '1rem', border: '1px solid var(--color-hairline, #e5e7eb)', borderRadius: 10, padding: '1rem' }}>
+          <p>
+            Send payment to Paybill <strong>400200</strong>, Account Number <strong>1341657388</strong>. Once you've paid, fill in the
+            details below exactly as shown on your M-Pesa confirmation SMS - the same way your tenants submit theirs.
+          </p>
+          {manualError && <p className="add-tenant-error">{manualError}</p>}
+          <form onSubmit={handleManualSubmit}>
+            <label className="form-field__label">Transaction code</label>
+            <input required value={manualForm.transactionCode} onChange={(e) => setManualForm((f) => ({ ...f, transactionCode: e.target.value }))} placeholder="e.g. QGH7XYZ123" />
+
+            <label className="form-field__label">Amount paid (KES)</label>
+            <input required type="number" min="0" step="0.01" value={manualForm.amountPaid} onChange={(e) => setManualForm((f) => ({ ...f, amountPaid: e.target.value }))} />
+
+            <label className="form-field__label">M-Pesa payer name</label>
+            <input required value={manualForm.mpesaPayerName} onChange={(e) => setManualForm((f) => ({ ...f, mpesaPayerName: e.target.value }))} placeholder="Name shown on the M-Pesa SMS" />
+
+            <label className="form-field__label">Phone number paid from</label>
+            <input required value={manualForm.mpesaPayerPhone} onChange={(e) => setManualForm((f) => ({ ...f, mpesaPayerPhone: e.target.value }))} placeholder="e.g. 0712345678" />
+
+            <label className="form-field__label">M-Pesa SMS time</label>
+            <input type="datetime-local" value={manualForm.mpesaSmsTimestamp} onChange={(e) => setManualForm((f) => ({ ...f, mpesaSmsTimestamp: e.target.value }))} />
+
+            <Button type="submit" variant="mpesa" loading={manualSubmitting} style={{ marginTop: '0.75rem' }}>Submit for review</Button>
+          </form>
+        </div>
+      )}
 
       <p className="add-tenant-subtitle" style={{ marginTop: '2rem' }}>
         Looking for how rent reaches you? Payment method is now managed from <Link to="/settings">Settings</Link>.

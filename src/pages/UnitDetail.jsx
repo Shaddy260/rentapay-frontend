@@ -71,13 +71,14 @@ export default function UnitDetail() {
   const [pendingRentChange, setPendingRentChange] = useState(null);
   const [editingDueDate, setEditingDueDate] = useState(false);
   const [dueDateDraft, setDueDateDraft] = useState('');
-  const [chargeDraft, setChargeDraft] = useState({ name: '', amount: '' });
+  const [chargeDraft, setChargeDraft] = useState({ name: '', amount: '', recurring: true });
   const [editingPaymentOverride, setEditingPaymentOverride] = useState(false);
   const [paymentOverrideDraft, setPaymentOverrideDraft] = useState({ enabled: false, method: 'stk', paybillNumber: '', accountNumber: '', tillNumber: '' });
   const [busy, setBusy] = useState(false);
 
   // Modals
   const [showBalanceModal, setShowBalanceModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
   const [showRevokeModal, setShowRevokeModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -233,9 +234,9 @@ export default function UnitDetail() {
     setBusy(true);
     setError('');
     try {
-      await api.addExtraCharge(unitId, { name: chargeDraft.name, amount: Number(chargeDraft.amount) }, token);
-      setChargeDraft({ name: '', amount: '' });
-      setNotice('Extra charge added.');
+      await api.addExtraCharge(unitId, { name: chargeDraft.name, amount: Number(chargeDraft.amount), recurring: chargeDraft.recurring }, token);
+      setChargeDraft({ name: '', amount: '', recurring: true });
+      setNotice(chargeDraft.recurring ? 'Recurring charge added - will bill every month from next cycle.' : 'One-time charge billed to the current tenant now.');
       load();
     } catch (err) {
       setError(err.message);
@@ -564,6 +565,10 @@ export default function UnitDetail() {
             <form className="add-charge-form" onSubmit={handleAddCharge}>
               <input placeholder="Name (e.g. Water)" value={chargeDraft.name} onChange={(e) => setChargeDraft((d) => ({ ...d, name: e.target.value }))} />
               <input type="number" placeholder="KES" value={chargeDraft.amount} onChange={(e) => setChargeDraft((d) => ({ ...d, amount: e.target.value }))} />
+              <select value={chargeDraft.recurring ? 'recurring' : 'once'} onChange={(e) => setChargeDraft((d) => ({ ...d, recurring: e.target.value === 'recurring' }))}>
+                <option value="recurring">Every month</option>
+                <option value="once">One-time only</option>
+              </select>
               <button type="submit" disabled={busy}>+ Add</button>
             </form>
           )}
@@ -601,12 +606,24 @@ export default function UnitDetail() {
                     </span>
                   );
                 })()}
+                {activeTenant.deposit_amount ? (
+                  <span className="tenant-panel__deposit">
+                    Deposit: KES {Number(activeTenant.deposit_amount).toLocaleString()}
+                    {activeTenant.deposit_status === 'held' && ' (held)'}
+                    {activeTenant.deposit_status === 'refunded' && ' - fully refunded'}
+                    {activeTenant.deposit_status === 'partially_refunded' && ` - KES ${Number(activeTenant.deposit_refunded_amount || 0).toLocaleString()} refunded`}
+                    {activeTenant.deposit_status === 'forfeited' && ' - withheld'}
+                  </span>
+                ) : null}
               </div>
               <div className="tenant-panel__actions">
                 <button onClick={() => setShowEditTenantModal(true)}>Edit details</button>
                 <button onClick={handleRemind} disabled={busy}>Remind</button>
                 {!isCaretaker && <button onClick={() => setShowPaymentModal(true)}>Record payment</button>}
                 {!isCaretaker && <button onClick={() => setShowBalanceModal(true)}>Edit balance</button>}
+                {!isCaretaker && activeTenant.deposit_amount && activeTenant.deposit_status === 'held' && (
+                  <button onClick={() => setShowDepositModal(true)}>Settle deposit</button>
+                )}
                 {!isCaretaker && <button onClick={openTransferModal}>Transfer</button>}
                 {activeTenant.notice_given && (
                   <button onClick={() => setShowRevokeModal(true)} className="danger-link">Revoke notice</button>
@@ -674,6 +691,9 @@ export default function UnitDetail() {
 
       {showBalanceModal && activeTenant && (
         <EditBalanceModal tenant={activeTenant} token={token} onClose={() => setShowBalanceModal(false)} onDone={() => { setShowBalanceModal(false); setNotice('Balance updated.'); load(); }} />
+      )}
+      {showDepositModal && activeTenant && (
+        <SettleDepositModal tenant={activeTenant} token={token} onClose={() => setShowDepositModal(false)} onDone={() => { setShowDepositModal(false); setNotice('Deposit settled.'); load(); }} />
       )}
       {showRevokeModal && activeTenant && (
         <RevokeNoticeModal tenant={activeTenant} token={token} onClose={() => setShowRevokeModal(false)} onDone={() => { setShowRevokeModal(false); setNotice('Notice revoked.'); load(); }} />
@@ -765,6 +785,66 @@ function EditBalanceModal({ tenant, token, onClose, onDone }) {
         <label className="form-field__label">Reason (required)</label>
         <textarea required value={reason} onChange={(e) => setReason(e.target.value)} rows={3} />
         <Button type="submit" variant="primary" loading={busy}>Save</Button>
+      </form>
+    </ModalShell>
+  );
+}
+
+function SettleDepositModal({ tenant, token, onClose, onDone }) {
+  const [status, setStatus] = useState('refunded');
+  const [refundedAmount, setRefundedAmount] = useState(tenant.deposit_amount || 0);
+  const [deductionReason, setDeductionReason] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e) {
+    e.preventDefault();
+    if (status !== 'refunded' && !deductionReason) {
+      setError('A reason is required whenever any part of the deposit is withheld.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      await api.settleTenantDeposit(
+        tenant.id,
+        { status, refundedAmount: status === 'forfeited' ? 0 : Number(refundedAmount), deductionReason: deductionReason || undefined },
+        token
+      );
+      onDone();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <ModalShell title={`Settle deposit for ${tenant.full_name}`} onClose={onClose}>
+      <form onSubmit={submit} className="modal-form">
+        {error && <p className="modal-error">{error}</p>}
+        <p className="unit-detail-hint">
+          Deposit collected: KES {Number(tenant.deposit_amount).toLocaleString()}. This never affects rent balance - it's a separate, refundable record.
+        </p>
+        <label className="form-field__label">Outcome</label>
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="refunded">Full refund</option>
+          <option value="partially_refunded">Partial refund (damages/arrears deducted)</option>
+          <option value="forfeited">Fully withheld</option>
+        </select>
+        {status !== 'forfeited' && (
+          <>
+            <label className="form-field__label">Amount refunded (KES)</label>
+            <input type="number" min="0" max={tenant.deposit_amount} value={refundedAmount} onChange={(e) => setRefundedAmount(e.target.value)} />
+          </>
+        )}
+        {status !== 'refunded' && (
+          <>
+            <label className="form-field__label">Reason for withholding (required)</label>
+            <textarea required value={deductionReason} onChange={(e) => setDeductionReason(e.target.value)} rows={3} placeholder="e.g. broken window, unpaid final month, cleaning" />
+          </>
+        )}
+        <Button type="submit" variant="primary" loading={busy}>Save settlement</Button>
       </form>
     </ModalShell>
   );

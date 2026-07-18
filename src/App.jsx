@@ -30,6 +30,7 @@ const SubscriptionManage = lazy(() => import('./pages/SubscriptionManage.jsx'));
 const Settings = lazy(() => import('./pages/Settings.jsx'));
 const Terms = lazy(() => import('./pages/Terms.jsx'));
 const Privacy = lazy(() => import('./pages/Privacy.jsx'));
+const StatusPage = lazy(() => import('./pages/StatusPage.jsx'));
 
 // The admin path is read from an env var rather than hardcoded, so the
 // secret URL isn't sitting in plain sight in the source/bundle as a
@@ -63,7 +64,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<RegisterFlow />} />
           <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/privacy" element={<Privacy />} /><Route path="/status" element={<StatusPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/portal" element={<TenantPortal />} />
           <Route path="/subscription" element={<SubscriptionManage />} />

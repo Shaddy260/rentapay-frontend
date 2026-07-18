@@ -106,3 +106,22 @@
     display: none;
   }
 }
+
+/* FIX (direct request: "the profile pic dropdown opens on the right,
+   it should open in the center"): on phones the trigger sits near the
+   right edge of the header, so the old `right: 0` anchor pushed the
+   whole panel off toward/past the screen edge instead of somewhere a
+   thumb can comfortably reach. Below this width, the dropdown detaches
+   from the trigger entirely and centers itself as a fixed panel over
+   the middle of the viewport instead. */
+@media (max-width: 640px) {
+  .account-menu__dropdown {
+    position: fixed;
+    top: 64px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100vw - 32px);
+    max-width: 320px;
+  }
+}

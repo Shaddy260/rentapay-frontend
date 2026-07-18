@@ -6,12 +6,14 @@ import HelpButton from '../components/HelpButton.jsx';
 import ChatWidget from '../components/ChatWidget.jsx';
 import Countdown from '../components/Countdown.jsx';
 import PortalSidebar from '../components/PortalSidebar.jsx';
+import BottomNav from '../components/BottomNav.jsx';
 import UnitInfoCard from '../components/UnitInfoCard.jsx';
 import StatisticsPanel from '../components/StatisticsPanel.jsx';
 import { downloadCsv } from '../utils/downloadCsv.js';
 import { initPushSubscription } from '../utils/push.js';
 import Faq from '../components/Faq.jsx';
 import ComplaintsPanel from '../components/ComplaintsPanel.jsx';
+import MaintenancePanel from '../components/MaintenancePanel.jsx';
 import AnnouncementBell from '../components/AnnouncementBell.jsx';
 import PaymentMethodBadge from '../components/PaymentMethodBadge.jsx';
 import '../components/Countdown.css';
@@ -29,38 +31,49 @@ import './TenantPortal.css';
 // drift into different behavior. `myConfirmation` is the tenant's own
 // most recent submission (or null) from GET /payments/my-latest-confirmation.
 function PaymentStatusAction({ myConfirmation, payLabel, onPay, onCheck }) {
-  if (myConfirmation?.status === 'pending') {
-    return (
-      <div className="stk-pending paybill-pending">
-        <p>⏳ Submitted, waiting for approval.</p>
-        <div className="paybill-pending__details">
-          <div><span>Transaction code</span><span>{myConfirmation.transaction_code}</span></div>
-          <div><span>Amount</span><span>KES {Number(myConfirmation.amount_paid).toLocaleString()}</span></div>
-          <div><span>Paid by</span><span>{myConfirmation.mpesa_payer_name}</span></div>
-          <div><span>Submitted</span><span>{new Date(myConfirmation.submitted_at).toLocaleString('en-GB')}</span></div>
-        </div>
-        <button onClick={onCheck}>Check for confirmation</button>
-      </div>
-    );
-  }
-
-  if (myConfirmation?.status === 'rejected') {
-    // "A tenant should receive a banner telling them the payment was
-    // rejected, with a way to resubmit right there in the same
-    // banner." Red/urgent styling, distinct from the neutral pending
-    // banner above.
-    return (
-      <div className="paybill-rejected-banner">
-        <p>❌ Your last payment submission was not approved.</p>
-        {myConfirmation.rejection_reason && <p className="paybill-rejected-banner__reason">Reason: {myConfirmation.rejection_reason}</p>}
-        <Button variant="mpesa" onClick={onPay}>Resubmit payment</Button>
-      </div>
-    );
-  }
-
+  // FIX (direct request: "the make payment UI should still be shown
+  // all time... right now when a tenant submits a duplicate
+  // transaction id there is no way that confirmation window go away,
+  // it remains there and the tenant cannot submit another payment"):
+  // a duplicate transaction code still gets inserted as a normal
+  // 'pending' confirmation (see submitPaybillTransaction - it's
+  // flagged for the landlord to review, not auto-rejected), so this
+  // component used to swap the Pay button out entirely and strand the
+  // tenant on a "waiting for approval" card with no way to act. The
+  // Pay button now always renders; the pending/rejected card (if any)
+  // shows underneath it instead of replacing it.
   return (
-    <div className="pay-actions">
-      <Button variant="mpesa" onClick={onPay}>{payLabel}</Button>
+    <div className="pay-actions-wrap">
+      <div className="pay-actions">
+        <Button variant="mpesa" onClick={onPay}>{payLabel}</Button>
+      </div>
+
+      {myConfirmation?.status === 'pending' && (
+        <div className="stk-pending paybill-pending">
+          <p>⏳ Submitted, waiting for approval.</p>
+          <div className="paybill-pending__details">
+            <div><span>Transaction code</span><span>{myConfirmation.transaction_code}</span></div>
+            <div><span>Amount</span><span>KES {Number(myConfirmation.amount_paid).toLocaleString()}</span></div>
+            <div><span>Paid by</span><span>{myConfirmation.mpesa_payer_name}</span></div>
+            <div><span>Submitted</span><span>{new Date(myConfirmation.submitted_at).toLocaleString('en-GB')}</span></div>
+          </div>
+          <button onClick={onCheck}>Check for confirmation</button>
+        </div>
+      )}
+
+      {myConfirmation?.status === 'rejected' && (
+        // "A tenant should receive a banner telling them the payment
+        // was rejected, with a way to resubmit right there in the
+        // same banner." Red/urgent styling, distinct from the neutral
+        // pending banner above. The main Pay button above already
+        // covers resubmission too now, so this is a secondary
+        // shortcut, not the only way to act.
+        <div className="paybill-rejected-banner">
+          <p>❌ Your last payment submission was not approved.</p>
+          {myConfirmation.rejection_reason && <p className="paybill-rejected-banner__reason">Reason: {myConfirmation.rejection_reason}</p>}
+          <Button variant="mpesa" onClick={onPay}>Resubmit payment</Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -171,8 +184,19 @@ export default function TenantPortal() {
           { key: 'messages', label: 'Messages', icon: '💬', onClick: () => setChatOpen(true) },
           { key: 'statistics', label: 'Statistics', icon: '📊', onClick: () => setActiveTab('statistics') },
           { key: 'financials', label: 'Financials', icon: '🏦', onClick: () => setActiveTab('financials') },
+          { key: 'maintenance', label: 'Maintenance', icon: '🔧', onClick: () => setActiveTab('maintenance') },
           { key: 'complaints', label: 'Complaints', icon: '⚠️', onClick: () => setActiveTab('complaints') },
           { key: 'faq', label: 'FAQs', icon: '❓', onClick: () => setActiveTab('faq') },
+        ]}
+      />
+
+      <BottomNav
+        activeKey={activeTab}
+        items={[
+          { key: 'dashboard', label: 'Home', icon: '🏠', onClick: () => setActiveTab('dashboard') },
+          { key: 'financials', label: 'Payments', icon: '🏦', onClick: () => setActiveTab('financials') },
+          { key: 'maintenance', label: 'Maintenance', icon: '🔧', onClick: () => setActiveTab('maintenance') },
+          { key: 'messages', label: 'Messages', icon: '💬', onClick: () => setChatOpen(true) },
         ]}
       />
 
@@ -402,6 +426,26 @@ export default function TenantPortal() {
                 </div>
               )}
 
+              {/* Direct request: "that deposit should be read only to
+                  the tenants and should not count as rent" - shown as
+                  its own separate card, never mixed into the rent
+                  breakdown above, and with no way for a tenant to
+                  edit it from here. */}
+              {profile?.deposit_amount ? (
+                <div className="rent-breakdown" style={{ marginTop: 16 }}>
+                  <div className="rent-breakdown__row">
+                    <span>Security deposit {profile.deposit_paid_at ? `(paid ${new Date(profile.deposit_paid_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })})` : ''}</span>
+                    <span>KES {Number(profile.deposit_amount).toLocaleString()}</span>
+                  </div>
+                  <p className="tenant-portal-hint">
+                    {profile.deposit_status === 'held' && "Held by your landlord. This is not rent and is not counted toward your balance - it's refundable when you vacate, less any damages."}
+                    {profile.deposit_status === 'refunded' && `Fully refunded${profile.deposit_settled_at ? ` on ${new Date(profile.deposit_settled_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}.`}
+                    {profile.deposit_status === 'partially_refunded' && `KES ${Number(profile.deposit_refunded_amount || 0).toLocaleString()} refunded${profile.deposit_deduction_reason ? ` - remainder withheld for: ${profile.deposit_deduction_reason}` : ''}.`}
+                    {profile.deposit_status === 'forfeited' && `Withheld${profile.deposit_deduction_reason ? ` - reason: ${profile.deposit_deduction_reason}` : ''}.`}
+                  </p>
+                </div>
+              ) : null}
+
               <p className="tenant-portal-hint">
                 {paymentInstructions?.method === 'paybill'
                   ? <>Pay via M-Pesa STK push straight from the Dashboard tab, or use Paybill <strong>{paymentInstructions.paybillNumber}</strong>, Account Number <strong>{paymentInstructions.accountNumber}</strong>.</>
@@ -476,6 +520,8 @@ export default function TenantPortal() {
         )}
 
         {activeTab === 'statistics' && <StatisticsPanel payments={payments} />}
+
+        {activeTab === 'maintenance' && <MaintenancePanel token={token} />}
 
         {activeTab === 'complaints' && (
           <ComplaintsPanel token={token} name={profile?.full_name} defaultPhone={profile?.primary_phone} />

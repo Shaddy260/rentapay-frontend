@@ -51,7 +51,10 @@ export default function ChangePassword() {
     try {
       await api.changePassword({ currentPassword, newPassword }, token);
       setDone(true);
-      setTimeout(() => navigate(role === 'landlord' ? '/dashboard' : '/portal'), 1500);
+      // Property managers/caretakers use the same portal as the
+      // landlord who added them (scoped to that landlord's data) -
+      // never the tenant portal. Only an actual tenant goes to /portal.
+      setTimeout(() => navigate(role === 'landlord' || role === 'manager' ? '/dashboard' : '/portal'), 1500);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to change password.');
     } finally {
@@ -65,7 +68,7 @@ export default function ChangePassword() {
         <div className="login-page__panel">
           <div className="login-page__brand">RentaPay</div>
           <h1>Password changed</h1>
-          <p className="login-page__intro">Taking you to your {role === 'landlord' ? 'dashboard' : 'portal'}...</p>
+          <p className="login-page__intro">Taking you to your {role === 'landlord' || role === 'manager' ? 'dashboard' : 'portal'}...</p>
         </div>
       </div>
     );
