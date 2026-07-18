@@ -4,6 +4,18 @@
 // In dev, Vite proxies /api/* to http://localhost:5000 (see vite.config.js).
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// FIX: StatusPage.jsx used to fetch('/health') as a bare relative
+// path, completely bypassing BASE_URL. That works only by coincidence
+// when the frontend and backend share an origin with no VITE_API_
+// BASE_URL override; the moment a deployment sets VITE_API_BASE_URL
+// to point at a separately-hosted backend (a very normal setup), that
+// bare fetch hits the FRONTEND's own origin instead - which has no
+// /health route at all - and status always reports "can't reach
+// RentaPay" regardless of whether the backend is actually fine. /health
+// is mounted on the Express app root (see server.js), not under /api,
+// so this strips a trailing /api off BASE_URL rather than reusing it directly.
+const HEALTH_URL = `${BASE_URL.replace(/\/api\/?$/, '')}/health`;
+export { HEALTH_URL };
 
 /**
  * Typed error so callers (Login.jsx, RegisterFlow.jsx, etc.) can branch
@@ -158,6 +170,7 @@ export const api = {
   getDashboard: (token, propertyId) => request(`/dashboard${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
   getAttentionFeed: (token) => request('/dashboard/attention', { token }),
   getDueDatesCalendar: (token) => request('/dashboard/due-dates', { token }),
+  globalSearch: (query, token) => request(`/dashboard/search?q=${encodeURIComponent(query)}`, { token }),
   getLandlordStatistics: (token, propertyId) => request(`/dashboard/statistics${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
   getPaymentHistoryFull: (token, propertyId) => request(`/payments/history${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
   getPaymentsThisMonth: (token, propertyId) => request(`/dashboard/payments-this-month${propertyId ? `?propertyId=${propertyId}` : ''}`, { token }),
@@ -173,6 +186,7 @@ export const api = {
   updateUnitStatus: (unitId, payload, token) => request(`/units/${unitId}/status`, { method: 'PATCH', body: payload, token }),
   removeUnit: (unitId, token) => request(`/units/${unitId}`, { method: 'DELETE', token }),
   addExtraCharge: (unitId, payload, token) => request(`/units/${unitId}/extra-charges`, { method: 'POST', body: payload, token }),
+  bulkUpdateRent: (payload, token) => request('/units/bulk-rent', { method: 'POST', body: payload, token }),
 
   // Tenants
   addTenant: (payload, token) => request('/tenants', { method: 'POST', body: payload, token }),
@@ -216,6 +230,8 @@ export const api = {
   initiateRentSTKPush: (payload, token) => request('/payments/stk-push', { method: 'POST', body: payload, token }),
   checkRentPaymentStatus: (checkoutRequestId, token) => request(`/payments/rent-status/${checkoutRequestId}`, { token }),
   checkSubscriptionPaymentStatus: (checkoutRequestId) => request(`/payments/subscription-status/${checkoutRequestId}`),
+  submitRegistrationManualPayment: (payload) => request('/payments/subscription-manual/register', { method: 'POST', body: payload }),
+  checkRegistrationManualPaymentStatus: (landlordId) => request(`/payments/subscription-manual/register/${landlordId}/status`),
   submitPaybillTransaction: (payload, token) => request('/payments/paybill-submit', { method: 'POST', body: payload, token }),
   // payload: { transactionCode, amountPaid, mpesaPayerName, mpesaSmsTimestamp }
   getMyLatestPaybillConfirmation: (token) => request('/payments/my-latest-confirmation', { token }),

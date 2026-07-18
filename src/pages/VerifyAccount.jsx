@@ -100,7 +100,7 @@ export default function VerifyAccount() {
           <form onSubmit={handleResend}>
             <div className="form-field">
               <label className="form-field__label" htmlFor="phone">Phone number</label>
-              <input id="phone" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="2547XXXXXXXX" />
+              <input id="phone" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
             </div>
             <Button type="submit" variant="primary" loading={loading}>Send verification code</Button>
           </form>

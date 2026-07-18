@@ -962,13 +962,13 @@ function EditTenantModal({ tenant, token, onClose, onDone }) {
         <label className="form-field__label">Full name</label>
         <input required value={fullName} onChange={(e) => setFullName(e.target.value)} />
         <label className="form-field__label">Secondary phone (optional)</label>
-        <input value={secondaryPhone} onChange={(e) => setSecondaryPhone(e.target.value)} placeholder="2547XXXXXXXX" />
+        <input value={secondaryPhone} onChange={(e) => setSecondaryPhone(e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
         <label className="form-field__label">Email (optional)</label>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <label className="form-field__label">Emergency contact name</label>
         <input value={emergencyContactName} onChange={(e) => setEmergencyContactName(e.target.value)} />
         <label className="form-field__label">Emergency contact phone</label>
-        <input value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} placeholder="2547XXXXXXXX" />
+        <input value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
         <Button type="submit" variant="primary" loading={busy}>Save changes</Button>
       </form>
     </ModalShell>

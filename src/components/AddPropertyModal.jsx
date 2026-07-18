@@ -127,7 +127,7 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
             <input value={form.caretakerName} onChange={(e) => update('caretakerName', e.target.value)} />
 
             <label className="form-field__label">Their phone number (optional)</label>
-            <input value={form.caretakerPhone} onChange={(e) => update('caretakerPhone', e.target.value)} placeholder="2547XXXXXXXX" />
+            <input value={form.caretakerPhone} onChange={(e) => update('caretakerPhone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
             <p className="unit-detail-hint">Want to give someone their own login to manage this property? Add them as a Property Manager from Settings after it's created.</p>
 
             <Button type="submit" variant="mpesa" loading={busy}>Continue to payment</Button>

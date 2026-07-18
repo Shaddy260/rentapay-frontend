@@ -30,7 +30,7 @@ export default function PendingPaymentsBell({ token, onOpenPendingPayments }) {
     if (!token) return;
     api
       .getPendingPaymentConfirmations('pending', token)
-      .then((res) => setCount((res.confirmations || []).length))
+      .then((res) => setCount((res.confirmations || []).filter((c) => !c.duplicate_of).length))
       .catch(() => {}); // silent - a failed badge refresh shouldn't interrupt the portal
   }
 

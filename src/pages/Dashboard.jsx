@@ -9,7 +9,9 @@ import TenantContactCard from '../components/TenantContactCard.jsx';
 import Countdown from '../components/Countdown.jsx';
 import PortalSidebar from '../components/PortalSidebar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
+import GlobalSearch from '../components/GlobalSearch.jsx';
 import AddPropertyModal from '../components/AddPropertyModal.jsx';
+import BulkRentChangeModal from '../components/BulkRentChangeModal.jsx';
 import LandlordStatistics from '../components/LandlordStatistics.jsx';
 import PaymentHistoryPanel from '../components/PaymentHistoryPanel.jsx';
 import Faq from '../components/Faq.jsx';
@@ -82,6 +84,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [showAddProperty, setShowAddProperty] = useState(false);
+  const [showBulkRentModal, setShowBulkRentModal] = useState(false);
   const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'statistics'
   const [showAnnouncementComposer, setShowAnnouncementComposer] = useState(false);
   const token = sessionStorage.getItem('rentapay_token');
@@ -399,6 +402,8 @@ export default function Dashboard() {
           )}
         </div>
 
+        <GlobalSearch token={token} />
+
         {summary && (
           <div className="dashboard-header__account">
             {/* Bell sits immediately next to the profile picture/name -
@@ -438,6 +443,15 @@ export default function Dashboard() {
           token={token}
           onClose={() => setShowAddProperty(false)}
           onDone={(newPropertyId) => { setShowAddProperty(false); load(newPropertyId); }}
+        />
+      )}
+
+      {showBulkRentModal && (
+        <BulkRentChangeModal
+          token={token}
+          properties={properties}
+          onClose={() => setShowBulkRentModal(false)}
+          onDone={() => load(activePropertyId)}
         />
       )}
 
@@ -818,6 +832,9 @@ export default function Dashboard() {
             Send bulk reminder
           </button>
           <button className="quick-action-btn" onClick={handleDownloadReport}>Download report</button>
+          {!isCaretaker && (
+            <button className="quick-action-btn" onClick={() => setShowBulkRentModal(true)}>Bulk rent change</button>
+          )}
           <HelpButton role={isManager ? 'manager' : 'landlord'} token={token} renderAs="quick-action-btn" />
           <ChatWidget token={token} role={isManager ? 'manager' : 'landlord'} roleLevel={roleLevel} label="Messages" />
         </section>

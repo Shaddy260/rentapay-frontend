@@ -96,7 +96,7 @@ export default function ForgotPassword() {
             <form onSubmit={handleRequestCode}>
               <div className="form-field">
                 <label className="form-field__label" htmlFor="phone">Phone number</label>
-                <input id="phone" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="2547XXXXXXXX" />
+                <input id="phone" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
               </div>
               {error && <p className="login-page__error" role="alert">{error}</p>}
               <Button type="submit" disabled={loading} fullWidth>

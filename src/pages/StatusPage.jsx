@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { HEALTH_URL } from '../api/client.js';
 import './StatusPage.css';
 
 // Direct request: "a status/health page tenants and landlords can
@@ -13,7 +14,7 @@ export default function StatusPage() {
 
   function runCheck() {
     setState('checking');
-    fetch('/health')
+    fetch(HEALTH_URL)
       .then((res) => res.json().then((body) => ({ ok: res.ok, body })))
       .then(({ ok, body }) => {
         setChecks(body.checks || null);

@@ -138,7 +138,7 @@ export default function AddTenant() {
           </div>
           <div className="form-field">
             <label className="form-field__label">Primary phone *</label>
-            <input required value={form.primaryPhone} onChange={(e) => update('primaryPhone', e.target.value)} placeholder="2547XXXXXXXX" />
+            <input required value={form.primaryPhone} onChange={(e) => update('primaryPhone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
           </div>
           <div className="form-field">
             <label className="form-field__label">Secondary phone</label>

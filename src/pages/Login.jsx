@@ -356,7 +356,7 @@ export default function Login() {
               autoComplete="username"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="2547XXXXXXXX"
+              placeholder="07XXXXXXXX or 2547XXXXXXXX"
             />
           </div>
           <div className="form-field">

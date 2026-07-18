@@ -498,7 +498,7 @@ export default function Settings() {
               <div className="settings-payment-form__grid">
                 <div className="form-field">
                   <label className="form-field__label">Phone</label>
-                  <input required placeholder="2547XXXXXXXX" value={addManagerForm.phone} onChange={(e) => setAddManagerForm((f) => ({ ...f, phone: e.target.value }))} />
+                  <input required placeholder="07XXXXXXXX or 2547XXXXXXXX" value={addManagerForm.phone} onChange={(e) => setAddManagerForm((f) => ({ ...f, phone: e.target.value }))} />
                 </div>
                 <div className="form-field">
                   <label className="form-field__label">Email (optional)</label>
@@ -633,7 +633,7 @@ export default function Settings() {
             <div className="settings-payment-form__grid">
               <div className="form-field">
                 <label className="form-field__label">Phone</label>
-                <input required placeholder="2547XXXXXXXX" value={myContact.phone} onChange={(e) => setMyContact((c) => ({ ...c, phone: e.target.value }))} />
+                <input required placeholder="07XXXXXXXX or 2547XXXXXXXX" value={myContact.phone} onChange={(e) => setMyContact((c) => ({ ...c, phone: e.target.value }))} />
               </div>
               <div className="form-field">
                 <label className="form-field__label">Email</label>

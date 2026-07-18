@@ -248,12 +248,14 @@ export default function RegisterFlow() {
       setAmountDue(res.amountDue);
       setStepIndex(1);
     } catch (err) {
-      // err.details (an array) comes from the backend's password-strength
-      // validator (utils/password.js) - join it into one readable line.
-      // Anything else falls back to err.message, which on a network
-      // failure is now a clear "can't reach the server" string thanks
-      // to the typed ApiError in api/client.js, not a generic fetch error.
-      setError(err.details ? err.details.join(' ') : err.message);
+      // err.details is an ARRAY only for the password-strength
+      // validator (utils/password.js) - join it into one readable
+      // line. Anything else (a plain string, or nothing) falls back
+      // to itself/err.message - checking Array.isArray here matters:
+      // calling .join on a non-array string used to throw INSIDE this
+      // catch block itself, before setError ever ran, which is what
+      // made a duplicate-email error look like a silent no-op.
+      setError(Array.isArray(err.details) ? err.details.join(' ') : (err.details || err.message));
     } finally {
       setLoading(false);
     }
@@ -318,6 +320,78 @@ export default function RegisterFlow() {
     setPaymentPollError(
       "We couldn't confirm your payment yet. If you completed the M-Pesa prompt, this can just mean confirmation is running a little slow - wait a moment and tap the button again to re-check."
     );
+  }
+
+  // -----------------------------------------------------------------
+  // Registration-time manual payment fallback (direct request: "there
+  // should be a UI for manual payment that when opened meanwhile gives
+  // instructions to pay on paybill 522522 acct 1341657388, the exact
+  // amount they were to pay - at the moment there is no that manual
+  // entering of payment"). Same idea as the STK poll above, but for
+  // when the prompt never arrives at all - a landlord can pay directly
+  // to RentaPay's paybill and submit the M-Pesa transaction code
+  // instead of waiting on a popup that might not come.
+  // -----------------------------------------------------------------
+  const [showManualPayment, setShowManualPayment] = useState(false);
+  const [manualForm, setManualForm] = useState({ transactionCode: '', mpesaPayerName: '', mpesaPayerPhone: '' });
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+  const [manualError, setManualError] = useState('');
+  const [manualSubmitted, setManualSubmitted] = useState(false);
+  const [manualPolling, setManualPolling] = useState(false);
+  const [manualPollError, setManualPollError] = useState('');
+
+  async function handleSubmitManualPayment(e) {
+    e.preventDefault();
+    setManualError('');
+    setManualSubmitting(true);
+    try {
+      await api.submitRegistrationManualPayment({
+        landlordId,
+        transactionCode: manualForm.transactionCode,
+        amountPaid: amountDue,
+        mpesaPayerName: manualForm.mpesaPayerName,
+        mpesaPayerPhone: manualForm.mpesaPayerPhone,
+      });
+      setManualSubmitted(true);
+      pollManualPaymentStatus();
+    } catch (err) {
+      setManualError(Array.isArray(err.details) ? err.details.join(' ') : (err.details || err.message));
+    } finally {
+      setManualSubmitting(false);
+    }
+  }
+
+  async function pollManualPaymentStatus() {
+    setManualPollError('');
+    setManualPolling(true);
+    // Unlike the STK poll (which waits on Safaricom, seconds away),
+    // this is waiting on an admin to review the submission - could be
+    // minutes, not seconds. Polls less aggressively and for longer.
+    const MAX_ATTEMPTS = 40;
+    const INTERVAL_MS = 15000;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+      try {
+        const res = await api.checkRegistrationManualPaymentStatus(landlordId);
+        if (res.status === 'completed') {
+          setManualPolling(false);
+          setStepIndex(2);
+          return;
+        }
+        if (res.status === 'rejected') {
+          setManualPolling(false);
+          setManualPollError('Your submitted payment could not be verified. Please double-check the transaction code and try again, or contact support.');
+          setManualSubmitted(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Manual payment status poll failed, retrying:', err.message);
+      }
+      await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
+    }
+
+    setManualPolling(false);
+    setManualPollError("Still waiting on confirmation - this can take a little while. Feel free to close this page and check back by logging in once it's approved.");
   }
 
   // -----------------------------------------------------------------
@@ -654,7 +728,7 @@ export default function RegisterFlow() {
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="phone">Phone number</label>
-                    <input id="phone" required value={form.phone} onChange={(e) => updateForm('phone', e.target.value)} placeholder="2547XXXXXXXX" />
+                    <input id="phone" required value={form.phone} onChange={(e) => updateForm('phone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="email">Email (optional)</label>
@@ -739,6 +813,43 @@ export default function RegisterFlow() {
                   Checking with M-Pesa - this can take up to a minute. Don't close this page.
                 </p>
               )}
+
+              {!manualSubmitted ? (
+                <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border, #e5e1d8)', paddingTop: '1.5rem' }}>
+                  <button type="button" className="ghost-link" onClick={() => setShowManualPayment((v) => !v)}>
+                    {showManualPayment ? 'Hide manual payment' : "Didn't get the prompt? Pay manually"}
+                  </button>
+                  {showManualPayment && (
+                    <form onSubmit={handleSubmitManualPayment} style={{ marginTop: '1rem', textAlign: 'left' }}>
+                      <p className="register-page__intro">
+                        Pay <strong>KES {amountDue?.toLocaleString()}</strong> via M-Pesa Paybill <strong>522522</strong>, Account Number <strong>1341657388</strong>.
+                        Then enter the M-Pesa confirmation details below - your account will be activated once an admin verifies it (usually within a few minutes).
+                      </p>
+                      {manualError && <div className="api-error-banner" role="alert">{manualError}</div>}
+                      <div className="form-field">
+                        <label className="form-field__label">M-Pesa transaction code</label>
+                        <input required value={manualForm.transactionCode} onChange={(e) => setManualForm((f) => ({ ...f, transactionCode: e.target.value }))} placeholder="e.g. QGH7XXXXX" />
+                      </div>
+                      <div className="form-field">
+                        <label className="form-field__label">Name on the M-Pesa message</label>
+                        <input required value={manualForm.mpesaPayerName} onChange={(e) => setManualForm((f) => ({ ...f, mpesaPayerName: e.target.value }))} />
+                      </div>
+                      <div className="form-field">
+                        <label className="form-field__label">Phone number that paid</label>
+                        <input required value={manualForm.mpesaPayerPhone} onChange={(e) => setManualForm((f) => ({ ...f, mpesaPayerPhone: e.target.value }))} placeholder="07XXXXXXXX" />
+                      </div>
+                      <Button type="submit" variant="primary" loading={manualSubmitting}>Submit payment</Button>
+                    </form>
+                  )}
+                </div>
+              ) : (
+                <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border, #e5e1d8)', paddingTop: '1.5rem' }}>
+                  <p className="register-page__intro">
+                    {manualPolling ? 'Waiting for your payment to be verified - this page will move on automatically once it is.' : 'Submitted. Waiting for verification.'}
+                  </p>
+                  {manualPollError && <div className="api-error-banner" role="alert">{manualPollError}</div>}
+                </div>
+              )}
             </div>
           )}
 
@@ -807,7 +918,7 @@ export default function RegisterFlow() {
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="caretakerPhone">Their phone number (optional)</label>
-                    <input id="caretakerPhone" value={property.caretakerPhone} onChange={(e) => setProperty((p) => ({ ...p, caretakerPhone: e.target.value }))} placeholder="2547XXXXXXXX" />
+                    <input id="caretakerPhone" value={property.caretakerPhone} onChange={(e) => setProperty((p) => ({ ...p, caretakerPhone: e.target.value }))} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
                   </div>
                 </div>
                 <p className="register-page__hint">
