@@ -1,0 +1,74 @@
+.complaints-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.complaints-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.complaints-panel__form textarea {
+  font-family: var(--font-body);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-hairline);
+  resize: vertical;
+}
+
+.complaints-panel__done {
+  background: var(--color-success-bg);
+  color: var(--color-primary);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+/* FIX ("features on the right side are hidden on phone and can't be
+   scrolled to") - see the identical note in AdminDashboard.css and
+   Dashboard.css. Shared by ComplaintsPanel and MaintenancePanel. */
+.complaints-panel__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.complaints-panel__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.complaints-panel__table th,
+.complaints-panel__table td {
+  text-align: left;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-hairline);
+  font-size: var(--text-sm);
+}
+
+.complaints-panel__status {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  text-transform: capitalize;
+}
+
+.complaints-panel__status--open {
+  background: var(--color-accent-light);
+  color: var(--color-primary-dark);
+}
+
+.complaints-panel__status--resolved {
+  background: var(--color-success-bg);
+  color: var(--color-primary);
+}

@@ -1,0 +1,189 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  padding: var(--space-4);
+}
+
+.login-page__panel {
+  width: 100%;
+  max-width: 400px;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+.login-page__brand {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-primary-dark);
+  margin-bottom: var(--space-6);
+}
+
+.login-page__panel h1 {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-2);
+}
+
+.login-page__intro {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-6) 0;
+}
+
+.login-page__toggle {
+  display: flex;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-bottom: var(--space-6);
+}
+
+.login-page__toggle button {
+  flex: 1;
+  padding: 0.55rem 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-soft);
+}
+
+.login-page__toggle button.is-active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.login-page__account-picker {
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.login-page__biometric {
+  text-align: center;
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 12px;
+  background: var(--color-surface-subtle, #f7f7fa);
+}
+
+.login-page__biometric-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--color-primary, #2f5d50);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-page__biometric-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.login-page__biometric-icon {
+  font-size: 1.2rem;
+}
+
+.login-page__biometric-hint {
+  margin: 8px 0 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #666);
+}
+
+.login-page__error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.login-page__error strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.login-page__error p {
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+.login-page__signup {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  margin-top: var(--space-5);
+  margin-bottom: 0;
+}
+
+.login-page__resend-link {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--text-sm);
+  text-decoration: underline;
+  margin-top: var(--space-3);
+  padding: 0;
+  cursor: pointer;
+}
+
+.login-page__link-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--text-sm);
+  text-decoration: underline;
+  padding: 0;
+  cursor: pointer;
+}
+
+.login-page__lockdown-banner {
+  background: #FDECEC;
+  border: 2px solid var(--color-error);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  text-align: center;
+}
+
+.login-page__lockdown-icon {
+  display: block;
+  font-size: 1.8rem;
+  color: var(--color-error);
+  margin-bottom: var(--space-2);
+}
+
+.login-page__lockdown-banner strong {
+  display: block;
+  color: var(--color-error);
+  font-size: var(--text-base);
+  margin-bottom: var(--space-2);
+}
+
+.login-page__lockdown-banner p {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  margin: 0;
+}
