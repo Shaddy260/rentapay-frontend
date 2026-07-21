@@ -1,0 +1,44 @@
+.annual-report-panel {
+  margin: 10px 0 18px;
+}
+
+.annual-report-panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.annual-report-panel__year-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.annual-report-panel__year-label select {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.annual-report-panel__tax-form {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.annual-report-panel__tax-form input {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  min-width: 220px;
+}
+
+.annual-report-panel__tax-form .tenant-portal-hint {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+}
