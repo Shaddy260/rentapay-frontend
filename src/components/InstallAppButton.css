@@ -1,0 +1,53 @@
+.install-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0.75rem 0;
+}
+
+.install-app--login {
+  margin: 1rem 0 0.25rem;
+}
+
+.install-app--menu {
+  margin: 0;
+  align-items: stretch;
+}
+
+.install-app--menu .install-app__btn {
+  background: none;
+  color: inherit;
+  border-radius: 0;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 500;
+  width: 100%;
+}
+
+.install-app--menu .install-app__btn:hover {
+  filter: none;
+  background: var(--color-surface, #f4f2ec);
+}
+
+.install-app__btn {
+  background: var(--color-primary, #1f6f5c);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  padding: 0.65rem 1.1rem;
+  font-weight: 600;
+  font-size: var(--text-sm, 0.9rem);
+  cursor: pointer;
+}
+
+.install-app__btn:hover {
+  filter: brightness(1.08);
+}
+
+.install-app__help {
+  font-size: var(--text-xs, 0.78rem);
+  color: var(--color-ink-soft, #6b6b63);
+  text-align: center;
+  max-width: 320px;
+}

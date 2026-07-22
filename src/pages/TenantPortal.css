@@ -1,0 +1,497 @@
+.tenant-portal {
+  min-height: 100vh;
+  background: var(--color-surface);
+}
+
+.tenant-portal--loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: var(--space-4);
+}
+
+.tenant-portal-header {
+  background: var(--color-primary-dark);
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tenant-portal-header__brand {
+  font-family: var(--font-display);
+  color: white;
+  font-size: var(--text-lg);
+}
+
+.tenant-portal-header__actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.tenant-portal-header__logout {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.85);
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.tenant-portal-main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.tenant-portal-banner {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
+.tenant-portal-banner--ok { background: var(--color-success-bg); color: var(--color-mpesa-dark); }
+.tenant-portal-banner--error { background: var(--color-error-bg); color: var(--color-error); }
+
+.tenant-welcome h1 {
+  font-size: var(--text-2xl);
+  margin-bottom: 2px;
+}
+
+.tenant-welcome__unit {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-3);
+}
+
+.tenant-welcome .payment-method-badge {
+  margin-bottom: var(--space-5);
+}
+
+.balance-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+  display: flex;
+  flex-direction: column;
+}
+
+.balance-card--ahead {
+  border-color: rgba(61,165,53,0.3);
+  background: var(--color-success-bg);
+}
+
+.balance-card__label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-ink-soft);
+  font-weight: 600;
+}
+
+.balance-card--ahead .balance-card__label { color: var(--color-mpesa-dark); }
+
+.balance-card__amount {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  color: var(--color-primary-dark);
+  margin: 4px 0;
+}
+
+.balance-card--ahead .balance-card__amount { color: var(--color-mpesa-dark); }
+
+.balance-card__due {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  margin-bottom: var(--space-4);
+}
+
+.rent-breakdown {
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.rent-breakdown__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  padding: var(--space-1) 0;
+  color: var(--color-ink-soft);
+}
+
+.rent-breakdown__row--interest { color: var(--color-error); }
+
+.rent-breakdown__row--total {
+  font-weight: 700;
+  color: var(--color-ink);
+  border-top: 1px dashed var(--color-hairline);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.pay-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pay-actions__paybill-link {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--text-xs);
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+
+.stk-pending {
+  text-align: center;
+}
+
+.stk-pending button {
+  margin-top: var(--space-3);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.paybill-pending__details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: var(--space-2) 0;
+  text-align: left;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.paybill-pending__details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.paybill-pending__details > div span:first-child {
+  color: var(--color-ink-soft);
+}
+
+.paybill-rejected-banner {
+  text-align: center;
+  background: #FCE9E7;
+  border: 1px solid #D92D20;
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.paybill-rejected-banner p {
+  color: #B42318;
+  font-weight: 600;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.paybill-rejected-banner__reason {
+  font-weight: 400 !important;
+  font-size: var(--text-sm);
+}
+
+.tenant-section {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.tenant-section h2 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-3);
+}
+
+.tenant-section__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.tenant-section__header-row h2 {
+  margin-bottom: 0;
+}
+
+.tenant-portal-hint {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+
+.notice-status p {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.payments-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 480px) {
+  .payments-table {
+    font-size: 12px;
+  }
+  .payments-table th,
+  .payments-table td {
+    padding: 6px 4px;
+    white-space: nowrap;
+  }
+}
+
+.payments-table th {
+  text-align: left;
+  color: var(--color-ink-soft);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.payments-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.payment-status {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.payment-status--completed { background: var(--color-success-bg); color: var(--color-mpesa-dark); }
+.payment-status--pending { background: #FBF3EC; color: var(--color-accent); }
+.payment-status--failed, .payment-status--rejected { background: var(--color-error-bg); color: var(--color-error); }
+
+.receipt-link {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--text-xs);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.profile-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-sm);
+}
+
+.profile-grid__label {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  text-transform: uppercase;
+}
+
+/* Reuse the same modal styling pattern as UnitDetail.css */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 36, 33, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--space-4);
+}
+
+.modal-card {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.modal-card__close {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.modal-form input, .modal-form textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+}
+
+.modal-form button[type="submit"] {
+  margin-top: var(--space-3);
+}
+
+.modal-error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+/* Landlord / property manager contact card */
+.contact-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.contact-card__row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.contact-card__label {
+  font-size: 0.78rem;
+  opacity: 0.65;
+  min-width: 120px;
+}
+.contact-card__name {
+  font-weight: 600;
+}
+.contact-card__phone {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.contact-card__chat {
+  margin-top: 0.25rem;
+}
+
+/* 3-bar menu: Payment history + Your details live here now instead of
+   being two long, always-open sections. */
+.tenant-hamburger {
+  position: relative;
+}
+
+.tenant-hamburger__btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.9);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.tenant-hamburger__btn:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
+.tenant-hamburger__dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--color-surface-raised, #fff);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.tenant-hamburger__dropdown button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--color-ink, #222);
+}
+
+.tenant-hamburger__dropdown button:hover,
+.tenant-hamburger__dropdown button.is-active {
+  background: var(--color-primary, #0F3D3E);
+  color: #fff;
+}
+
+.tenant-hamburger__close {
+  border-top: 1px solid var(--color-hairline, #eee) !important;
+  color: #b3261e !important;
+}
+
+.tenant-portal-hint--menu {
+  text-align: center;
+  padding: 1rem 0;
+  opacity: 0.7;
+}
+
+.balance-card__breakdown-link {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.85;
+  text-decoration: underline;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  margin-top: var(--space-2);
+  padding: 0;
+  align-self: flex-start;
+}
+.balance-card__breakdown-link:hover {
+  opacity: 1;
+}
