@@ -465,7 +465,15 @@ export default function RegisterFlow() {
   // to RentaPay's paybill and submit the M-Pesa transaction code
   // instead of waiting on a popup that might not come.
   // -----------------------------------------------------------------
-  const [showManualPayment, setShowManualPayment] = useState(false);
+  // FIX (direct request: "there is not that manual payment option...
+  // its not visible or persistent at all"): this used to start
+  // collapsed behind a small ghost-styled toggle button, only
+  // revealed on a click - easy to miss entirely, which is exactly
+  // what was reported. Now it's open by default the moment the STK
+  // step loads, right alongside "I've completed the payment" - still
+  // collapsible for anyone who doesn't want it taking up space, but
+  // no longer something you have to know to go looking for.
+  const [showManualPayment, setShowManualPayment] = useState(true);
   const [manualForm, setManualForm] = useState({ transactionCode: '', mpesaPayerName: '', mpesaPayerPhone: '' });
   const [manualSubmitting, setManualSubmitting] = useState(false);
   const [manualError, setManualError] = useState('');
@@ -1032,13 +1040,20 @@ export default function RegisterFlow() {
 
               {!manualSubmitted ? (
                 <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border, #e5e1d8)', paddingTop: '1.5rem' }}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setShowManualPayment((v) => !v)}
-                  >
-                    {showManualPayment ? 'Hide manual payment' : "Prompt failed, cancelled, or didn't arrive? Pay manually"}
-                  </Button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                    <h3 style={{ fontSize: 'var(--text-md, 1rem)', margin: 0 }}>Or pay manually</h3>
+                    <button
+                      type="button"
+                      className="ghost-link"
+                      onClick={() => setShowManualPayment((v) => !v)}
+                    >
+                      {showManualPayment ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  <p className="register-page__intro" style={{ marginTop: '0.25rem' }}>
+                    If the M-Pesa prompt fails, gets cancelled, or never arrives - or you'd simply rather pay this way -
+                    send the amount yourself and enter the confirmation details below.
+                  </p>
                   {showManualPayment && (
                     <form onSubmit={handleSubmitManualPayment} style={{ marginTop: '1rem', textAlign: 'left' }}>
                       <PaymentDetailsCard amount={amountDue} note="Enter the M-Pesa confirmation details below - your account will be activated once an admin verifies it (usually within a few minutes)." />
