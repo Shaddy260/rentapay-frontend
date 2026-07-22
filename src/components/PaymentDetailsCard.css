@@ -1,0 +1,38 @@
+.payment-details-card {
+  background: var(--color-surface-raised, #fff);
+  border: 2px solid var(--color-primary, #2f8f77);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-4, 1rem);
+  margin: var(--space-3, 0.75rem) 0;
+}
+
+.payment-details-card__header {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: var(--space-2, 0.5rem);
+  color: var(--color-primary-dark, #1f6f5c);
+}
+
+.payment-details-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed var(--color-hairline, #e5e7eb);
+  font-size: 0.95rem;
+}
+
+.payment-details-card__row:last-of-type {
+  border-bottom: none;
+}
+
+.payment-details-card__row strong {
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.payment-details-card__note {
+  margin: var(--space-2, 0.5rem) 0 0;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}

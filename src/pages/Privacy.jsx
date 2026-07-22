@@ -28,8 +28,9 @@ export default function Privacy() {
         <p>
           Your information is used to operate the core service: tracking balances, confirming
           payments, sending reminders and receipts, and enabling communication between
-          landlords, managers, and tenants. Phone numbers are used to send SMS notifications.
-          We do not sell personal data to third parties.
+          landlords, managers, and tenants. Email addresses are used to send account
+          notifications, receipts, and reminders; phone numbers are used for account identification
+          and M-Pesa payments. We do not sell personal data to third parties.
         </p>
 
         <h2>3. Who Can See Your Information</h2>

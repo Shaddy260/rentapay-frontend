@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import AccountMenu from '../components/AccountMenu.jsx';
@@ -17,6 +17,7 @@ import DocumentsPanel from '../components/DocumentsPanel.jsx';
 import MaintenancePanel from '../components/MaintenancePanel.jsx';
 import AnnouncementBell from '../components/AnnouncementBell.jsx';
 import NotificationsBell from '../components/NotificationsBell.jsx';
+import { useSharedPoll } from '../utils/sharedPoll.js';
 import PaymentMethodBadge from '../components/PaymentMethodBadge.jsx';
 import '../components/Countdown.css';
 import { api, ApiError } from '../api/client.js';
@@ -85,35 +86,25 @@ export default function TenantPortal() {
   const token = sessionStorage.getItem('rentapay_token');
   const [messagesBadge, setMessagesBadge] = useState(0);
 
+  const loadMessagesBadge = useCallback(() => {
+    if (!token) return;
+    api
+      .listChatThreads(token)
+      .then((res) => {
+        const total = (res.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0);
+        setMessagesBadge(total);
+      })
+      .catch(() => {});
+  }, [token]);
+
   useEffect(() => {
     if (!token) return undefined;
-    let cancelled = false;
-    function loadMessagesBadge() {
-      api
-        .listChatThreads(token)
-        .then((res) => {
-          if (cancelled) return;
-          const total = (res.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0);
-          setMessagesBadge(total);
-        })
-        .catch(() => {});
-    }
     loadMessagesBadge();
-    const interval = setInterval(() => {
-      if (document.visibilityState !== 'hidden') loadMessagesBadge();
-    }, 20000);
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') loadMessagesBadge();
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('rentapay:pending-payments-changed', loadMessagesBadge);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('rentapay:pending-payments-changed', loadMessagesBadge);
-    };
-  }, [token]);
+    return () => window.removeEventListener('rentapay:pending-payments-changed', loadMessagesBadge);
+  }, [token, loadMessagesBadge]);
+
+  useSharedPoll(loadMessagesBadge, 20000);
 
 
   const [breakdown, setBreakdown] = useState(null);

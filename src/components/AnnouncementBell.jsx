@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client.js';
-import { usePoll } from '../utils/usePoll.js';
+import { useSharedPoll } from '../utils/sharedPoll.js';
 import './AnnouncementBell.css';
 
 // A bell icon with an unread-count badge, used in every non-admin
@@ -17,7 +17,7 @@ import './AnnouncementBell.css';
 // time" here means "within 30 seconds", which is fine for an
 // announcement (not a chat). If true push delivery is needed later,
 // this is the one place that would need to change.
-export default function AnnouncementBell({ token, role }) {
+export default function AnnouncementBell({ token, role, propertyId }) {
   const [announcements, setAnnouncements] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -27,7 +27,7 @@ export default function AnnouncementBell({ token, role }) {
 
   function load() {
     if (!token) return;
-    api.listAnnouncements(token)
+    api.listAnnouncements(token, propertyId)
       .then((res) => {
         setAnnouncements(res.announcements || []);
         setUnreadCount(res.unreadCount || 0);
@@ -35,7 +35,16 @@ export default function AnnouncementBell({ token, role }) {
       .catch(() => {}); // silent - a failed bell refresh shouldn't interrupt the portal
   }
 
-  usePoll(load, 30000, [token]);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, propertyId]);
+
+  // FIX: this used to own its own independent setInterval(load, 30000)
+  // - now rides the app-wide shared tick instead, alongside
+  // NotificationsBell/PendingPaymentsBell/messages-badge polling, so a
+  // portal isn't running 4-5 separate timers at once.
+  useSharedPoll(load, 30000);
 
   useEffect(() => {
     function handleClickOutside(e) {

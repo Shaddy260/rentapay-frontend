@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Button from '../components/Button.jsx';
+import PaymentDetailsCard from '../components/PaymentDetailsCard.jsx';
 import { api, ApiError } from '../api/client.js';
 import './AddTenant.css';
 
@@ -16,9 +17,84 @@ export default function SubscriptionManage() {
   const [periodMonths, setPeriodMonths] = useState(1);
   const [unitsCount, setUnitsCount] = useState(5);
   const [error, setError] = useState('');
-  const [pending, setPending] = useState(null); // { checkoutRequestId, amountDue }
+
+  // FIX (direct request: "the manual payment feature... is not
+  // persistent, it's not visible until i reload the page and it only
+  // appears for like 2 seconds and disappears"): `pending` used to be
+  // plain useState, which React wipes on every reload - so the "check
+  // your phone" screen (and everything hanging off it, including the
+  // manual-pay fallback) only ever existed for the lifetime of that
+  // one render. Persisting it to sessionStorage (same pattern as
+  // RegisterFlow.jsx's STORAGE_KEY) means a reload, or a tab closed
+  // and reopened, lands right back on this screen instead of the bare
+  // renewal form - a landlord is never able to "escape" a payment
+  // that hasn't been confirmed yet by simply refreshing.
+  const PENDING_KEY = 'rentapay_subscription_pending';
+  const [pending, setPendingState] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      return raw ? JSON.parse(raw).pending : null;
+    } catch {
+      return null;
+    }
+  });
+  const [preRenewalSnapshot, setPreRenewalSnapshot] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      return raw ? JSON.parse(raw).preRenewalSnapshot : null;
+    } catch {
+      return null;
+    }
+  });
+  // True while a manual payment has been submitted but not yet acted
+  // on by an admin, and no STK checkoutRequestId exists for this
+  // attempt (i.e. the landlord went straight to "pay manually"
+  // without ever tapping "Pay via M-Pesa" first). Gates the same as
+  // `pending` does, just for the other payment path.
+  const [manualAwaiting, setManualAwaiting] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      return raw ? !!JSON.parse(raw).manualAwaiting : false;
+    } catch {
+      return false;
+    }
+  });
   const [submitting, setSubmitting] = useState(false);
-  const [preRenewalSnapshot, setPreRenewalSnapshot] = useState(null); // status right before this renewal, to detect when it actually goes through
+
+  function setPending(next, snapshot) {
+    setPendingState(next);
+    if (snapshot !== undefined) setPreRenewalSnapshot(snapshot);
+    if (next) setManualAwaiting(false);
+    try {
+      if (next) {
+        sessionStorage.setItem(PENDING_KEY, JSON.stringify({ pending: next, preRenewalSnapshot: snapshot !== undefined ? snapshot : preRenewalSnapshot }));
+        // Push a real history entry the moment we enter the payment-
+        // waiting screen, so the phone's hardware/browser back button
+        // takes the person back to the renewal form (handled by the
+        // popstate listener below) instead of skipping straight past
+        // this whole page to wherever they were before it.
+        window.history.pushState({ rentapaySubscriptionPending: true }, '');
+      } else {
+        sessionStorage.removeItem(PENDING_KEY);
+      }
+    } catch {
+      // sessionStorage can throw in private-browsing/storage-full edge
+      // cases - non-fatal, the payment itself still goes through.
+    }
+  }
+
+  // Back button while on the "check your phone" / "awaiting
+  // confirmation" screen -> return to the renewal form instead of
+  // leaving the page entirely.
+  useEffect(() => {
+    function onPopState() {
+      setPendingState(null);
+      setManualAwaiting(false);
+      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* non-fatal */ }
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   // "Didn't receive the popup? Pay manually" fallback state.
   const [showManualPay, setShowManualPay] = useState(false);
@@ -57,6 +133,29 @@ export default function SubscriptionManage() {
       );
       setManualForm({ transactionCode: '', amountPaid: '', mpesaPayerName: '', mpesaPayerPhone: '', mpesaSmsTimestamp: '' });
       setShowManualPay(false);
+      // FIX (direct request: "when a landlord decides to use either
+      // manual or the push...either of them should work...proceed and
+      // unlock the account and verify and proceed to the next step"):
+      // a landlord can submit the manual form WITHOUT ever tapping
+      // "Pay via M-Pesa" first, in which case `pending` (the STK
+      // checkoutRequestId) is never set. Previously nothing then
+      // watched for an admin to confirm it - the redirect-polling
+      // effect below only ever ran when `pending` was truthy, so a
+      // manual-only payment could get approved by the admin and the
+      // landlord would just never find out until they happened to
+      // reload. Snapshotting `status` here (same as handleRenew does
+      // for the STK path) and persisting it lets the shared polling
+      // effect below pick this path up too, purely by watching
+      // whether myManualPayment ever flips off 'pending' - see that
+      // effect for the actual redirect logic.
+      if (!pending) {
+        try {
+          sessionStorage.setItem(PENDING_KEY, JSON.stringify({ pending: null, preRenewalSnapshot: status, manualAwaiting: true }));
+          window.history.pushState({ rentapaySubscriptionPending: true }, '');
+        } catch { /* non-fatal */ }
+        setPreRenewalSnapshot(status);
+        setManualAwaiting(true);
+      }
       loadMyManualPayment();
     } catch (err) {
       setManualError(err instanceof ApiError ? err.message : 'Failed to submit payment.');
@@ -70,8 +169,9 @@ export default function SubscriptionManage() {
       navigate('/login');
       return;
     }
+    const activePropertyId = sessionStorage.getItem('rentapay_active_property_id') || undefined;
     api
-      .getSubscriptionStatus(token)
+      .getSubscriptionStatus(token, activePropertyId)
       .then((res) => {
         setStatus(res);
         setUnitsCount(res.unit_limit || 5);
@@ -89,11 +189,11 @@ export default function SubscriptionManage() {
   // (status flips to active, or the expiry date moves forward), it
   // automatically takes them to a freshly reloaded dashboard.
   useEffect(() => {
-    if (!pending || !token) return undefined;
+    if ((!pending && !manualAwaiting) || !token) return undefined;
 
     const interval = setInterval(async () => {
       try {
-        const res = await api.getSubscriptionStatus(token);
+        const res = await api.getSubscriptionStatus(token, status?.scopedToPropertyId || undefined);
         const renewalLandedAlready =
           preRenewalSnapshot &&
           (res.subscription_status === 'active' &&
@@ -102,10 +202,28 @@ export default function SubscriptionManage() {
 
         if (renewalLandedAlready) {
           clearInterval(interval);
+          try { sessionStorage.removeItem(PENDING_KEY); } catch { /* non-fatal */ }
           // Full reload (not just a route change) so every part of the
           // dashboard - unit limit, countdown, everything - reflects
           // the renewed subscription fresh from the server.
           window.location.href = '/dashboard';
+          return;
+        }
+
+        // Manual-only path: a landlord's admin could also REJECT the
+        // payment, which never changes subscription_status/expires_at
+        // at all - so the check above alone would poll forever. Catch
+        // that here and drop back to the form with the rejection
+        // banner (myManualPayment already surfaces the reason) instead
+        // of silently polling past it.
+        if (manualAwaiting && !pending) {
+          const latest = await api.getMyLatestManualSubscriptionPayment(token);
+          setMyManualPayment(latest);
+          if (latest?.status === 'rejected') {
+            clearInterval(interval);
+            setManualAwaiting(false);
+            try { sessionStorage.removeItem(PENDING_KEY); } catch { /* non-fatal */ }
+          }
         }
       } catch {
         // transient network hiccup while polling - just try again next tick
@@ -120,7 +238,7 @@ export default function SubscriptionManage() {
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, [pending, token, preRenewalSnapshot]);
+  }, [pending, manualAwaiting, token, preRenewalSnapshot]);
 
   const discount = PERIOD_DISCOUNTS[periodMonths] ?? 0;
   const rate = Math.round(BASE_RATE * (1 - discount) * 100) / 100;
@@ -131,9 +249,8 @@ export default function SubscriptionManage() {
     setError('');
     setSubmitting(true);
     try {
-      setPreRenewalSnapshot(status);
       const res = await api.renewSubscription({ plan: 'starter', periodMonths: Number(periodMonths), unitsCount: Number(unitsCount) }, token);
-      setPending({ checkoutRequestId: res.checkoutRequestId, amountDue: res.amountDue });
+      setPending({ checkoutRequestId: res.checkoutRequestId, amountDue: res.amountDue }, status);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to start renewal.');
     } finally {
@@ -151,6 +268,43 @@ export default function SubscriptionManage() {
           <h2>Check your phone</h2>
           <p>An M-Pesa prompt for KES {pending.amountDue?.toLocaleString()} was sent. Enter your PIN to complete renewal.</p>
           <p style={{ opacity: 0.7, fontSize: '0.9rem' }}>This page will automatically continue to your dashboard once the payment goes through - no need to refresh.</p>
+          <button
+            type="button"
+            className="ghost-link"
+            style={{ marginTop: '0.5rem' }}
+            onClick={() => { setShowManualPay(true); setPending(null); }}
+          >
+            Didn't get the prompt? Pay manually instead
+          </button>
+          <Button variant="primary" onClick={() => navigate('/dashboard')}>Back to dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // FIX (direct request: "when a landlord decides to use either
+  // manual or the push...either of them should work...proceed and
+  // unlock the account and verify and proceed to the next step"): a
+  // manual submission now gates the exact same way an STK push does -
+  // the landlord is kept on this locked screen (not the normal form)
+  // until an admin actually confirms or rejects it, and the polling
+  // effect above takes them straight to a fresh dashboard the moment
+  // that happens, with no reload needed.
+  if (manualAwaiting && myManualPayment === null) {
+    return <div className="add-tenant-page add-tenant-page--center">Loading…</div>;
+  }
+
+  if (manualAwaiting && myManualPayment?.status === 'pending') {
+    return (
+      <div className="add-tenant-page add-tenant-page--center">
+        <div className="add-tenant-success">
+          <span className="add-tenant-success__icon">⏳</span>
+          <h2>Awaiting confirmation</h2>
+          <p>
+            Your manual payment (transaction {myManualPayment.transaction_code}, KES {Number(myManualPayment.amount_paid).toLocaleString()}) has been
+            submitted and is awaiting admin confirmation.
+          </p>
+          <p style={{ opacity: 0.7, fontSize: '0.9rem' }}>This page will automatically continue to your dashboard once it's confirmed - no need to refresh.</p>
           <Button variant="primary" onClick={() => navigate('/dashboard')}>Back to dashboard</Button>
         </div>
       </div>
@@ -221,10 +375,7 @@ export default function SubscriptionManage() {
 
       {showManualPay && (
         <div className="add-tenant-form" style={{ marginTop: '1rem', border: '1px solid var(--color-hairline, #e5e7eb)', borderRadius: 10, padding: '1rem' }}>
-          <p>
-            Send payment to Paybill <strong>522522</strong>, Account Number <strong>1341657388</strong>. Once you've paid, fill in the
-            details below exactly as shown on your M-Pesa confirmation SMS - the same way your tenants submit theirs.
-          </p>
+          <PaymentDetailsCard note="Once you've paid, fill in the details below exactly as shown on your M-Pesa confirmation SMS - the same way your tenants submit theirs." />
           {manualError && <p className="add-tenant-error">{manualError}</p>}
           <form onSubmit={handleManualSubmit}>
             <label className="form-field__label">Transaction code</label>

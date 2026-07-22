@@ -7,7 +7,7 @@ import './PendingPaymentConfirmations.css';
 /**
  * "Landlords manual payment confirmations" - direct request: admin
  * queue for landlord/manager/caretaker subscription payments made
- * manually to RentaPay's own paybill (522522 / 1341657388) instead of
+ * manually to RentaPay's own paybill (400200 / 1341657388) instead of
  * via the Daraja STK popup. Confirm activates/renews the account
  * (see landlordManualSubscriptionPayment.controller.js for what that
  * does under the hood). Reject leaves it actionable with a reason.
@@ -119,7 +119,7 @@ export default function LandlordManualPaymentConfirmations({ token }) {
         </h2>
       </div>
       <p className="tenant-portal-hint">
-        Subscription payments landlords, managers, or caretakers submitted manually (Paybill 522522, Acc 1341657388) after not
+        Subscription payments landlords, managers, or caretakers submitted manually (Paybill 400200, Acc 1341657388) after not
         receiving or trusting the M-Pesa popup.
       </p>
 

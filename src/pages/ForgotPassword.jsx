@@ -7,7 +7,7 @@ import './Login.css';
 /**
  * Two-stage flow, deliberately NOT requiring a token (this is
  * precisely for someone who's locked out and can't get one):
- *  1. 'request' - phone + account type, sends a code by SMS.
+ *  1. 'request' - phone + account type, sends a code by email.
  *  2. 'reset'   - code + new password, actually changes it.
  */
 export default function ForgotPassword() {

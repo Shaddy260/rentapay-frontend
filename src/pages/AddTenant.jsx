@@ -68,7 +68,7 @@ export default function AddTenant() {
           fullName: form.fullName,
           primaryPhone: form.primaryPhone,
           secondaryPhone: form.secondaryPhone || undefined,
-          email: form.email || undefined,
+          email: form.email,
           idNumber: form.idNumber,
           moveInDate: form.moveInDate,
           rentOverride: form.rentOverride ? Number(form.rentOverride) : undefined,
@@ -112,7 +112,7 @@ export default function AddTenant() {
         <div className="add-tenant-success">
           <span className="add-tenant-success__icon">✓</span>
           <h2>Tenant added</h2>
-          <p>Login details have been sent via SMS{form.email ? ' and email' : ''}.</p>
+          <p>Login details have been sent via email.</p>
         </div>
       </div>
     );
@@ -145,8 +145,8 @@ export default function AddTenant() {
             <input value={form.secondaryPhone} onChange={(e) => update('secondaryPhone', e.target.value)} placeholder="Optional" />
           </div>
           <div className="form-field">
-            <label className="form-field__label">Email</label>
-            <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Optional" />
+            <label className="form-field__label">Email *</label>
+            <input type="email" required value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="tenant@example.com" />
           </div>
           <div className="form-field">
             <label className="form-field__label">ID number *</label>

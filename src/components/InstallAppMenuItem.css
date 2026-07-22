@@ -1,0 +1,43 @@
+.install-app-menu-item__ios-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+}
+
+.install-app-menu-item__ios-modal-card {
+  background: var(--color-surface-raised, #fff);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.25rem;
+  max-width: 320px;
+  width: 100%;
+}
+
+.install-app-menu-item__ios-modal-card h4 {
+  margin: 0 0 0.6rem;
+}
+
+.install-app-menu-item__ios-modal-card ol {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+}
+
+.install-app-menu-item__ios-modal-card li {
+  margin-bottom: 0.4rem;
+}
+
+.install-app-menu-item__ios-modal-card button {
+  width: 100%;
+  padding: 0.6rem;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-primary, #2f8f77);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}

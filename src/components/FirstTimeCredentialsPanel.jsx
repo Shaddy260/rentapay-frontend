@@ -52,7 +52,7 @@ export default function FirstTimeCredentialsPanel({ token, viewerRole }) {
       <h2>{isLandlord ? 'Login & Password-Reset Codes' : 'First-Time Login Details'}</h2>
       <p className="tenant-portal-hint">
         {isFirstLogin
-          ? "The temp password and OTP each person was given when their account was created - use this if the SMS or email with their details never reached them. These are the ORIGINAL values from account creation, not their current password."
+          ? "The temp password and OTP each person was given when their account was created - use this if the email with their details never reached them. These are the ORIGINAL values from account creation, not their current password."
           : 'The OTP sent whenever someone requests a password reset (forgot password). Each code disappears from here automatically once it expires - the same expiry the person sees when entering it.'}
       </p>
 

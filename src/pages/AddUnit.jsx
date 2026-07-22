@@ -23,7 +23,18 @@ export default function AddUnit() {
   const [unitLimit, setUnitLimit] = useState(null);
   const [currentCount, setCurrentCount] = useState(null);
   const [properties, setProperties] = useState([]);
-  const [propertyId, setPropertyId] = useState('');
+  // FIX (direct request: "every apartment be solely independent... I
+  // need these things to be independent"): this page used to always
+  // start from an empty/"Unassigned" selection and check the
+  // landlord-WIDE unit count/limit regardless of which property the
+  // landlord actually had open. That meant a property with its own
+  // 10-unit subscription could get blocked by a completely different
+  // property's units, because the check never knew which property was
+  // actually in view. Defaulting to (and re-checking against) whichever
+  // property is currently active in the dashboard switcher - the same
+  // sessionStorage key the dashboard itself uses - keeps this page
+  // consistent with whatever the landlord was just looking at.
+  const [propertyId, setPropertyId] = useState(() => sessionStorage.getItem('rentapay_active_property_id') || '');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   // Same bulk-duplicate feature as the setup wizard's unit step
@@ -37,14 +48,14 @@ export default function AddUnit() {
       navigate('/login');
       return;
     }
-    Promise.all([api.getSubscriptionStatus(token), api.listUnits(token), api.listProperties(token)])
+    Promise.all([api.getSubscriptionStatus(token, propertyId || undefined), api.listUnits(token, propertyId || undefined), api.listProperties(token)])
       .then(([sub, unitsRes, propsRes]) => {
         setUnitLimit(sub.unit_limit);
         setCurrentCount((unitsRes.units || []).length);
         setProperties(propsRes.properties || []);
       })
       .catch((err) => setError(err.message));
-  }, [token, navigate]);
+  }, [token, navigate, propertyId]);
 
   const atLimit = unitLimit != null && currentCount != null && currentCount >= unitLimit;
 

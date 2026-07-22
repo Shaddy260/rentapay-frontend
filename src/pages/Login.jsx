@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import HelpButton from '../components/HelpButton.jsx';
 import Faq from '../components/Faq.jsx';
-import InstallAppButton from '../components/InstallAppButton.jsx';
+import InstallAppBanner from '../components/InstallAppBanner.jsx';
 import { api, ApiError } from '../api/client.js';
 import { isBiometricSupported, listBiometricEntries, unlockWithBiometric } from '../utils/biometricAuth.js';
 import './Login.css';
@@ -315,6 +315,7 @@ export default function Login() {
 
   return (
     <div className="login-page">
+      <InstallAppBanner />
       <div className="login-page__panel">
         <div className="login-page__brand">RentaPay</div>
         <h1>Welcome back</h1>
@@ -435,8 +436,6 @@ export default function Login() {
         <p className="login-page__signup">
           Are you a Scout? <Link to="/scout">Sign up</Link>
         </p>
-
-        <InstallAppButton variant="login" />
 
         <div style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
           <HelpButton renderAs="login-page__help-link" />

@@ -67,7 +67,7 @@ const FAQ_ITEMS = [
     items: [
       {
         q: 'How do I onboard a tenant?',
-        a: "Open a vacant unit and choose \"Add Tenant.\" Enter their details, and they'll immediately receive their login (via SMS, and email if provided) with a temporary password they must change on first login. Their first month's rent is billed to their balance right away.",
+        a: "Open a vacant unit and choose \"Add Tenant.\" Enter their details, and they'll immediately receive their login by email with a temporary password they must change on first login. Their first month's rent is billed to their balance right away.",
       },
       {
         q: 'What does a tenant see when they log in?',
@@ -85,7 +85,7 @@ const FAQ_ITEMS = [
       },
       {
         q: 'How do I add a property manager or caretaker?',
-        a: 'In Settings, use "Add a property manager," choose whether they\'re a Manager or Caretaker, pick which properties they can access, and they\'ll receive their own login details by SMS with a temporary password to change on first use.',
+        a: 'In Settings, use "Add a property manager," choose whether they\'re a Manager or Caretaker, pick which properties they can access, and they\'ll receive their own login details by email with a temporary password to change on first use.',
       },
     ],
   },

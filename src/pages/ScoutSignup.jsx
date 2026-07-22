@@ -15,6 +15,7 @@ export default function ScoutSignup() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,12 +25,13 @@ export default function ScoutSignup() {
     setError('');
     setLoading(true);
     try {
-      const res = await api.registerScout({ fullName, phone, password });
+      const res = await api.registerScout({ fullName, phone, email, password });
       // Hand off to the shared OTP-verify screen with everything it
       // needs prefilled, same pattern Login.jsx uses for an unverified
-      // account - no separate Scout-specific OTP page needed.
+      // account - no separate Scout-specific OTP page needed. The OTP
+      // itself now goes to email (not SMS), matching the backend.
       navigate('/verify-account', {
-        state: { accountType: 'scout', accountId: res.accountId, phone: res.phone, stage: 'enter-otp', message: res.message },
+        state: { accountType: 'scout', accountId: res.accountId, phone: res.phone, email, stage: 'enter-otp', message: res.message },
       });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to register. Please try again.');
@@ -56,6 +58,10 @@ export default function ScoutSignup() {
           <div className="form-field">
             <label className="form-field__label" htmlFor="phone">Phone number</label>
             <input id="phone" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
+          </div>
+          <div className="form-field">
+            <label className="form-field__label" htmlFor="email">Email</label>
+            <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
           </div>
           <div className="form-field">
             <label className="form-field__label" htmlFor="password">Password</label>

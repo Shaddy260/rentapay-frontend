@@ -29,6 +29,20 @@ self.addEventListener('push', (event) => {
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: { url: data.url || '/' },
+      // FIX (direct request: "notifications... should not land in
+      // silently unnoticed"): these two used to be left unset
+      // entirely, which is fine on some devices but on others quietly
+      // defaults to no vibration at all. Now driven by the sender's
+      // stored notification_style (see webpush.service.js) instead of
+      // leaving it to chance.
+      silent: !!data.silent,
+      vibrate: data.vibrate || undefined,
+      // Keeps the notification on screen until the person actually
+      // dismisses or taps it, instead of auto-disappearing after a
+      // few seconds unread - same reasoning as the vibrate/silent fix
+      // above, this is about not letting something important slip by
+      // unnoticed.
+      requireInteraction: true,
     })
   );
 });

@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
-import { usePoll } from '../utils/usePoll.js';
 import './ChatThreadList.css';
 
 const POLL_MS = 6000;
@@ -33,10 +32,10 @@ export default function ChatThreadList({ token, onSelect, selectedKey }) {
 
   useEffect(() => {
     load(false);
+    const id = setInterval(() => load(true), POLL_MS);
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  usePoll(() => load(true), POLL_MS, [], { skipInitialCall: true });
 
   function keyOf(t) {
     return `${t.threadType}:${t.landlordId || ''}:${t.tenantId || ''}:${t.scoutId || ''}`;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
-import { usePoll } from '../utils/usePoll.js';
+import { useSharedPoll } from '../utils/sharedPoll.js';
 import './PendingPaymentsBell.css';
 
 // A small badge-only bell for the landlord/manager header, next to
@@ -35,13 +35,14 @@ export default function PendingPaymentsBell({ token, onOpenPendingPayments }) {
       .catch(() => {}); // silent - a failed badge refresh shouldn't interrupt the portal
   }
 
-  usePoll(load, 20000, [token]);
-
   useEffect(() => {
+    load();
     window.addEventListener('rentapay:pending-payments-changed', load);
     return () => window.removeEventListener('rentapay:pending-payments-changed', load);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  useSharedPoll(load, 20000);
 
   return (
     <button

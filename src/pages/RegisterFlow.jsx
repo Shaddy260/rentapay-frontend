@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StepRail from '../components/StepRail.jsx';
 import Button from '../components/Button.jsx';
+import PaymentDetailsCard from '../components/PaymentDetailsCard.jsx';
 import { api } from '../api/client.js';
 import { KENYA_COUNTIES } from '../constants/kenyaCounties.js';
 import { KENYA_CONSTITUENCIES } from '../constants/kenyaConstituencies.js';
@@ -345,7 +346,7 @@ export default function RegisterFlow() {
       const res = await api.registerLandlord({
         fullName: form.fullName,
         phone: form.phone,
-        email: form.email || undefined,
+        email: form.email,
         password: form.password,
         gender: form.gender || undefined,
         unitsCount: Number(form.unitsCount),
@@ -464,7 +465,15 @@ export default function RegisterFlow() {
   // to RentaPay's paybill and submit the M-Pesa transaction code
   // instead of waiting on a popup that might not come.
   // -----------------------------------------------------------------
-  const [showManualPayment, setShowManualPayment] = useState(false);
+  // FIX (direct request: "there is not that manual payment option...
+  // its not visible or persistent at all"): this used to start
+  // collapsed behind a small ghost-styled toggle button, only
+  // revealed on a click - easy to miss entirely, which is exactly
+  // what was reported. Now it's open by default the moment the STK
+  // step loads, right alongside "I've completed the payment" - still
+  // collapsible for anyone who doesn't want it taking up space, but
+  // no longer something you have to know to go looking for.
+  const [showManualPayment, setShowManualPayment] = useState(true);
   const [manualForm, setManualForm] = useState({ transactionCode: '', mpesaPayerName: '', mpesaPayerPhone: '' });
   const [manualSubmitting, setManualSubmitting] = useState(false);
   const [manualError, setManualError] = useState('');
@@ -938,8 +947,8 @@ export default function RegisterFlow() {
                     <input id="phone" required value={form.phone} onChange={(e) => updateForm('phone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
                   </div>
                   <div className="form-field">
-                    <label className="form-field__label" htmlFor="email">Email (optional)</label>
-                    <input id="email" type="email" value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="jane@example.com" />
+                    <label className="form-field__label" htmlFor="email">Email</label>
+                    <input id="email" type="email" required value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="jane@example.com" />
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="gender">I am a (optional)</label>
@@ -1031,19 +1040,23 @@ export default function RegisterFlow() {
 
               {!manualSubmitted ? (
                 <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border, #e5e1d8)', paddingTop: '1.5rem' }}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setShowManualPayment((v) => !v)}
-                  >
-                    {showManualPayment ? 'Hide manual payment' : "Prompt failed, cancelled, or didn't arrive? Pay manually"}
-                  </Button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                    <h3 style={{ fontSize: 'var(--text-md, 1rem)', margin: 0 }}>Or pay manually</h3>
+                    <button
+                      type="button"
+                      className="ghost-link"
+                      onClick={() => setShowManualPayment((v) => !v)}
+                    >
+                      {showManualPayment ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  <p className="register-page__intro" style={{ marginTop: '0.25rem' }}>
+                    If the M-Pesa prompt fails, gets cancelled, or never arrives - or you'd simply rather pay this way -
+                    send the amount yourself and enter the confirmation details below.
+                  </p>
                   {showManualPayment && (
                     <form onSubmit={handleSubmitManualPayment} style={{ marginTop: '1rem', textAlign: 'left' }}>
-                      <p className="register-page__intro">
-                        Pay <strong>KES {amountDue?.toLocaleString()}</strong> via M-Pesa Paybill <strong>522522</strong>, Account Number <strong>1341657388</strong>.
-                        Then enter the M-Pesa confirmation details below - your account will be activated once an admin verifies it (usually within a few minutes).
-                      </p>
+                      <PaymentDetailsCard amount={amountDue} note="Enter the M-Pesa confirmation details below - your account will be activated once an admin verifies it (usually within a few minutes)." />
                       {manualError && <div className="api-error-banner" role="alert">{manualError}</div>}
                       <div className="form-field">
                         <label className="form-field__label">M-Pesa transaction code</label>

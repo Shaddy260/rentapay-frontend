@@ -589,6 +589,22 @@
   border-style: dashed;
 }
 
+.unit-card--show-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  cursor: pointer;
+  min-height: 96px;
+}
+
+.unit-card--show-more:hover {
+  background: var(--color-surface);
+}
+
 /* Empty placeholder slots for unused subscription quota */
 .unit-card--placeholder {
   display: flex;

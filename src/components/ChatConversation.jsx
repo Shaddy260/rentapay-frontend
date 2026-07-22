@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
-import { usePoll } from '../utils/usePoll.js';
 import './ChatConversation.css';
 
 const POLL_MS = 4000;
@@ -42,6 +41,7 @@ export default function ChatConversation({ token, role, roleLevel = null, thread
     if (initialReplyTo) setReplyTo(initialReplyTo);
   }, [initialReplyTo]);
   const bottomRef = useRef(null);
+  const pollRef = useRef(null);
 
   const load = useCallback(async (silent) => {
     if (!silent) setLoading(true);
@@ -59,10 +59,10 @@ export default function ChatConversation({ token, role, roleLevel = null, thread
     }
   }, [token, thread.threadType, thread.landlordId, thread.tenantId, thread.scoutId]);
 
-  usePoll(() => load(true), POLL_MS, [thread.threadType, thread.landlordId, thread.tenantId, thread.scoutId], { skipInitialCall: true });
-
   useEffect(() => {
     load(false);
+    pollRef.current = setInterval(() => load(true), POLL_MS);
+    return () => clearInterval(pollRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thread.threadType, thread.landlordId, thread.tenantId, thread.scoutId]);
 

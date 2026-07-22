@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api, ApiError } from '../api/client.js';
 import Button from '../components/Button.jsx';
@@ -6,7 +6,6 @@ import HelpButton from '../components/HelpButton.jsx';
 import ChatWidget from '../components/ChatWidget.jsx';
 import AccountMenu from '../components/AccountMenu.jsx';
 import TenantContactCard from '../components/TenantContactCard.jsx';
-import PagedList from '../components/PagedList.jsx';
 import Countdown from '../components/Countdown.jsx';
 import PortalSidebar from '../components/PortalSidebar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
@@ -18,6 +17,7 @@ import PaymentHistoryPanel from '../components/PaymentHistoryPanel.jsx';
 import Faq from '../components/Faq.jsx';
 import AnnouncementBell from '../components/AnnouncementBell.jsx';
 import NotificationsBell from '../components/NotificationsBell.jsx';
+import { useSharedPoll } from '../utils/sharedPoll.js';
 import PendingPaymentsBell from '../components/PendingPaymentsBell.jsx';
 import PaymentMethodBadge from '../components/PaymentMethodBadge.jsx';
 import TenantListExport from '../components/TenantListExport.jsx';
@@ -77,6 +77,19 @@ export default function Dashboard() {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  // FIX (flagged, now addressed): landlords with very large unit
+  // counts rendered the ENTIRE list with no pagination - fine for
+  // dozens of units, sluggish in the hundreds (every single unit-card
+  // link, tenant badge, and conditional render all mounted to the DOM
+  // at once). Simple page-size cap instead of pulling in a
+  // virtualization library - much lower risk, and dozens-to-low-
+  // hundreds is the actual range real landlords are in.
+  const UNITS_PAGE_SIZE = 60;
+  const [unitsPageSize, setUnitsPageSize] = useState(UNITS_PAGE_SIZE);
+  useEffect(() => {
+    setUnitsPageSize(UNITS_PAGE_SIZE); // back to page 1 whenever the search changes
+  }, [unitSearch]);
+  const unitsToRender = useMemo(() => visibleUnits.slice(0, unitsPageSize), [visibleUnits, unitsPageSize]);
   const [bulkRemindStatus, setBulkRemindStatus] = useState('');
   const [drillDown, setDrillDown] = useState(null);
   const [paidPayments, setPaidPayments] = useState(null);
@@ -96,35 +109,27 @@ export default function Dashboard() {
   // Sidebar "Messages" badge - PendingPaymentsBell in the header already
   // covers payments; this covers unread chat threads the same way, so
   // the sidebar item shows something's waiting without opening it.
+  const loadMessagesBadge = useCallback(() => {
+    if (!token) return;
+    api
+      .listChatThreads(token)
+      .then((res) => {
+        const total = (res.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0);
+        setMessagesBadge(total);
+      })
+      .catch(() => {});
+  }, [token]);
+
   useEffect(() => {
     if (!token) return undefined;
-    let cancelled = false;
-    function loadMessagesBadge() {
-      api
-        .listChatThreads(token)
-        .then((res) => {
-          if (cancelled) return;
-          const total = (res.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0);
-          setMessagesBadge(total);
-        })
-        .catch(() => {});
-    }
     loadMessagesBadge();
-    const interval = setInterval(() => {
-      if (document.visibilityState !== 'hidden') loadMessagesBadge();
-    }, 20000);
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') loadMessagesBadge();
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('rentapay:pending-payments-changed', loadMessagesBadge);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('rentapay:pending-payments-changed', loadMessagesBadge);
-    };
-  }, [token]);
+    return () => window.removeEventListener('rentapay:pending-payments-changed', loadMessagesBadge);
+  }, [token, loadMessagesBadge]);
+
+  // FIX: used to be its own independent setInterval(loadMessagesBadge,
+  // 20000) - now rides the shared tick alongside the header bells.
+  useSharedPoll(loadMessagesBadge, 20000);
 
   // A property manager sees this exact same dashboard, scoped to the
   // landlord who added them, with a handful of landlord-only actions
@@ -452,8 +457,8 @@ export default function Dashboard() {
                 there's only ever one avatar+name control in the
                 header, not two overlapping ones. */}
             <PendingPaymentsBell token={token} onOpenPendingPayments={() => setActiveView('pending-confirmations')} />
-            <AnnouncementBell token={token} role={isManager ? 'manager' : 'landlord'} />
-            <NotificationsBell token={token} />
+            <AnnouncementBell token={token} role={isManager ? 'manager' : 'landlord'} propertyId={activePropertyId} />
+            <NotificationsBell token={token} propertyId={activePropertyId} />
             <AccountMenu
               name={summary.viewerName}
               photoUrl={summary.viewerPhotoUrl}
@@ -740,18 +745,16 @@ export default function Dashboard() {
                   <table className="drilldown-table">
                     <thead><tr><th></th><th>Date</th><th>Tenant</th><th>Unit</th><th>Amount</th><th>Method</th></tr></thead>
                     <tbody>
-                      <PagedList items={paidPayments} resetKey="paid">
-                        {(page) => page.map((p) => (
-                          <tr key={p.id}>
-                            <td><TenantContactCard tenant={{ ...p.tenants, unit_name: p.units?.unit_name }} size={28} /></td>
-                            <td>{new Date(p.paid_at).toLocaleDateString('en-GB')}</td>
-                            <td>{p.tenants?.full_name || '—'}</td>
-                            <td>{p.units?.unit_name || '—'}</td>
-                            <td>KES {Number(p.amount).toLocaleString()}</td>
-                            <td>{p.payment_method}</td>
-                          </tr>
-                        ))}
-                      </PagedList>
+                      {paidPayments.map((p) => (
+                        <tr key={p.id}>
+                          <td><TenantContactCard tenant={{ ...p.tenants, unit_name: p.units?.unit_name }} size={28} /></td>
+                          <td>{new Date(p.paid_at).toLocaleDateString('en-GB')}</td>
+                          <td>{p.tenants?.full_name || '—'}</td>
+                          <td>{p.units?.unit_name || '—'}</td>
+                          <td>KES {Number(p.amount).toLocaleString()}</td>
+                          <td>{p.payment_method}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                   </div>
@@ -764,20 +767,18 @@ export default function Dashboard() {
               <table className="drilldown-table">
                 <thead><tr><th></th><th>Unit</th><th>Status</th><th>Tenant</th><th>Rent</th></tr></thead>
                 <tbody>
-                  <PagedList items={units} resetKey="units">
-                    {(page) => page.map((u) => {
-                      const activeTenant = (u.tenants || []).find((t) => t.is_active);
-                      return (
-                        <tr key={u.id}>
-                          <td>{activeTenant && <TenantContactCard tenant={{ ...activeTenant, unit_name: u.unit_name }} size={28} />}</td>
-                          <td>{u.unit_name}</td>
-                          <td>{STATUS_LABELS[u.status]?.label || u.status}</td>
-                          <td>{activeTenant?.full_name || '—'}</td>
-                          <td>KES {Number(u.rent_amount).toLocaleString()}</td>
-                        </tr>
-                      );
-                    })}
-                  </PagedList>
+                  {units.map((u) => {
+                    const activeTenant = (u.tenants || []).find((t) => t.is_active);
+                    return (
+                      <tr key={u.id}>
+                        <td>{activeTenant && <TenantContactCard tenant={{ ...activeTenant, unit_name: u.unit_name }} size={28} />}</td>
+                        <td>{u.unit_name}</td>
+                        <td>{STATUS_LABELS[u.status]?.label || u.status}</td>
+                        <td>{activeTenant?.full_name || '—'}</td>
+                        <td>KES {Number(u.rent_amount).toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               </div>
@@ -788,11 +789,9 @@ export default function Dashboard() {
               <table className="drilldown-table">
                 <thead><tr><th></th><th>Tenant</th><th>Unit</th><th>Balance owed</th></tr></thead>
                 <tbody>
-                  <PagedList
-                    items={units.flatMap((u) => (u.tenants || []).filter((t) => t.is_active && Number(t.balance_due) > 0).map((t) => ({ ...t, unitName: u.unit_name })))}
-                    resetKey="overdue"
-                  >
-                    {(page) => page.map((t) => (
+                  {units
+                    .flatMap((u) => (u.tenants || []).filter((t) => t.is_active && Number(t.balance_due) > 0).map((t) => ({ ...t, unitName: u.unit_name })))
+                    .map((t) => (
                       <tr key={t.id}>
                         <td><TenantContactCard tenant={{ ...t, unit_name: t.unitName }} size={28} /></td>
                         <td>{t.full_name}</td>
@@ -800,7 +799,6 @@ export default function Dashboard() {
                         <td className="drilldown-table__owing">KES {Number(t.balance_due).toLocaleString()}</td>
                       </tr>
                     ))}
-                  </PagedList>
                 </tbody>
               </table>
               </div>
@@ -811,8 +809,9 @@ export default function Dashboard() {
               <table className="drilldown-table">
                 <thead><tr><th></th><th>Unit</th><th>Tenant</th></tr></thead>
                 <tbody>
-                  <PagedList items={units.filter((u) => u.status === 'notice_given')} resetKey="notice">
-                    {(page) => page.map((u) => {
+                  {units
+                    .filter((u) => u.status === 'notice_given')
+                    .map((u) => {
                       const activeTenant = (u.tenants || []).find((t) => t.is_active);
                       return (
                         <tr key={u.id}>
@@ -822,7 +821,6 @@ export default function Dashboard() {
                         </tr>
                       );
                     })}
-                  </PagedList>
                 </tbody>
               </table>
               </div>
@@ -833,14 +831,14 @@ export default function Dashboard() {
               <table className="drilldown-table">
                 <thead><tr><th>Unit</th><th>Rent</th></tr></thead>
                 <tbody>
-                  <PagedList items={units.filter((u) => u.status === 'vacant')} resetKey="vacant">
-                    {(page) => page.map((u) => (
+                  {units
+                    .filter((u) => u.status === 'vacant')
+                    .map((u) => (
                       <tr key={u.id}>
                         <td>{u.unit_name}</td>
                         <td>KES {Number(u.rent_amount).toLocaleString()}</td>
                       </tr>
                     ))}
-                  </PagedList>
                 </tbody>
               </table>
               </div>
@@ -851,19 +849,17 @@ export default function Dashboard() {
               <table className="drilldown-table">
                 <thead><tr><th>Unit</th><th>Status</th><th>Counted?</th><th>Rent</th></tr></thead>
                 <tbody>
-                  <PagedList items={units} resetKey="revenue">
-                    {(page) => page.map((u) => {
-                      const counted = u.status === 'occupied' || u.status === 'notice_given';
-                      return (
-                        <tr key={u.id}>
-                          <td>{u.unit_name}</td>
-                          <td>{STATUS_LABELS[u.status]?.label || u.status}</td>
-                          <td>{counted ? 'Yes' : 'No - no tenant to pay it'}</td>
-                          <td>KES {Number(u.rent_amount).toLocaleString()}</td>
-                        </tr>
-                      );
-                    })}
-                  </PagedList>
+                  {units.map((u) => {
+                    const counted = u.status === 'occupied' || u.status === 'notice_given';
+                    return (
+                      <tr key={u.id}>
+                        <td>{u.unit_name}</td>
+                        <td>{STATUS_LABELS[u.status]?.label || u.status}</td>
+                        <td>{counted ? 'Yes' : 'No - no tenant to pay it'}</td>
+                        <td>KES {Number(u.rent_amount).toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               </div>
@@ -929,7 +925,7 @@ export default function Dashboard() {
               {visibleUnits.length === 0 && unitSearch && (
                 <p className="units-empty__search-hint">No units or tenants match "{unitSearch}".</p>
               )}
-              {visibleUnits.map((unit) => {
+              {unitsToRender.map((unit) => {
                 const statusInfo = STATUS_LABELS[unit.status] || STATUS_LABELS.vacant;
                 const activeTenant = (unit.tenants || []).find((t) => t.is_active);
                 const isOverdue = activeTenant && Number(activeTenant.balance_due) > 0;
@@ -1007,6 +1003,16 @@ export default function Dashboard() {
                   </Link>
                 );
               })}
+
+              {visibleUnits.length > unitsPageSize && (
+                <button
+                  type="button"
+                  className="unit-card unit-card--show-more"
+                  onClick={() => setUnitsPageSize((s) => s + UNITS_PAGE_SIZE)}
+                >
+                  Show {Math.min(UNITS_PAGE_SIZE, visibleUnits.length - unitsPageSize)} more ({visibleUnits.length - unitsPageSize} remaining)
+                </button>
+              )}
 
               {/* Empty placeholder slots for quota the landlord has
                   paid for but not yet used. Not part of the original

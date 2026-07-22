@@ -29,17 +29,8 @@ export default function StatusPage() {
 
   useEffect(() => {
     runCheck();
-    const interval = setInterval(() => {
-      if (document.visibilityState !== 'hidden') runCheck();
-    }, 30000);
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') runCheck();
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    const interval = setInterval(runCheck, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const labels = {

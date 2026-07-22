@@ -77,7 +77,7 @@ export default function Settings() {
   // values. `contactHasBeenLoaded` gates this so the very first load
   // (before we know whether anything is saved yet) doesn't flash the
   // wrong state.
-  const [myContact, setMyContact] = useState({ fullName: '', phone: '', email: '', gender: '' });
+  const [myContact, setMyContact] = useState({ fullName: '', phone: '', email: '', gender: '', notificationStyle: 'ring' });
   const [contactHasBeenLoaded, setContactHasBeenLoaded] = useState(false);
   const [editingMyContact, setEditingMyContact] = useState(false);
   const [savingMyContact, setSavingMyContact] = useState(false);
@@ -95,7 +95,25 @@ export default function Settings() {
   // payment method also changed my other apartments"). '' means "the
   // account-wide default", which applies to any apartment that hasn't
   // set its own override.
-  const [paymentPropertyId, setPaymentPropertyId] = useState('');
+  // FIX (direct request: "when a landlord or manager updates in one
+  // apartment it automatically updates the other apartments"): the
+  // backend write itself was already correctly scoped (see
+  // updatePaymentMethod in auth.controller.js) - properties.
+  // payment_override_* vs the landlords row are genuinely separate
+  // columns. The actual bug was here: this always STARTED at ''
+  // ("account default") no matter which apartment was active in the
+  // dashboard switcher, so a landlord who opened Settings from inside
+  // "KimCom Apartments" and just edited the form - without noticing or
+  // touching the separate "Apply to" dropdown - was actually editing
+  // the shared account-wide default the whole time. Every apartment
+  // without its OWN override inherits that default, which is exactly
+  // what looked like "editing one apartment changed the others".
+  // Defaulting this to the currently active property (same
+  // sessionStorage key the dashboard/AddUnit/notifications all read)
+  // means the form now matches whatever apartment is actually on
+  // screen; "Account default" is still one explicit option away for
+  // anyone who deliberately wants to change the shared fallback.
+  const [paymentPropertyId, setPaymentPropertyId] = useState(() => sessionStorage.getItem('rentapay_active_property_id') || '');
   const [savingPayment, setSavingPayment] = useState(false);
 
   function load() {
@@ -109,7 +127,7 @@ export default function Settings() {
     const secondPromise = isManager ? api.getMyManagerAccess(token) : api.listPropertyManagers(token);
     const peersPromise = isManager && canViewTeamSection ? api.listPropertyManagers(token) : Promise.resolve(null);
     const profilePromise = !isManager ? api.getMyLandlordProfile(token) : Promise.resolve(null);
-    const paymentPromise = api.getPaymentMethod(token);
+    const paymentPromise = api.getPaymentMethod(token, sessionStorage.getItem('rentapay_active_property_id') || undefined);
 
     Promise.all([propertiesPromise, secondPromise, peersPromise, profilePromise, paymentPromise])
       .then(([propsRes, secondRes, peersRes, profileRes, paymentRes]) => {
@@ -117,11 +135,11 @@ export default function Settings() {
         let loadedContact;
         if (isManager) {
           setMyAccess(secondRes.manager);
-          loadedContact = { fullName: secondRes.manager?.full_name || '', phone: secondRes.manager?.phone || '', email: secondRes.manager?.email || '', gender: secondRes.manager?.gender || '' };
+          loadedContact = { fullName: secondRes.manager?.full_name || '', phone: secondRes.manager?.phone || '', email: secondRes.manager?.email || '', gender: secondRes.manager?.gender || '', notificationStyle: secondRes.manager?.notification_style || 'ring' };
           if (peersRes) setManagers(peersRes.managers || []);
         } else {
           setManagers(secondRes.managers || []);
-          loadedContact = profileRes?.contact || { fullName: '', phone: '', email: '', gender: '' };
+          loadedContact = profileRes?.contact || { fullName: '', phone: '', email: '', gender: '', notificationStyle: 'ring' };
         }
         setMyContact(loadedContact);
         if (paymentRes?.paymentMethod) setPaymentMethod(paymentRes.paymentMethod);
@@ -197,12 +215,12 @@ export default function Settings() {
     setError('');
     try {
       const res = await api.addPropertyManager(addManagerForm, token);
-      setNotice(res.message || 'Property manager added. Their login details were sent via SMS.');
+      setNotice(res.message || 'Property manager added. Their login details were sent via email.');
       // Fallback so it's never unclear whether this worked: shown right
       // in the form area (not just a banner near the top that's easy to
-      // miss), with the temp password/OTP visible in case the SMS/email
-      // didn't actually arrive (e.g. sandbox SMS credentials in dev).
-      setJustAddedManager({ name: addManagerForm.fullName, ...res.tempCredentials });
+      // miss), with the temp password/OTP visible in case the email
+      // didn't actually arrive (e.g. unverified Resend domain in dev).
+      setJustAddedManager({ name: addManagerForm.fullName, email: addManagerForm.email, ...res.tempCredentials });
       setShowAddManager(false);
       setAddManagerForm({ fullName: '', phone: '', email: '', propertyIds: [], roleLevel: 'manager' });
       load();
@@ -468,7 +486,7 @@ export default function Settings() {
             <div id="manager-added-confirmation" className="settings-banner settings-banner--ok" style={{ marginBottom: '1rem' }}>
               <strong>{justAddedManager.name} was added.</strong>
               <p style={{ margin: '0.4rem 0 0' }}>
-                Their login details were sent to <strong>{justAddedManager.phone}</strong>. If the SMS/email
+                Their login details were sent to <strong>{justAddedManager.email}</strong> by email. If it
                 doesn't arrive, share these directly:
               </p>
               <p style={{ margin: '0.4rem 0 0', fontFamily: 'monospace' }}>
@@ -502,8 +520,8 @@ export default function Settings() {
                   <input required placeholder="07XXXXXXXX or 2547XXXXXXXX" value={addManagerForm.phone} onChange={(e) => setAddManagerForm((f) => ({ ...f, phone: e.target.value }))} />
                 </div>
                 <div className="form-field">
-                  <label className="form-field__label">Email (optional)</label>
-                  <input type="email" value={addManagerForm.email} onChange={(e) => setAddManagerForm((f) => ({ ...f, email: e.target.value }))} />
+                  <label className="form-field__label">Email</label>
+                  <input type="email" required value={addManagerForm.email} onChange={(e) => setAddManagerForm((f) => ({ ...f, email: e.target.value }))} />
                 </div>
               </div>
 
@@ -648,6 +666,17 @@ export default function Settings() {
                   <option value="female">{isManager ? 'Female' : 'Landlady (female)'}</option>
                 </select>
               </div>
+              {!isManager && (
+                <div className="form-field">
+                  <label className="form-field__label">Notifications</label>
+                  <select value={myContact.notificationStyle} onChange={(e) => setMyContact((c) => ({ ...c, notificationStyle: e.target.value }))}>
+                    <option value="ring">Ring (normal sound)</option>
+                    <option value="vibrate">Vibrate only</option>
+                    <option value="silent">Silent (inbox only)</option>
+                  </select>
+                  <p className="form-field__hint">How push notifications on your device should get your attention. "Ring" uses your phone's own notification sound - we can't override it with a custom tone.</p>
+                </div>
+              )}
             </div>
             <div className="settings-manager-row__actions">
               <Button type="submit" variant="primary" loading={savingMyContact}>Save my contact details</Button>

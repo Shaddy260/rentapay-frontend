@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import Avatar from '../components/Avatar.jsx';
@@ -14,12 +14,14 @@ import { downloadCsv } from '../utils/downloadCsv.js';
 import Faq from '../components/Faq.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import LandlordManualPaymentConfirmations from '../components/LandlordManualPaymentConfirmations.jsx';
-import PropertyPurchaseManualPayments from '../components/PropertyPurchaseManualPayments.jsx';
 import ScoutManualPaymentConfirmations from '../components/ScoutManualPaymentConfirmations.jsx';
 import AdminScoutsPanel from '../components/AdminScoutsPanel.jsx';
-import NotificationsBell from '../components/NotificationsBell.jsx';
 import { api, ApiError } from '../api/client.js';
+import { useInstallPrompt } from '../utils/useInstallPrompt.js';
+import '../components/InstallAppMenuItem.css';
+import NotificationsBell from '../components/NotificationsBell.jsx';
 import { initPushSubscription } from '../utils/push.js';
+import { useSharedPoll } from '../utils/sharedPoll.js';
 import './AdminDashboard.css';
 
 /**
@@ -37,15 +39,8 @@ import './AdminDashboard.css';
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const token = sessionStorage.getItem('rentapay_token');
-
-  // FIX (direct request: "admin also should be notified on payment
-  // submissions for scouts and landlords"): admin never called this,
-  // so even once the backend could notify an 'admin' recipient, there
-  // was no push subscription on file to actually deliver to.
-  useEffect(() => {
-    initPushSubscription(token);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  const { canOffer: canOfferInstall, isIOS: installOnIOS, promptInstall } = useInstallPrompt();
+  const [showIOSInstallSteps, setShowIOSInstallSteps] = useState(false);
 
   const [metrics, setMetrics] = useState(null);
   const [landlords, setLandlords] = useState([]);
@@ -326,43 +321,40 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // FIX: admin was entirely excluded from the "Live push" pipeline -
+  // no page ever called initPushSubscription for it, so even with the
+  // backend now fully supporting an 'admin' recipient there was no
+  // browser subscription to actually push to. Same pattern as
+  // Dashboard.jsx / TenantPortal.jsx / ScoutPortal.jsx.
   useEffect(() => {
-    if (!token) return undefined;
-    let cancelled = false;
-
-    function loadSidebarCounts() {
-      Promise.allSettled([
-        api.listHelpRequestsAdmin('open', token),
-        api.listManualSubscriptionPayments('pending', token),
-        api.listScoutManualCountyPayments('pending', token),
-        api.listChatThreads(token),
-      ]).then(([helpRes, landlordPayRes, scoutPayRes, threadsRes]) => {
-        if (cancelled) return;
-        const help = helpRes.status === 'fulfilled' ? (helpRes.value.helpRequests || []).length : 0;
-        const landlordPayments = landlordPayRes.status === 'fulfilled' ? (landlordPayRes.value || []).length : 0;
-        const scoutPayments = scoutPayRes.status === 'fulfilled' ? (scoutPayRes.value || []).length : 0;
-        const messages =
-          threadsRes.status === 'fulfilled'
-            ? (threadsRes.value.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0)
-            : 0;
-        setSidebarCounts({ help, landlordPayments, scoutPayments, messages });
-      });
-    }
-
-    loadSidebarCounts();
-    const interval = setInterval(() => {
-      if (document.visibilityState !== 'hidden') loadSidebarCounts();
-    }, 20000);
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') loadSidebarCounts();
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    initPushSubscription(token);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  const loadSidebarCounts = useCallback(() => {
+    if (!token) return;
+    Promise.allSettled([
+      api.listHelpRequestsAdmin('open', token),
+      api.listManualSubscriptionPayments('pending', token),
+      api.listScoutManualCountyPayments('pending', token),
+      api.listChatThreads(token),
+    ]).then(([helpRes, landlordPayRes, scoutPayRes, threadsRes]) => {
+      const help = helpRes.status === 'fulfilled' ? (helpRes.value.helpRequests || []).length : 0;
+      const landlordPayments = landlordPayRes.status === 'fulfilled' ? (landlordPayRes.value || []).length : 0;
+      const scoutPayments = scoutPayRes.status === 'fulfilled' ? (scoutPayRes.value || []).length : 0;
+      const messages =
+        threadsRes.status === 'fulfilled'
+          ? (threadsRes.value.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0)
+          : 0;
+      setSidebarCounts({ help, landlordPayments, scoutPayments, messages });
+    });
+  }, [token]);
+
+  useEffect(() => {
+    loadSidebarCounts();
+  }, [loadSidebarCounts]);
+
+  useSharedPoll(loadSidebarCounts, 20000);
 
   useEffect(() => {
     if (activeTab === 'help') loadHelpRequests(helpFilter);
@@ -555,15 +547,39 @@ export default function AdminDashboard() {
           { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
           { key: 'sql', label: 'SQL', icon: '🗄️', onClick: () => setActiveTab('sql') },
           { key: 'manual-subscription-payments', label: 'Landlord Manual Payments', icon: '💳', badge: sidebarCounts.landlordPayments, onClick: () => setActiveTab('manual-subscription-payments') },
-          { key: 'property-purchase-manual-payments', label: 'New Property Manual Payments', icon: '🏗️', onClick: () => setActiveTab('property-purchase-manual-payments') },
           { key: 'scouts', label: 'Scouts', icon: '🧑\u200d💼', onClick: () => setActiveTab('scouts') },
           { key: 'scout-manual-payments', label: 'Scout Manual Payments', icon: '🧭', badge: sidebarCounts.scoutPayments, onClick: () => setActiveTab('scout-manual-payments') },
           { key: 'messages', label: 'Messages', icon: '💬', badge: sidebarCounts.messages, onClick: () => setActiveTab('messages') },
           { key: 'broadcast', label: 'Broadcast', icon: '📢', onClick: () => setShowBroadcastModal(true) },
           { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
           { key: 'faq', label: 'FAQs', icon: '📚', onClick: () => setActiveTab('faq') },
+          ...(canOfferInstall
+            ? [{
+                key: 'install-app',
+                label: 'Download the App',
+                icon: '📲',
+                onClick: () => {
+                  if (installOnIOS) setShowIOSInstallSteps(true);
+                  else promptInstall();
+                },
+              }]
+            : []),
         ]}
       />
+
+      {showIOSInstallSteps && (
+        <div className="install-app-menu-item__ios-modal" onClick={() => setShowIOSInstallSteps(false)}>
+          <div className="install-app-menu-item__ios-modal-card" onClick={(e) => e.stopPropagation()}>
+            <h4>Install on iPhone/iPad</h4>
+            <ol>
+              <li>Tap the <strong>Share</strong> icon <span aria-hidden="true">⬆️</span> in Safari's toolbar</li>
+              <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+              <li>Tap <strong>Add</strong> in the top right</li>
+            </ol>
+            <button type="button" onClick={() => setShowIOSInstallSteps(false)}>Got it</button>
+          </div>
+        </div>
+      )}
 
       <header className="admin-header">
         <div className="admin-header__left">
@@ -690,7 +706,6 @@ export default function AdminDashboard() {
         {activeTab === 'credentials' && <AdminCredentialsPanel token={token} />}
         {activeTab === 'sql' && <AdminSqlPanel token={token} />}
         {activeTab === 'manual-subscription-payments' && <LandlordManualPaymentConfirmations token={token} />}
-        {activeTab === 'property-purchase-manual-payments' && <PropertyPurchaseManualPayments token={token} />}
         {activeTab === 'scouts' && <AdminScoutsPanel token={token} />}
         {activeTab === 'scout-manual-payments' && <ScoutManualPaymentConfirmations token={token} />}
 

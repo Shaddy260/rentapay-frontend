@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import Countdown from '../components/Countdown.jsx';
@@ -7,11 +7,15 @@ import { initPushSubscription } from '../utils/push.js';
 import ComplaintsPanel from '../components/ComplaintsPanel.jsx';
 import AnnouncementBell from '../components/AnnouncementBell.jsx';
 import NotificationsBell from '../components/NotificationsBell.jsx';
+import { useSharedPoll } from '../utils/sharedPoll.js';
+import { useInstallPrompt } from '../utils/useInstallPrompt.js';
+import '../components/InstallAppMenuItem.css';
 import PortalSidebar from '../components/PortalSidebar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
 import ChatWidget from '../components/ChatWidget.jsx';
 import Faq from '../components/Faq.jsx';
 import ScoutStatsPanel from '../components/ScoutStatsPanel.jsx';
+import PaymentDetailsCard from '../components/PaymentDetailsCard.jsx';
 import './AddTenant.css';
 import './TenantPortal.css';
 import './Login.css';
@@ -40,6 +44,8 @@ function percentRemaining(expiresAt) {
 // ScoutVacancies.jsx, and Help/Complaints/FAQ get their own tabs too.
 export default function ScoutPortal() {
   const navigate = useNavigate();
+  const { canOffer: canOfferInstall, isIOS: installOnIOS, promptInstall } = useInstallPrompt();
+  const [showIOSInstallSteps, setShowIOSInstallSteps] = useState(false);
   const token = sessionStorage.getItem('rentapay_token');
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -52,7 +58,90 @@ export default function ScoutPortal() {
   const [selectedCounties, setSelectedCounties] = useState([]);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [pending, setPending] = useState(null); // { checkoutRequestId, amount, counties }
+
+  // FIX (direct request: "the payment flow should also apply to
+  // scouts accounts... check whether they receive mpesa popups and
+  // make sure its just exactly the same trail as the landlords"):
+  // scouts DO get the same STK push, but this screen used to just
+  // show a static "check your phone" message with no persistence and
+  // no polling at all - a reload wiped it, and there was no way to
+  // find out the payment had gone through except manually refreshing
+  // and hoping. Same sessionStorage-persistence pattern as
+  // SubscriptionManage.jsx now applies here too.
+  const PENDING_KEY = 'rentapay_scout_county_pending';
+  const [pending, setPendingState] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  function setPending(next) {
+    setPendingState(next);
+    try {
+      if (next) {
+        sessionStorage.setItem(PENDING_KEY, JSON.stringify(next));
+        // Same back-button fix as SubscriptionManage.jsx: push a real
+        // history entry so a phone's back button returns to the
+        // county-selection form instead of skipping past this whole
+        // tab/page.
+        window.history.pushState({ rentapayScoutPending: true }, '');
+      } else {
+        sessionStorage.removeItem(PENDING_KEY);
+      }
+    } catch {
+      // non-fatal - sessionStorage can throw in private browsing
+    }
+  }
+
+  useEffect(() => {
+    function onPopState() {
+      setPendingState(null);
+      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* non-fatal */ }
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // FIX: this page previously never checked whether the STK push had
+  // actually gone through - it just displayed "Check your phone" and
+  // sat there. This polls the new self-heal endpoint
+  // (checkScoutCountyPaymentStatus, mirroring the landlord
+  // subscription-status poll) every 3s while pending, and the moment
+  // it's confirmed (by Daraja OR by an admin manually confirming -
+  // both flip mySubscriptions/scout_county_payments, so a fresh
+  // getMyScoutSubscriptions() call picks either up) moves the scout
+  // on automatically - including resuming correctly after a reload,
+  // since `pending` above is now restored from sessionStorage first.
+  useEffect(() => {
+    if (!pending || !token) return undefined;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.checkScoutCountyPaymentStatus(pending.checkoutRequestId, token);
+        if (res.status === 'completed') {
+          clearInterval(interval);
+          setPending(null);
+          window.location.href = '/scout-portal';
+        } else if (res.status === 'failed') {
+          clearInterval(interval);
+          setError(res.reason ? `Payment was not completed: ${res.reason}. You can pay manually below instead.` : 'Payment was not completed (cancelled or insufficient funds). You can pay manually below instead.');
+          setPending(null);
+          setShowManualPay(true);
+        }
+      } catch {
+        // transient network hiccup - just try again next tick
+      }
+    }, 3000);
+
+    const timeout = setTimeout(() => clearInterval(interval), 120000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [pending, token]);
 
   const [showManualPay, setShowManualPay] = useState(false);
   const [manualForm, setManualForm] = useState({ transactionCode: '', amountPaid: '', mpesaPayerName: '', mpesaPayerPhone: '', mpesaSmsTimestamp: '' });
@@ -60,6 +149,83 @@ export default function ScoutPortal() {
   const [manualError, setManualError] = useState('');
   const [myManualPayment, setMyManualPayment] = useState(null);
   const [scoutProfile, setScoutProfile] = useState(null);
+
+  // FIX (direct request: "either manual or the push...either of them
+  // should work...proceed and unlock the account"): same gap as
+  // SubscriptionManage.jsx - a scout submitting the manual form
+  // directly (without ever tapping "Pay with M-Pesa") had nothing
+  // watching for an admin's confirmation. This mirrors that fix:
+  // gates on the counties just submitted, restored from sessionStorage
+  // so a reload doesn't lose it either.
+  const MANUAL_AWAITING_KEY = 'rentapay_scout_manual_awaiting';
+  const [manualAwaitingCounties, setManualAwaitingCounties] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(MANUAL_AWAITING_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  function setManualAwaiting(counties) {
+    setManualAwaitingCounties(counties);
+    try {
+      if (counties) {
+        sessionStorage.setItem(MANUAL_AWAITING_KEY, JSON.stringify(counties));
+        window.history.pushState({ rentapayScoutManualPending: true }, '');
+      } else {
+        sessionStorage.removeItem(MANUAL_AWAITING_KEY);
+      }
+    } catch { /* non-fatal */ }
+  }
+
+  useEffect(() => {
+    function onPopState() {
+      setManualAwaitingCounties(null);
+      try { sessionStorage.removeItem(MANUAL_AWAITING_KEY); } catch { /* non-fatal */ }
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // Poll every 3s while a manual submission is awaiting review: either
+  // it gets confirmed (activateScoutCounties flips those counties to
+  // active in getMyScoutSubscriptions - reload straight to a fresh
+  // portal, same as the STK path) or rejected (surfaced via the
+  // rejection banner below, gate lifted so the form is usable again).
+  useEffect(() => {
+    if (!manualAwaitingCounties || !token) return undefined;
+
+    const interval = setInterval(async () => {
+      try {
+        const [subsRes, latestRes] = await Promise.all([
+          api.getMyScoutSubscriptions(token),
+          api.getMyLatestScoutManualCountyPayment(token),
+        ]);
+        setMyManualPayment(latestRes);
+        const nowActive = new Set((subsRes || []).filter((s) => s.status === 'active').map((s) => s.county));
+        const allLanded = manualAwaitingCounties.every((c) => nowActive.has(c));
+        if (allLanded) {
+          clearInterval(interval);
+          setManualAwaiting(null);
+          window.location.href = '/scout-portal';
+          return;
+        }
+        if (latestRes?.status === 'rejected') {
+          clearInterval(interval);
+          setManualAwaiting(null);
+        }
+      } catch {
+        // transient network hiccup - just try again next tick
+      }
+    }, 3000);
+
+    const timeout = setTimeout(() => clearInterval(interval), 120000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [manualAwaitingCounties, token]);
 
   useEffect(() => {
     if (!token) {
@@ -83,33 +249,22 @@ export default function ScoutPortal() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  useEffect(() => {
-    if (!token) return undefined;
-    let cancelled = false;
-    function loadMessagesBadge() {
-      api
-        .listChatThreads(token)
-        .then((res) => {
-          if (cancelled) return;
-          const total = (res.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0);
-          setMessagesBadge(total);
-        })
-        .catch(() => {});
-    }
-    loadMessagesBadge();
-    const interval = setInterval(() => {
-      if (document.visibilityState !== 'hidden') loadMessagesBadge();
-    }, 20000);
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') loadMessagesBadge();
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+  const loadMessagesBadge = useCallback(() => {
+    if (!token) return;
+    api
+      .listChatThreads(token)
+      .then((res) => {
+        const total = (res.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0);
+        setMessagesBadge(total);
+      })
+      .catch(() => {});
   }, [token]);
+
+  useEffect(() => {
+    loadMessagesBadge();
+  }, [loadMessagesBadge]);
+
+  useSharedPoll(loadMessagesBadge, 20000);
 
   function loadSubscriptions() {
     api.getMyScoutSubscriptions(token).then(setMySubscriptions).catch(() => {});
@@ -152,9 +307,11 @@ export default function ScoutPortal() {
     }
     setManualSubmitting(true);
     try {
-      const res = await api.submitScoutManualCountyPayment({ counties: selectedCounties.length ? selectedCounties : pending?.counties, ...manualForm }, token);
+      const countiesSubmitted = selectedCounties.length ? selectedCounties : pending?.counties;
+      const res = await api.submitScoutManualCountyPayment({ counties: countiesSubmitted, ...manualForm }, token);
       setMyManualPayment(res.confirmation);
       setShowManualPay(false);
+      setManualAwaiting(countiesSubmitted);
     } catch (err) {
       setManualError(err instanceof ApiError ? err.message : 'Failed to submit payment.');
     } finally {
@@ -176,6 +333,17 @@ export default function ScoutPortal() {
           { key: 'messages', label: 'Messages', icon: '💬', badge: messagesBadge, onClick: () => setChatOpen(true) },
           { key: 'complaints', label: 'Help / Complaints', icon: '🆘', onClick: () => setActiveTab('complaints') },
           { key: 'faq', label: 'FAQs', icon: '❓', onClick: () => setActiveTab('faq') },
+          ...(canOfferInstall
+            ? [{
+                key: 'install-app',
+                label: 'Download the App',
+                icon: '📲',
+                onClick: () => {
+                  if (installOnIOS) setShowIOSInstallSteps(true);
+                  else promptInstall();
+                },
+              }]
+            : []),
           {
             key: 'logout',
             label: 'Log out',
@@ -206,6 +374,20 @@ export default function ScoutPortal() {
         <NotificationsBell token={token} />
       </div>
 
+      {showIOSInstallSteps && (
+        <div className="install-app-menu-item__ios-modal" onClick={() => setShowIOSInstallSteps(false)}>
+          <div className="install-app-menu-item__ios-modal-card" onClick={(e) => e.stopPropagation()}>
+            <h4>Install on iPhone/iPad</h4>
+            <ol>
+              <li>Tap the <strong>Share</strong> icon <span aria-hidden="true">⬆️</span> in Safari's toolbar</li>
+              <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+              <li>Tap <strong>Add</strong> in the top right</li>
+            </ol>
+            <button type="button" onClick={() => setShowIOSInstallSteps(false)}>Got it</button>
+          </div>
+        </div>
+      )}
+
       {mySubscriptions === null ? (
         <p>Loading…</p>
       ) : activeTab === 'complaints' ? (
@@ -219,10 +401,17 @@ export default function ScoutPortal() {
               <p className="tenant-portal-hint">
                 Check your phone to complete the M-Pesa payment for {pending.counties.join(', ')} (KES {pending.amount}).
               </p>
-              <Button type="button" variant="secondary" onClick={loadSubscriptions}>I've paid — refresh</Button>
-              <button type="button" className="login-page__link-btn" onClick={() => setShowManualPay(true)} style={{ marginTop: 10 }}>
+              <p style={{ opacity: 0.7, fontSize: '0.85rem' }}>This page will automatically continue once the payment goes through - no need to refresh.</p>
+              <button type="button" className="login-page__link-btn" onClick={() => { setShowManualPay(true); setPending(null); }} style={{ marginTop: 10 }}>
                 Didn't get the M-Pesa prompt? Pay manually
               </button>
+            </section>
+          ) : manualAwaitingCounties ? (
+            <section>
+              <p className="tenant-portal-hint">
+                ⏳ Your manual payment for {manualAwaitingCounties.join(', ')} has been submitted and is awaiting admin confirmation.
+              </p>
+              <p style={{ opacity: 0.7, fontSize: '0.85rem' }}>This page will automatically continue once it's confirmed - no need to refresh.</p>
             </section>
           ) : (
             <form onSubmit={handlePay}>
@@ -246,21 +435,17 @@ export default function ScoutPortal() {
             </form>
           )}
 
-          {myManualPayment && myManualPayment.status === 'pending' && (
-            <p className="tenant-portal-hint" style={{ marginTop: 16 }}>
-              Your manual payment for {myManualPayment.counties.join(', ')} is awaiting admin review.
+          {myManualPayment && myManualPayment.status === 'rejected' && !manualAwaitingCounties && (
+            <p className="login-page__error" role="alert" style={{ marginTop: 16 }}>
+              ❌ Your last manual payment for {myManualPayment.counties.join(', ')} was not approved
+              {myManualPayment.rejection_reason ? `: ${myManualPayment.rejection_reason}` : '.'}
             </p>
           )}
 
-          {showManualPay && (
+          {showManualPay && !manualAwaitingCounties && (
             <form onSubmit={handleManualSubmit} style={{ marginTop: 16, borderTop: '1px solid #eee', paddingTop: 16 }}>
               <h3>Pay manually to RentaPay's Paybill</h3>
-              <div className="stk-pending paybill-pending" style={{ marginBottom: 12 }}>
-                <div className="paybill-pending__details">
-                  <div><span>Paybill</span><span><strong>522522</strong></span></div>
-                  <div><span>Account Number</span><span><strong>1341657388</strong></span></div>
-                </div>
-              </div>
+              <PaymentDetailsCard amount={totalCost} note="Fill in the details below exactly as shown on your M-Pesa confirmation SMS." />
               <div className="form-field">
                 <label className="form-field__label">M-Pesa transaction code</label>
                 <input required value={manualForm.transactionCode} onChange={(e) => setManualForm((f) => ({ ...f, transactionCode: e.target.value }))} />

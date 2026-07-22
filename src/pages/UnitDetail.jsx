@@ -933,7 +933,7 @@ function RevokeNoticeModal({ tenant, token, onClose, onDone }) {
     <ModalShell title={`Revoke vacating notice for ${tenant.full_name}`} onClose={onClose}>
       <form onSubmit={submit} className="modal-form">
         {error && <p className="modal-error">{error}</p>}
-        <p className="unit-detail-hint">This puts the unit back to Occupied and notifies the tenant by SMS.</p>
+        <p className="unit-detail-hint">This puts the unit back to Occupied and notifies the tenant by email.</p>
         <label className="form-field__label">Reason (required)</label>
         <textarea required value={reason} onChange={(e) => setReason(e.target.value)} rows={3} />
         <Button type="submit" variant="primary" loading={busy}>Revoke notice</Button>
