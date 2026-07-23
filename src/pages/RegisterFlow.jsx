@@ -1140,6 +1140,9 @@ export default function RegisterFlow() {
                         setProperty((p) => ({ ...p, county: e.target.value, constituency: '' }));
                         setConstituencySearch('');
                       }}
+                    >
+                      <option value="" disabled>Select a county…</option>
+                      {filteredCounties.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div className="form-field">
