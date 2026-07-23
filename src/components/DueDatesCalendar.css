@@ -1,0 +1,65 @@
+.due-dates-calendar__intro {
+  color: var(--color-text-muted, #8a8374);
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.due-dates-calendar__day {
+  margin-bottom: 14px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.due-dates-calendar__day--today {
+  border-color: var(--color-accent, #2b6777);
+}
+
+.due-dates-calendar__day-label {
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  background: var(--color-surface-muted, #f7f4ec);
+}
+
+.due-dates-calendar__day--today .due-dates-calendar__day-label {
+  background: rgba(43, 103, 119, 0.1);
+  color: var(--color-accent, #2b6777);
+}
+
+.due-dates-calendar__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.due-dates-calendar__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-border, #e5e1d8);
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.due-dates-calendar__item:hover {
+  background: var(--color-surface-muted, #f7f4ec);
+}
+
+.due-dates-calendar__item.is-overdue .due-dates-calendar__amount {
+  color: var(--color-error, #c0392b);
+  font-weight: 600;
+}
+
+.due-dates-calendar__item.is-paid .due-dates-calendar__amount {
+  color: var(--color-success, #2e7d32);
+}
+
+.due-dates-calendar__item.is-upcoming .due-dates-calendar__amount {
+  color: var(--color-warning, #b8860b);
+}
+
+.due-dates-error {
+  color: var(--color-error, #c0392b);
+}

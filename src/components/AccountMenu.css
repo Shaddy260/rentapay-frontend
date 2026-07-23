@@ -1,0 +1,127 @@
+.account-menu {
+  position: relative;
+}
+
+.account-menu__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.account-menu__trigger:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.account-menu__name {
+  font-weight: 600;
+  font-size: 14px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu__chevron {
+  font-size: 9px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.account-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--color-hairline, #e5e7eb);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  min-width: 220px;
+  max-width: min(280px, calc(100vw - 24px));
+  z-index: 50;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.account-menu__photo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+}
+
+.account-menu__photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.account-menu__item--compact {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.account-menu__photo-error {
+  margin: 0 6px 6px;
+  font-size: 12px;
+  color: #B3261E;
+}
+
+.account-menu__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--color-text, #1a1a1a);
+}
+
+.account-menu__item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.account-menu__item--danger {
+  color: #B3261E;
+}
+
+.account-menu__divider {
+  height: 1px;
+  background: var(--color-hairline, #e5e7eb);
+  margin: 4px 2px;
+}
+
+@media (max-width: 380px) {
+  .account-menu__name,
+  .account-menu__chevron {
+    display: none;
+  }
+}
+
+/* FIX (direct request: "the profile pic dropdown opens on the right,
+   it should open in the center"): on phones the trigger sits near the
+   right edge of the header, so the old `right: 0` anchor pushed the
+   whole panel off toward/past the screen edge instead of somewhere a
+   thumb can comfortably reach. Below this width, the dropdown detaches
+   from the trigger entirely and centers itself as a fixed panel over
+   the middle of the viewport instead. */
+@media (max-width: 640px) {
+  .account-menu__dropdown {
+    position: fixed;
+    top: 64px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100vw - 32px);
+    max-width: 320px;
+  }
+}

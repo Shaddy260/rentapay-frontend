@@ -1,0 +1,73 @@
+/* ===================================================================
+   RentaPay Design Tokens
+   ===================================================================
+   Subject: Kenyan landlords registering + paying via M-Pesa STK push.
+   This is a trust + clarity problem, not a delight problem.
+
+   Palette:
+   - Deep teal-green primary  (#0F3D3E) - growth/money, not generic fintech-green
+   - Warm off-white surface   (#FAF7F2) - paper-like, not stark white
+   - Clay/terracotta accent   (#C1622D) - active states, progress
+   - M-Pesa green             (#3DA535) - RESERVED only for actual M-Pesa
+     actions/badges, so the "M-Pesa moment" is visually distinct from
+     RentaPay's own UI. This separation matters for trust.
+   - Ink (text)               (#1B2421)
+   - Hairline                 (#DCD5C8)
+   ================================================================= */
+
+:root {
+  /* Color */
+  --color-primary: #0F3D3E;
+  --color-primary-light: #1A5C5D;
+  --color-primary-dark: #082726;
+  --color-surface: #FAF7F2;
+  --color-surface-raised: #FFFFFF;
+  --color-accent: #C1622D;
+  --color-accent-light: #E8A574;
+  --color-mpesa: #3DA535;
+  --color-mpesa-dark: #2D7D27;
+  --color-ink: #1B2421;
+  --color-ink-soft: #5C6663;
+  --color-hairline: #DCD5C8;
+  --color-error: #B3261E;
+  --color-error-bg: #FBEAE9;
+  --color-success-bg: #EAF4E8;
+
+  /* Type */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  /* Layout */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --space-10: 4rem;
+
+  --shadow-sm: 0 1px 2px rgba(15, 61, 62, 0.06);
+  --shadow-md: 0 4px 16px rgba(15, 61, 62, 0.10);
+  --shadow-lg: 0 12px 32px rgba(15, 61, 62, 0.14);
+
+  --max-width: 1080px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
