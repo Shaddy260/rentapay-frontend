@@ -10,6 +10,9 @@ import Countdown from '../components/Countdown.jsx';
 import PortalSidebar from '../components/PortalSidebar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
 import GlobalSearch from '../components/GlobalSearch.jsx';
+import Skeleton from '../components/Skeleton.jsx';
+import OnboardingChecklist from '../components/OnboardingChecklist.jsx';
+import { downloadCsv } from '../utils/downloadCsv.js';
 import AddPropertyModal from '../components/AddPropertyModal.jsx';
 import BulkRentChangeModal from '../components/BulkRentChangeModal.jsx';
 import LandlordStatistics from '../components/LandlordStatistics.jsx';
@@ -20,7 +23,6 @@ import { useSharedPoll } from '../utils/sharedPoll.js';
 import PendingPaymentsBell from '../components/PendingPaymentsBell.jsx';
 import PaymentMethodBadge from '../components/PaymentMethodBadge.jsx';
 import TenantListExport from '../components/TenantListExport.jsx';
-import { downloadCsv } from '../utils/downloadCsv.js';
 import { initPushSubscription } from '../utils/push.js';
 import { roleLabel } from '../utils/roleLabel.js';
 import BroadcastPanel from '../components/BroadcastPanel.jsx';
@@ -94,6 +96,7 @@ export default function Dashboard() {
   const [paidPayments, setPaidPayments] = useState(null);
   const [paidLoading, setPaidLoading] = useState(false);
   const [properties, setProperties] = useState([]);
+  const [onboardingDismissedAt, setOnboardingDismissedAt] = useState(null);
   const [activePropertyId, setActivePropertyId] = useState(null);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -172,6 +175,7 @@ export default function Dashboard() {
       .then(([dashboardData, unitsData]) => {
         setSummary(dashboardData);
         setProperties(dashboardData.properties || []);
+        setOnboardingDismissedAt(dashboardData.onboardingDismissedAt || null);
         // FIX ("there should be nothing like All Apartments - only one
         // at a time"): a landlord with more than one property used to
         // land on a merged "all properties" view by default, which is
@@ -278,19 +282,13 @@ export default function Dashboard() {
     // than wiring a button to a 404). Covers the blueprint 11.2 "view
     // payment reports" need today; a real PDF/server-generated report
     // is a reasonable next increment.
-    const rows = [['Unit', 'Status', 'Tenant', 'Rent (KES)', 'Balance Due (KES)']];
+    const headers = ['Unit', 'Status', 'Tenant', 'Rent (KES)', 'Balance Due (KES)'];
+    const rows = [];
     for (const unit of units) {
       const activeTenant = (unit.tenants || []).find((t) => t.is_active);
       rows.push([unit.unit_name, unit.status, activeTenant?.full_name || '—', unit.rent_amount, activeTenant?.balance_due || 0]);
     }
-    const csv = rows.map((r) => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `rentapay-report-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadCsv('rentapay-report', headers, rows);
   }
 
   if (loading) {
@@ -467,6 +465,39 @@ export default function Dashboard() {
           </div>
         )}
       </header>
+
+      {!isManager && (
+        <OnboardingChecklist
+          token={token}
+          dismissed={!!onboardingDismissedAt}
+          onDismissed={() => setOnboardingDismissedAt(new Date().toISOString())}
+          steps={[
+            {
+              key: 'add-property',
+              label: 'Add your first property',
+              done: properties.length > 0,
+              actionLabel: 'Add a property',
+              onAction: () => setShowAddProperty(true),
+            },
+            {
+              key: 'add-unit',
+              label: 'Add a unit',
+              done: units.length > 0,
+              actionLabel: 'Add a unit',
+              onAction: () => navigate('/units/new'),
+            },
+            {
+              key: 'first-tenant',
+              label: 'Get your first tenant set up',
+              done: units.some((u) => (u.tenants || []).some((t) => t.is_active)),
+              actionLabel: units.length > 0 ? 'Add a tenant' : undefined,
+              onAction: units.length > 0
+                ? () => navigate(`/units/${(units.find((u) => u.status === 'vacant') || units[0]).id}/add-tenant`)
+                : undefined,
+            },
+          ]}
+        />
+      )}
 
       {showAnnouncementComposer && (
         <BroadcastPanel
@@ -736,7 +767,7 @@ export default function Dashboard() {
 
             {drillDown === 'paid' && (
               <>
-                {paidLoading && <p>Loading…</p>}
+                {paidLoading && <Skeleton rows={3} />}
                 {!paidLoading && (paidPayments || []).length === 0 && <p>No payments received yet this month.</p>}
                 {!paidLoading && (paidPayments || []).length > 0 && (
                   <div className="drilldown-table-wrap">

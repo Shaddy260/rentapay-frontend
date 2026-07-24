@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from './Avatar.jsx';
+import ThemeToggleItem from './ThemeToggle.jsx';
 import HelpButton from './HelpButton.jsx';
 import BiometricSettingsPanel from './BiometricSettingsPanel.jsx';
 import InstallAppMenuItem from './InstallAppMenuItem.jsx';
@@ -145,6 +146,7 @@ export default function AccountMenu({ name, photoUrl, role, phone, roleLevel, to
             Fingerprint / device login
           </button>
           <HelpButton role={role} token={token} renderAs="account-menu__item" />
+          <ThemeToggleItem className="account-menu__item" />
           <InstallAppMenuItem className="account-menu__item" onClick={() => setOpen(false)} />
           <div className="account-menu__divider" />
           <button type="button" className="account-menu__item account-menu__item--danger" role="menuitem" onClick={handleLogout}>

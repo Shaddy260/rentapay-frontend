@@ -173,6 +173,8 @@ export const api = {
   getScoutVacancies: (status, token) => request(`/scout/vacancies?status=${encodeURIComponent(status || 'vacant')}`, { token }),
   referScoutUnit: (unitId, token) => request('/scout/refer', { method: 'POST', body: { unitId }, token }),
   getMyScoutReferrals: (token) => request('/scout/my-referrals', { token }),
+  listPendingScoutPayouts: (token) => request('/admin/scout-payouts/pending', { token }),
+  markScoutPayoutPaid: (referralId, body, token) => request(`/admin/scout-payouts/${referralId}/mark-paid`, { method: 'PATCH', body, token }),
   markScoutReferralViewed: (referralId, token) => request(`/scout/referrals/${referralId}/mark-viewed`, { method: 'PATCH', token }),
   listScoutManualCountyPayments: (status, token) => request(`/scout/admin/manual-payments?status=${encodeURIComponent(status || 'pending')}`, { token }),
   confirmScoutManualCountyPayment: (id, token) => request(`/scout/admin/manual-payments/${id}/confirm`, { method: 'POST', token }),
@@ -375,7 +377,10 @@ export const api = {
 
   // Account (both roles)
   changePassword: (payload, token) => request('/auth/change-password', { method: 'POST', body: payload, token }),
+  dismissOnboarding: (token) => request('/auth/dismiss-onboarding', { method: 'POST', token }),
   uploadProfilePhoto: (formData, token) => requestMultipart('/upload/profile-photo', { method: 'POST', formData, token }),
+  uploadUnitPhotos: (unitId, formData, token) => requestMultipart(`/units/${unitId}/photos`, { method: 'POST', formData, token }),
+  removeUnitPhoto: (unitId, photoUrl, token) => request(`/units/${unitId}/photos`, { method: 'DELETE', body: { photoUrl }, token }),
   removeProfilePhoto: (token) => request('/upload/profile-photo', { method: 'DELETE', token }),
 
   // Expenses (property-level cost tracking, feeds net profit on the

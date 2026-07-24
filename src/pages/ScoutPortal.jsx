@@ -8,6 +8,8 @@ import ComplaintsPanel from '../components/ComplaintsPanel.jsx';
 import AnnouncementBell from '../components/AnnouncementBell.jsx';
 import AccountMenu from '../components/AccountMenu.jsx';
 import Avatar from '../components/Avatar.jsx';
+import OnboardingChecklist from '../components/OnboardingChecklist.jsx';
+import { downloadCsv } from '../utils/downloadCsv.js';
 import { useSharedPoll } from '../utils/sharedPoll.js';
 import { useInstallPrompt } from '../utils/useInstallPrompt.js';
 import '../components/InstallAppMenuItem.css';
@@ -340,6 +342,16 @@ export default function ScoutPortal() {
     }
   }
 
+  // FEATURE (direct request: "CSV export" for the scout portal, not
+  // just the landlord dashboard): a scout tracking their own county
+  // subscription spend/expiry for their own records now has the same
+  // export a landlord already had for their unit report.
+  function handleExportSubscriptions() {
+    const headers = ['County', 'Status', 'Started', 'Expires'];
+    const rows = (mySubscriptions || []).map((s) => [s.county, s.status, s.started_at?.slice(0, 10) || '', s.expires_at?.slice(0, 10) || '']);
+    downloadCsv('rentapay-scout-subscriptions', headers, rows);
+  }
+
   async function handleSaveProfile(e) {
     e.preventDefault();
     setProfileError('');
@@ -427,6 +439,36 @@ export default function ScoutPortal() {
           />
         )}
       </div>
+
+      {scoutProfile && (
+        <OnboardingChecklist
+          token={token}
+          dismissed={!!scoutProfile.onboarding_dismissed_at}
+          onDismissed={() => setScoutProfile((p) => ({ ...p, onboarding_dismissed_at: new Date().toISOString() }))}
+          steps={[
+            {
+              key: 'subscribe-county',
+              label: 'Subscribe to your first county',
+              done: activeCounties.length > 0,
+              actionLabel: 'Subscribe',
+              onAction: () => setActiveTab('subscribe'),
+            },
+            {
+              key: 'browse-vacancies',
+              label: 'Browse vacant units',
+              done: (() => {
+                try {
+                  return localStorage.getItem('rentapay_scout_visited_vacancies') === '1';
+                } catch {
+                  return false;
+                }
+              })(),
+              actionLabel: 'Browse vacancies',
+              onAction: () => navigate('/scout-vacancies'),
+            },
+          ]}
+        />
+      )}
 
       {showIOSInstallSteps && (
         <div className="install-app-menu-item__ios-modal" onClick={() => setShowIOSInstallSteps(false)}>
@@ -586,7 +628,12 @@ export default function ScoutPortal() {
           <ScoutStatsPanel token={token} />
           {activeCounties.length > 0 ? (
             <section style={{ marginBottom: 24 }}>
-              <h2>My active counties</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ marginBottom: 0 }}>My active counties</h2>
+                {(mySubscriptions || []).length > 0 && (
+                  <button type="button" onClick={handleExportSubscriptions} style={{ fontSize: '0.85em' }}>⬇ Export CSV</button>
+                )}
+              </div>
               <ul style={{ listStyle: 'none', padding: 0 }}>
                 {activeCounties.map((s) => {
                   const pct = percentRemaining(s.expires_at);

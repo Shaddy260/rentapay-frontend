@@ -23,6 +23,16 @@ export default function ExpensesPanel({ token, propertyId, canEdit = true }) {
   const [draft, setDraft] = useState(emptyDraft);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  // FEATURE (direct request: "search bars on long lists"): expenses
+  // had no filter at all - a landlord tracking costs for a while would
+  // have to scroll the whole history to find, say, every "Repairs"
+  // entry or a specific note.
+  const [expenseSearch, setExpenseSearch] = useState('');
+  const filteredExpenses = expenses.filter((e) => {
+    const needle = expenseSearch.trim().toLowerCase();
+    if (!needle) return true;
+    return [e.category, e.note].some((f) => (f || '').toLowerCase().includes(needle));
+  });
 
   function load() {
     setLoading(true);
@@ -146,13 +156,26 @@ export default function ExpensesPanel({ token, propertyId, canEdit = true }) {
         </form>
       )}
 
+      {expenses.length > 0 && (
+        <div className="form-field" style={{ maxWidth: 280, marginBottom: 12 }}>
+          <input
+            type="search"
+            placeholder="Search category or note…"
+            value={expenseSearch}
+            onChange={(e) => setExpenseSearch(e.target.value)}
+          />
+        </div>
+      )}
+
       {loading ? (
         <p className="tenant-portal-hint">Loading…</p>
       ) : expenses.length === 0 ? (
         <p className="tenant-portal-hint">No expenses logged yet.</p>
+      ) : filteredExpenses.length === 0 ? (
+        <p className="tenant-portal-hint">No expenses match "{expenseSearch}".</p>
       ) : (
         <ul className="maintenance-manage-panel__list">
-          {expenses.map((e) => (
+          {filteredExpenses.map((e) => (
             <li key={e.id} className="maintenance-manage-panel__item">
               <div className="maintenance-manage-panel__item-header">
                 <strong>{e.category}</strong>

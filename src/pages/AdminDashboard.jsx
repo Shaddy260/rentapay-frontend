@@ -17,6 +17,7 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import LandlordManualPaymentConfirmations from '../components/LandlordManualPaymentConfirmations.jsx';
 import ScoutManualPaymentConfirmations from '../components/ScoutManualPaymentConfirmations.jsx';
 import AdminScoutsPanel from '../components/AdminScoutsPanel.jsx';
+import AdminScoutPayoutsPanel from '../components/AdminScoutPayoutsPanel.jsx';
 import { api, ApiError } from '../api/client.js';
 import { useInstallPrompt } from '../utils/useInstallPrompt.js';
 import '../components/InstallAppMenuItem.css';
@@ -727,7 +728,12 @@ export default function AdminDashboard() {
         {activeTab === 'credentials' && <AdminCredentialsPanel token={token} />}
         {activeTab === 'sql' && <AdminSqlPanel token={token} />}
         {activeTab === 'manual-subscription-payments' && <LandlordManualPaymentConfirmations token={token} />}
-        {activeTab === 'scouts' && <AdminScoutsPanel token={token} />}
+        {activeTab === 'scouts' && (
+          <>
+            <AdminScoutsPanel token={token} />
+            <AdminScoutPayoutsPanel token={token} />
+          </>
+        )}
         {activeTab === 'scout-manual-payments' && <ScoutManualPaymentConfirmations token={token} />}
 
 

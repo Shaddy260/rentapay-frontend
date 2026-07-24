@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api, ApiError } from '../api/client.js';
 import ChatWidget from '../components/ChatWidget.jsx';
+import Skeleton from '../components/Skeleton.jsx';
 import './AddTenant.css';
 import './TenantPortal.css';
 import './Login.css';
@@ -68,6 +69,16 @@ export default function ScoutVacancies() {
       return;
     }
     load();
+    // FEATURE (onboarding checklist "browse vacancies" step, see
+    // ScoutPortal.jsx/OnboardingChecklist.jsx): a plain, best-effort
+    // signal that this scout has actually opened the vacancy-browsing
+    // page at least once. Not stored server-side since it's not real
+    // account data, just a local "have they looked yet" flag.
+    try {
+      localStorage.setItem('rentapay_scout_visited_vacancies', '1');
+    } catch {
+      // localStorage unavailable - checklist step just won't tick off, harmless
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, statusFilter]);
 
@@ -192,7 +203,7 @@ export default function ScoutVacancies() {
           {error && <p className="login-page__error" role="alert">{error}</p>}
 
           {loading ? (
-            <p>Loading…</p>
+            <Skeleton variant="card" count={4} />
           ) : units.length === 0 ? (
             <p>
               {searchNeedle
@@ -209,6 +220,8 @@ export default function ScoutVacancies() {
                   <button
                     type="button"
                     onClick={() => toggleConstituency(constituency)}
+                    aria-expanded={open}
+                    aria-label={`${open ? 'Collapse' : 'Expand'} ${constituency} listings`}
                     style={{
                       width: '100%',
                       display: 'flex',
@@ -243,6 +256,8 @@ export default function ScoutVacancies() {
                             <button
                               type="button"
                               onClick={() => toggleArea(constituency, area)}
+                              aria-expanded={areaOpen}
+                              aria-label={`${areaOpen ? 'Collapse' : 'Expand'} ${area} units`}
                               style={{
                                 width: '100%',
                                 display: 'flex',
@@ -282,6 +297,37 @@ export default function ScoutVacancies() {
                           gap: 10,
                         }}
                       >
+                        {/* FEATURE (direct request: unit photos for
+                            scouts browsing vacancies) - a small
+                            thumbnail of the first photo if the
+                            landlord has added any, otherwise a plain
+                            placeholder so the layout stays consistent
+                            rather than jumping around per-card. */}
+                        {u.photoUrls?.[0] ? (
+                          <img
+                            src={u.photoUrls[0]}
+                            alt={`${u.unitName} photo`}
+                            style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                          />
+                        ) : (
+                          <div
+                            aria-hidden="true"
+                            style={{
+                              width: 72,
+                              height: 72,
+                              borderRadius: 8,
+                              flexShrink: 0,
+                              background: '#F5F5F5',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#BBB',
+                              fontSize: '1.4em',
+                            }}
+                          >
+                            🏠
+                          </div>
+                        )}
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <strong>{u.unitName}</strong>

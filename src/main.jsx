@@ -6,6 +6,17 @@ import { initSentry } from './utils/sentry.js';
 
 initSentry();
 
+// Apply the persisted dark/light preference before the first paint,
+// so returning users with dark mode on don't see a flash of the light
+// theme while React mounts. AccountMenu's ThemeToggle owns the actual
+// toggle control and keeps this in sync going forward.
+try {
+  const savedTheme = localStorage.getItem('rentapay_theme');
+  if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+} catch {
+  // localStorage unavailable - defaults to light theme, no crash
+}
+
 // Direct request: "an app I can download". Registering the service
 // worker unconditionally (not just when someone opts into push
 // notifications) is what lets the browser offer "Install app" / "Add

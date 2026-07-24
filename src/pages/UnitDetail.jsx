@@ -5,6 +5,7 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { api, ApiError } from '../api/client.js';
 import { downloadCsv } from '../utils/downloadCsv.js';
 import DocumentsPanel from '../components/DocumentsPanel.jsx';
+import UnitPhotosPanel from '../components/UnitPhotosPanel.jsx';
 import './UnitDetail.css';
 import './TenantPortal.css';
 
@@ -388,6 +389,14 @@ export default function UnitDetail() {
         </div>
         <p className="unit-detail-type">{unit.unit_type}</p>
       </header>
+
+      <UnitPhotosPanel
+        unitId={unitId}
+        photoUrls={unit.photo_urls || []}
+        token={token}
+        canEdit={!isCaretaker}
+        onChange={(newUrls) => setUnit((u) => ({ ...u, photo_urls: newUrls }))}
+      />
 
       {notice && <div className="unit-detail-banner unit-detail-banner--ok">{notice}</div>}
       {error && <div className="unit-detail-banner unit-detail-banner--error">{error}</div>}

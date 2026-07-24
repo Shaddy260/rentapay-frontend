@@ -71,3 +71,39 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ===================================================================
+   DARK MODE
+   ===================================================================
+   FEATURE (direct request: "dark mode"). Scoped to a [data-theme="dark"]
+   attribute set on <html> by ThemeToggle.jsx (persisted to
+   localStorage), not @media (prefers-color-scheme) - the person picks
+   it explicitly rather than it silently following OS settings, which
+   matters for a payments app where a sudden appearance change while
+   someone's mid-STK-push could be disorienting.
+
+   HONEST LIMITATION: this repalette only reaches UI built from these
+   --color-* tokens. Anywhere a component/CSS file uses a hardcoded hex
+   value directly (there are a fair number, scattered across per-page
+   .css files and a few inline styles) will NOT flip with the toggle -
+   converting every one of those to a token is a larger, separate pass.
+   This gives correct dark-mode coverage for anything already following
+   the design system, and is the foundation to convert stragglers onto.
+   ================================================================= */
+[data-theme='dark'] {
+  --color-primary: #3DA88A;
+  --color-primary-light: #52C4A3;
+  --color-primary-dark: #1F5C4C;
+  --color-surface: #14201E;
+  --color-surface-raised: #1C2C29;
+  --color-accent: #E0935E;
+  --color-accent-light: #F0B98C;
+  --color-mpesa: #4FC13F;
+  --color-mpesa-dark: #3DA535;
+  --color-ink: #F1EEE7;
+  --color-ink-soft: #B7C1BC;
+  --color-hairline: #33443F;
+  --color-error: #E5766D;
+  --color-error-bg: #3A211F;
+  --color-success-bg: #1F3320;
+}

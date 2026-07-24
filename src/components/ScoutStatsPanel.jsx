@@ -35,13 +35,29 @@ export default function ScoutStatsPanel({ token }) {
   if (loading) return <p>Loading your referral stats…</p>;
   if (error) return <p className="login-page__error" role="alert">{error}</p>;
 
-  const stats = data?.stats || { sharedThisMonth: 0, landlordViews: 0, placements: 0 };
+  const stats = data?.stats || { sharedThisMonth: 0, landlordViews: 0, placements: 0, totalOwed: 0, totalPaid: 0 };
   const referrals = data?.referrals || [];
+
+  // FEATURE (direct request: scout referral payout tracking - "scout
+  // portal is so boring" / least-developed portal): previously a scout
+  // could see a referral got credited as 'placed' and nothing else -
+  // no idea whether that ever turned into an actual payment. This
+  // makes the money side of a placement visible in the same place.
+  function payoutBadgeStyle(payoutStatus) {
+    if (payoutStatus === 'paid') return { background: '#E8F5E9', color: '#2E7D32' };
+    if (payoutStatus === 'pending') return { background: '#FFF3E0', color: '#B85C00' };
+    return null; // not_applicable - not placed yet, nothing to show
+  }
+  function payoutBadgeLabel(r) {
+    if (r.payoutStatus === 'paid') return `Paid KES ${Number(r.payoutAmount || 0).toLocaleString()}`;
+    if (r.payoutStatus === 'pending') return 'Payout pending';
+    return null;
+  }
 
   return (
     <section style={{ marginBottom: 24 }}>
       <h2>My referrals</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 12 }}>
         <div style={{ border: '1px solid #eee', borderRadius: 10, padding: 14, textAlign: 'center' }}>
           <div style={{ fontSize: '0.8em', color: '#666' }}>Shared this month</div>
           <div style={{ fontSize: '1.6em', fontWeight: 600 }}>{stats.sharedThisMonth}</div>
@@ -53,6 +69,17 @@ export default function ScoutStatsPanel({ token }) {
         <div style={{ border: '2px solid #2E7D32', borderRadius: 10, padding: 14, textAlign: 'center', background: '#E8F5E9' }}>
           <div style={{ fontSize: '0.8em', color: '#2E7D32' }}>Confirmed placements</div>
           <div style={{ fontSize: '2em', fontWeight: 700, color: '#2E7D32' }}>{stats.placements}</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <div style={{ border: '1px solid #FFE0B2', background: '#FFF8E1', borderRadius: 10, padding: 14, textAlign: 'center' }}>
+          <div style={{ fontSize: '0.8em', color: '#8D6E00' }}>Owed to you (pending)</div>
+          <div style={{ fontSize: '1.4em', fontWeight: 700, color: '#8D6E00' }}>KES {stats.totalOwed.toLocaleString()}</div>
+        </div>
+        <div style={{ border: '1px solid #eee', borderRadius: 10, padding: 14, textAlign: 'center' }}>
+          <div style={{ fontSize: '0.8em', color: '#666' }}>Paid out to date</div>
+          <div style={{ fontSize: '1.4em', fontWeight: 700 }}>KES {stats.totalPaid.toLocaleString()}</div>
         </div>
       </div>
 
@@ -78,9 +105,16 @@ export default function ScoutStatsPanel({ token }) {
                 <strong>{r.unitName || 'Unit'}</strong>
                 <div style={{ color: '#888', fontSize: '0.8em' }}>{new Date(r.sharedAt).toLocaleDateString('en-GB')}</div>
               </div>
-              <span style={{ fontSize: '0.75em', padding: '2px 10px', borderRadius: 12, ...badgeStyle(r.status) }}>
-                {badgeLabel(r.status)}
-              </span>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.75em', padding: '2px 10px', borderRadius: 12, ...badgeStyle(r.status) }}>
+                  {badgeLabel(r.status)}
+                </span>
+                {payoutBadgeLabel(r) && (
+                  <span style={{ fontSize: '0.75em', padding: '2px 10px', borderRadius: 12, ...payoutBadgeStyle(r.payoutStatus) }}>
+                    {payoutBadgeLabel(r)}
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>
