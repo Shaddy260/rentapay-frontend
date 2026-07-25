@@ -1,0 +1,85 @@
+.install-app-banner {
+  background: var(--color-primary-dark, #1f6f5c);
+  color: #fff;
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.install-app-banner--topbar {
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.install-app-banner__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+}
+
+.install-app-banner__icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.install-app-banner__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.install-app-banner__text strong {
+  font-size: 0.95rem;
+}
+
+.install-app-banner__text span {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.install-app-banner__cta {
+  background: #fff;
+  color: var(--color-primary-dark, #1f6f5c);
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  padding: 0.45rem 0.9rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.install-app-banner__cta--ghost {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.install-app-banner__dismiss {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0.25rem;
+}
+
+.install-app-banner__ios-steps {
+  margin-top: var(--space-3, 0.75rem);
+  padding-top: var(--space-3, 0.75rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 0.85rem;
+}
+
+.install-app-banner__ios-steps ol {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.install-app-banner__ios-steps li {
+  margin-bottom: 0.3rem;
+}

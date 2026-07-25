@@ -1,0 +1,110 @@
+.my-reputation-panel {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 560px;
+}
+
+.my-reputation-panel__intro,
+.my-reputation-panel__empty {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+  margin: 0 0 16px;
+}
+
+.my-reputation-panel__summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.my-reputation-panel__big-stars {
+  font-size: 1.6rem;
+  display: inline-flex;
+}
+
+.my-reputation-panel__big-stars .star {
+  color: var(--color-border, #D8D2C8);
+}
+
+.my-reputation-panel__big-stars .star--filled {
+  color: #E0A526;
+}
+
+.my-reputation-panel__score {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-ink, #22282A);
+}
+
+.my-reputation-panel__meta {
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-ink-soft, #5C6663);
+  width: 100%;
+}
+
+.my-reputation-panel__categories {
+  border-top: 1px solid var(--color-border, #E4DFD8);
+  padding-top: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.my-reputation-panel__category-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.my-reputation-panel__category-label {
+  text-transform: capitalize;
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.my-reputation-panel__comments {
+  border-top: 1px solid var(--color-border, #E4DFD8);
+  padding-top: 12px;
+}
+
+.my-reputation-panel__comments h4 {
+  margin: 0 0 10px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.my-reputation-panel__comment {
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--color-border, #E4DFD8);
+}
+
+.my-reputation-panel__comment:last-child {
+  border-bottom: none;
+}
+
+.my-reputation-panel__comment-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs, 0.8125rem);
+  color: #E0A526;
+  margin-bottom: 4px;
+}
+
+.my-reputation-panel__comment-landlord {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.my-reputation-panel__comment p {
+  margin: 0;
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-ink, #22282A);
+}
+
+.my-reputation-panel__disagree {
+  margin-top: 16px;
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-ink-soft, #5C6663);
+}

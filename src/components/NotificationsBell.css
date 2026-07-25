@@ -1,0 +1,117 @@
+.notifications-bell {
+  position: relative;
+  display: inline-flex;
+}
+
+.notifications-bell__trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.notifications-bell__trigger:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.notifications-bell__badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #e11d48;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.notifications-bell__panel {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  width: 320px;
+  max-width: 88vw;
+  max-height: 420px;
+  overflow-y: auto;
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-hairline, #e5e7eb);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+}
+
+.notifications-bell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--color-hairline, #e5e7eb);
+  position: sticky;
+  top: 0;
+  background: var(--color-surface-raised, #fff);
+}
+
+.notifications-bell__mark-all {
+  background: none;
+  border: none;
+  color: var(--color-primary, #2f8f77);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notifications-bell__empty {
+  padding: 1rem;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.notifications-bell__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notifications-bell__item {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--color-hairline, #f0f0f0);
+  cursor: pointer;
+}
+
+.notifications-bell__item:last-child {
+  border-bottom: none;
+}
+
+.notifications-bell__item--unread {
+  background: rgba(47, 143, 119, 0.07);
+}
+
+.notifications-bell__item-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.notifications-bell__item-body {
+  font-size: 0.82rem;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.notifications-bell__item-time {
+  font-size: 0.7rem;
+  opacity: 0.55;
+  margin-top: 4px;
+}

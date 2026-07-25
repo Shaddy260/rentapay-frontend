@@ -1,0 +1,91 @@
+/* ===================================================================
+   Payment method badge - item 6/7 redesign.
+   - Rectangle, tenant portal: directly below the unit code, full width
+     of that block, more attention-grabbing (a tenant needs to notice
+     how to pay).
+   - Square-ish pill, landlord/manager/caretaker header: same gradient
+     + glow language, unchanged position, just a tighter shape so it
+     sits comfortably among the other header icons.
+   Both stay within the app's own color language (deep teal + clay
+   accent) rather than reaching for a generic neon color - the "glow"
+   is a soft outer ring in the badge's own hue, not a jarring
+   drop-shadow.
+   =================================================================== */
+
+.payment-method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.payment-method-badge__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.payment-method-badge__override-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* -------------------- Shapes -------------------- */
+
+.payment-method-badge--square {
+  padding: 5px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+}
+
+.payment-method-badge--rectangle {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  width: fit-content;
+}
+
+/* -------------------- Colour + glow per method --------------------
+   Each uses a gradient built from the app's own tokens plus a soft
+   outer glow ring in the same hue - "attention-grabbing" without
+   turning into a generic neon-sign color. */
+
+.payment-method-badge--stk {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: var(--color-surface);
+  border-color: var(--color-primary-light);
+  box-shadow: 0 0 0 1px rgba(26, 92, 93, 0.25), 0 0 14px rgba(26, 92, 93, 0.45), var(--shadow-sm);
+}
+
+.payment-method-badge--paybill {
+  background: linear-gradient(135deg, var(--color-mpesa-dark), var(--color-mpesa));
+  color: #ffffff;
+  border-color: var(--color-mpesa);
+  box-shadow: 0 0 0 1px rgba(61, 165, 53, 0.3), 0 0 14px rgba(61, 165, 53, 0.5), var(--shadow-sm);
+}
+
+.payment-method-badge--till {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
+  color: #ffffff;
+  border-color: var(--color-accent-light);
+  box-shadow: 0 0 0 1px rgba(193, 98, 45, 0.3), 0 0 14px rgba(232, 165, 116, 0.55), var(--shadow-sm);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .payment-method-badge--rectangle {
+    animation: payment-badge-pulse 3.2s ease-in-out infinite;
+  }
+}
+
+@keyframes payment-badge-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.08); }
+}
