@@ -1,0 +1,168 @@
+import React, { useState, useEffect } from 'react';
+import { api, ApiError } from '../api/client.js';
+
+// Spec §6: "shows counts - units shared this month, landlord views,
+// confirmed placements - plus a simple list of the scout's referrals
+// with status badges." Placements is deliberately the biggest/most
+// prominent number here - per the spec, it's the one that actually
+// justifies the subscription fee, so it shouldn't be buried at the
+// same visual weight as the other two.
+export default function ScoutStatsPanel({ token }) {
+  const [data, setData] = useState(null); // { stats, referrals }
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [advancing, setAdvancing] = useState(null); // referralId currently being updated
+
+  function load() {
+    api
+      .getMyScoutReferrals(token)
+      .then(setData)
+      .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load referral stats.'))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  async function advanceStage(referralId, stage) {
+    setAdvancing(referralId);
+    try {
+      await api.advanceScoutReferralStage(referralId, stage, token);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to update this referral.');
+    } finally {
+      setAdvancing(null);
+    }
+  }
+
+  function badgeStyle(status) {
+    if (status === 'placed') return { background: '#E8F5E9', color: '#2E7D32' };
+    if (status === 'viewing_scheduled') return { background: '#E3F2FD', color: '#1565C0' };
+    if (status === 'contacted') return { background: '#F3E5F5', color: '#6A1B9A' };
+    if (status === 'viewed_by_landlord') return { background: '#FFF8E1', color: '#8D6E00' };
+    if (status === 'expired') return { background: '#F5F5F5', color: '#999' };
+    return { background: '#F5F5F5', color: '#555' }; // 'shared'
+  }
+  function badgeLabel(status) {
+    if (status === 'placed') return 'Moved in';
+    if (status === 'viewing_scheduled') return 'Viewing scheduled';
+    if (status === 'contacted') return 'Contacted';
+    if (status === 'viewed_by_landlord') return 'Viewed by landlord';
+    if (status === 'expired') return 'Expired';
+    return 'Shared';
+  }
+  // Which self-reported button (if any) to offer next, given the
+  // referral's current status. 'viewed_by_landlord' is treated the
+  // same as 'shared' here - it's an orthogonal landlord-side signal,
+  // not a scout-progress stage (see scoutReferral.service.js).
+  function nextStageAction(status) {
+    if (status === 'shared' || status === 'viewed_by_landlord') return { stage: 'contacted', label: 'Mark contacted' };
+    if (status === 'contacted') return { stage: 'viewing_scheduled', label: 'Schedule viewing' };
+    return null; // viewing_scheduled/placed/expired - nothing further to self-report
+  }
+
+  if (loading) return <p>Loading your referral stats…</p>;
+  if (error) return <p className="login-page__error" role="alert">{error}</p>;
+
+  const stats = data?.stats || { sharedThisMonth: 0, landlordViews: 0, placements: 0, totalOwed: 0, totalPaid: 0 };
+  const referrals = data?.referrals || [];
+
+  // FEATURE (direct request: scout referral payout tracking - "scout
+  // portal is so boring" / least-developed portal): previously a scout
+  // could see a referral got credited as 'placed' and nothing else -
+  // no idea whether that ever turned into an actual payment. This
+  // makes the money side of a placement visible in the same place.
+  function payoutBadgeStyle(payoutStatus) {
+    if (payoutStatus === 'paid') return { background: '#E8F5E9', color: '#2E7D32' };
+    if (payoutStatus === 'pending') return { background: '#FFF3E0', color: '#B85C00' };
+    return null; // not_applicable - not placed yet, nothing to show
+  }
+  function payoutBadgeLabel(r) {
+    if (r.payoutStatus === 'paid') return `Paid KES ${Number(r.payoutAmount || 0).toLocaleString()}`;
+    if (r.payoutStatus === 'pending') return 'Payout pending';
+    return null;
+  }
+
+  return (
+    <section style={{ marginBottom: 24 }}>
+      <h2>My referrals</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 12 }}>
+        <div style={{ border: '1px solid #eee', borderRadius: 10, padding: 14, textAlign: 'center' }}>
+          <div style={{ fontSize: '0.8em', color: '#666' }}>Shared this month</div>
+          <div style={{ fontSize: '1.6em', fontWeight: 600 }}>{stats.sharedThisMonth}</div>
+        </div>
+        <div style={{ border: '1px solid #eee', borderRadius: 10, padding: 14, textAlign: 'center' }}>
+          <div style={{ fontSize: '0.8em', color: '#666' }}>Landlord views</div>
+          <div style={{ fontSize: '1.6em', fontWeight: 600 }}>{stats.landlordViews}</div>
+        </div>
+        <div style={{ border: '2px solid #2E7D32', borderRadius: 10, padding: 14, textAlign: 'center', background: '#E8F5E9' }}>
+          <div style={{ fontSize: '0.8em', color: '#2E7D32' }}>Confirmed placements</div>
+          <div style={{ fontSize: '2em', fontWeight: 700, color: '#2E7D32' }}>{stats.placements}</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <div style={{ border: '1px solid #FFE0B2', background: '#FFF8E1', borderRadius: 10, padding: 14, textAlign: 'center' }}>
+          <div style={{ fontSize: '0.8em', color: '#8D6E00' }}>Owed to you (pending)</div>
+          <div style={{ fontSize: '1.4em', fontWeight: 700, color: '#8D6E00' }}>KES {stats.totalOwed.toLocaleString()}</div>
+        </div>
+        <div style={{ border: '1px solid #eee', borderRadius: 10, padding: 14, textAlign: 'center' }}>
+          <div style={{ fontSize: '0.8em', color: '#666' }}>Paid out to date</div>
+          <div style={{ fontSize: '1.4em', fontWeight: 700 }}>KES {stats.totalPaid.toLocaleString()}</div>
+        </div>
+      </div>
+
+      {referrals.length === 0 ? (
+        <p className="tenant-portal-hint">You haven't shared any units yet — tap "Share this unit" on a vacancy to start building your pipeline.</p>
+      ) : (
+        <div style={{ display: 'grid', gap: 8 }}>
+          {referrals.map((r) => (
+            <div
+              key={r.id}
+              style={{
+                border: '1px solid #eee',
+                borderRadius: 8,
+                padding: '10px 14px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <div>
+                <strong>{r.unitName || 'Unit'}</strong>
+                {r.prospectName && <span style={{ color: '#666', fontSize: '0.85em' }}> — lead: {r.prospectName}</span>}
+                <div style={{ color: '#888', fontSize: '0.8em' }}>{new Date(r.sharedAt).toLocaleDateString('en-GB')}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75em', padding: '2px 10px', borderRadius: 12, ...badgeStyle(r.status) }}>
+                  {badgeLabel(r.status)}
+                </span>
+                {payoutBadgeLabel(r) && (
+                  <span style={{ fontSize: '0.75em', padding: '2px 10px', borderRadius: 12, ...payoutBadgeStyle(r.payoutStatus) }}>
+                    {payoutBadgeLabel(r)}
+                  </span>
+                )}
+                {nextStageAction(r.status) && (
+                  <button
+                    type="button"
+                    className="login-page__link-btn"
+                    style={{ fontSize: '0.78em' }}
+                    disabled={advancing === r.id}
+                    onClick={() => advanceStage(r.id, nextStageAction(r.status).stage)}
+                  >
+                    {advancing === r.id ? 'Updating…' : nextStageAction(r.status).label}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
