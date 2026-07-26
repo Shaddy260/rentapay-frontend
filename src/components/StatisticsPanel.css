@@ -74,3 +74,15 @@
   color: var(--color-ink-soft, #5C6663);
   font-style: italic;
 }
+
+.activity-day--nested {
+  margin-left: var(--space-5);
+  margin-top: var(--space-2);
+}
+
+.admin-credentials-modal__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}

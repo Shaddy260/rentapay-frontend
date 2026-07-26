@@ -136,7 +136,7 @@ export default function PaymentHistoryPanel({ token, role = 'landlord', property
                       <button
                         type="button"
                         className="ghost-link"
-                        style={{ color: '#b3261e' }}
+                        className="u-text-error"
                         disabled={deletingId === p.id}
                         onClick={() => handleDelete(p.id)}
                       >

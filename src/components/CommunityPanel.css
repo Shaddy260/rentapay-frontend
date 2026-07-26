@@ -162,3 +162,103 @@
   border: 1px solid var(--color-hairline);
   font-family: var(--font-body);
 }
+
+/* FEATURE (direct request): photo attachments on posts. */
+.community-panel__photo-attach {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--color-hairline);
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+  width: fit-content;
+}
+.community-panel__photo-attach:hover {
+  border-color: var(--color-primary, #2E7D32);
+  color: var(--color-primary, #2E7D32);
+}
+
+.community-panel__photo-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.community-panel__photo-preview {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-hairline);
+}
+.community-panel__photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.community-panel__photo-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  line-height: 18px;
+  text-align: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9em;
+}
+
+/* Photo gallery/listing view within a post - up to 4 thumbnails shown,
+   with a "+N" overlay on the 4th when there are more. */
+.community-panel__gallery {
+  display: grid;
+  gap: 4px;
+  margin: var(--space-2) 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.community-panel__gallery--count-1 {
+  grid-template-columns: 1fr;
+}
+.community-panel__gallery--count-2 {
+  grid-template-columns: 1fr 1fr;
+}
+.community-panel__gallery--count-3,
+.community-panel__gallery--count-4 {
+  grid-template-columns: 1fr 1fr;
+}
+.community-panel__gallery-item {
+  position: relative;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  aspect-ratio: 4 / 3;
+  background: #f2f2f2;
+  display: block;
+}
+.community-panel__gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.community-panel__gallery-more {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

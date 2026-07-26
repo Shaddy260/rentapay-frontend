@@ -3,8 +3,18 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './styles/global.css';
 import { initSentry } from './utils/sentry.js';
+import { syncOfflineQueue } from './api/client.js';
 
 initSentry();
+
+// OFFLINE FIX: replay anything queued while the connection was down
+// (payment confirmations, chat messages, etc. - see offlineDb.js) as
+// soon as we're back online, and once at startup in case the app was
+// reopened after connectivity returned rather than while it did.
+window.addEventListener('online', () => { syncOfflineQueue(); });
+if (typeof navigator !== 'undefined' && navigator.onLine) {
+  syncOfflineQueue();
+}
 
 // Apply the persisted dark/light preference before the first paint,
 // so returning users with dark mode on don't see a flash of the light

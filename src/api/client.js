@@ -3,6 +3,8 @@
 // Thin fetch wrapper for talking to the RentaPay backend.
 // In dev, Vite proxies /api/* to http://localhost:5000 (see vite.config.js).
 
+import { cacheKeyFor, getCached, setCached, enqueueAction, flushQueuedActions } from '../utils/offlineDb.js';
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 // FIX: StatusPage.jsx used to fetch('/health') as a bare relative
 // path, completely bypassing BASE_URL. That works only by coincidence
@@ -40,9 +42,10 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, { method = 'GET', body, token } = {}) {
+async function request(path, { method = 'GET', body, token, queueable, queueDescription } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
+  const cacheKey = method === 'GET' ? cacheKeyFor(path, token) : null;
 
   let response;
   try {
@@ -53,6 +56,33 @@ async function request(path, { method = 'GET', body, token } = {}) {
       cache: 'no-store',
     });
   } catch (networkErr) {
+    // OFFLINE FIX (direct request: "resilience outside Nairobi's core,
+    // where connectivity is patchy"). Two different fallbacks depending
+    // on what kind of request this was:
+    //
+    //  - GET: serve the last successful response for this exact
+    //    endpoint+user from IndexedDB, if we have one, clearly flagged
+    //    as stale (`_offline`/`_cachedAt`) so screens can show a "last
+    //    updated" banner instead of pretending the data is live.
+    //  - queueable mutation (payment confirmations, chat messages,
+    //    maintenance requests, etc.): persist it and return a synthetic
+    //    "queued" response instead of throwing, so the UI can say
+    //    "saved - will sync once you're back online" rather than losing
+    //    the action entirely. It's replayed automatically by
+    //    flushQueuedActions() on the next 'online' event, in order.
+    //
+    // Anything else (login, STK push, non-queueable writes) still
+    // throws as before - those genuinely need a live round trip.
+    if (cacheKey) {
+      const cached = await getCached(cacheKey);
+      if (cached) {
+        return { ...cached.data, _offline: true, _cachedAt: cached.cachedAt };
+      }
+    }
+    if (queueable) {
+      await enqueueAction({ path, method, body, token, description: queueDescription });
+      return { queued: true, _offline: true };
+    }
     throw new ApiError(
       'Could not reach the server. Please check your internet connection and try again.',
       { kind: 'network' }
@@ -100,6 +130,10 @@ async function request(path, { method = 'GET', body, token } = {}) {
     });
   }
 
+  // Cache every successful GET so it's available as a fallback next
+  // time this exact endpoint is hit with no network (see catch block above).
+  if (cacheKey) setCached(cacheKey, data);
+
   return data;
 }
 
@@ -134,6 +168,24 @@ async function requestMultipart(path, { method = 'POST', formData, token } = {})
 
   return data;
 }
+
+// Replays a single queued item using a real network request (bypassing
+// the offline fallback above - if this one fails too, flushQueuedActions
+// leaves it queued and stops, rather than looping forever).
+async function sendQueuedItem(item) {
+  return request(item.path, { method: item.method, body: item.body, token: item.token });
+}
+
+/**
+ * Call this after regaining connectivity (main.jsx wires it to the
+ * browser's 'online' event, plus once at startup) to replay anything
+ * that was queued while offline, in the order it was created.
+ */
+export function syncOfflineQueue() {
+  return flushQueuedActions(sendQueuedItem);
+}
+
+export { onQueueChange, listQueuedActions, queuedActionCount } from '../utils/offlineDb.js';
 
 export const api = {
   registerLandlord: (payload) => request('/auth/landlord/register', { method: 'POST', body: payload }),
@@ -172,6 +224,20 @@ export const api = {
   // Community board + marketplace (tenant<->tenant, scoped to a property)
   listCommunityPosts: (kind, token, propertyId) => request(`/community?kind=${kind}${propertyId ? `&propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
   createCommunityPost: (payload, token) => request('/community', { method: 'POST', body: payload, token }),
+  // FEATURE (direct request): posts can attach photos. Used instead
+  // of createCommunityPost whenever at least one file is selected -
+  // same endpoint, just sent as multipart/form-data so the files can
+  // ride along with the text fields.
+  createCommunityPostWithPhotos: (payload, files, token) => {
+    const formData = new FormData();
+    if (payload.kind) formData.append('kind', payload.kind);
+    if (payload.title) formData.append('title', payload.title);
+    formData.append('body', payload.body);
+    if (payload.price != null) formData.append('price', payload.price);
+    if (payload.propertyId) formData.append('propertyId', payload.propertyId);
+    for (const file of files) formData.append('photos', file);
+    return requestMultipart('/community', { method: 'POST', formData, token });
+  },
   deleteCommunityPost: (postId, token) => request(`/community/${postId}`, { method: 'DELETE', token }),
   pinCommunityPost: (postId, pinned, token) => request(`/community/${postId}/pin`, { method: 'PATCH', body: { pinned }, token }),
   replyToCommunityPost: (postId, body, token) => request(`/community/${postId}/replies`, { method: 'POST', body: { body }, token }),
@@ -192,6 +258,22 @@ export const api = {
   listTenantReputations: (token) => request('/tenants/reputations', { token }),
   rateLandlord: (payload, token) => request('/tenants/rate-landlord', { method: 'POST', body: payload, token }),
   getMyLandlordReputation: (token) => request('/tenants/landlord-reputation', { token }),
+  // direct request #8: landlord's own aggregate rating, and the
+  // manager/caretaker rating flow (tenant rates -> staff views own).
+  getMyReputationAsLandlord: (token) => request('/tenants/my-reputation', { token }),
+  listRateableStaff: (token) => request('/tenants/rateable-staff', { token }),
+  rateStaff: (staffId, payload, token) => request(`/tenants/rate-staff/${staffId}`, { method: 'POST', body: payload, token }),
+  getMyStaffReputation: (token) => request('/tenants/my-staff-reputation', { token }),
+  // Property reputation - rated by current tenants of that property.
+  rateProperty: (payload, token) => request('/tenants/rate-property', { method: 'POST', body: payload, token }),
+  getMyPropertyReputation: (token) => request('/tenants/property-reputation', { token }),
+  // Rating flags: a landlord's recourse against a bad-faith rating.
+  // `table` is one of landlord_ratings | staff_ratings | property_ratings.
+  listMyRatings: (table, token, propertyId) => request(`/ratings/${table}/mine${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
+  getPropertyReputationForLandlord: (propertyId, token) => request(`/properties/${propertyId}/reputation`, { token }),
+  flagRating: (table, id, reason, token) => request(`/ratings/${table}/${id}/flag`, { method: 'POST', body: { reason }, token }),
+  listRatingFlags: (status, token) => request(`/admin/rating-flags?status=${encodeURIComponent(status || 'flagged')}`, { token }),
+  resolveRatingFlag: (table, id, resolution, note, token) => request(`/admin/rating-flags/${table}/${id}/resolve`, { method: 'PATCH', body: { resolution, note }, token }),
 
   getDashboard: (token, propertyId) => request(`/dashboard${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
   getAttentionFeed: (token) => request('/dashboard/attention', { token }),
@@ -212,6 +294,9 @@ export const api = {
   updateUnitPaymentOverride: (unitId, payload, token) => request(`/units/${unitId}/payment-override`, { method: 'PATCH', body: payload, token }),
   updateUnitStatus: (unitId, payload, token) => request(`/units/${unitId}/status`, { method: 'PATCH', body: payload, token }),
   verifyUnit: (unitId, token) => request(`/units/${unitId}/verify`, { method: 'PATCH', token }),
+  updatePublicListing: (unitId, isPubliclyListed, token) => request(`/units/${unitId}/public-listing`, { method: 'PATCH', body: { isPubliclyListed }, token }),
+  updateListingStatus: (unitId, listingStatus, token) => request(`/units/${unitId}/listing-status`, { method: 'PATCH', body: { listingStatus }, token }),
+  updateDepositSettings: (unitId, payload, token) => request(`/units/${unitId}/deposit-settings`, { method: 'PATCH', body: payload, token }),
   removeUnit: (unitId, token) => request(`/units/${unitId}`, { method: 'DELETE', token }),
   addExtraCharge: (unitId, payload, token) => request(`/units/${unitId}/extra-charges`, { method: 'POST', body: payload, token }),
   bulkUpdateRent: (payload, token) => request('/units/bulk-rent', { method: 'POST', body: payload, token }),
@@ -222,7 +307,7 @@ export const api = {
   editTenantDetails: (tenantId, payload, token) => request(`/tenants/${tenantId}`, { method: 'PATCH', body: payload, token }),
   editTenantBalance: (tenantId, payload, token) => request(`/tenants/${tenantId}/balance`, { method: 'PATCH', body: payload, token }),
   settleTenantDeposit: (tenantId, payload, token) => request(`/tenants/${tenantId}/deposit`, { method: 'PATCH', body: payload, token }),
-  remindTenant: (tenantId, token) => request(`/tenants/${tenantId}/remind`, { method: 'POST', token }),
+  remindTenant: (tenantId, token) => request(`/tenants/${tenantId}/remind`, { method: 'POST', token, queueable: true, queueDescription: 'Send rent reminder' }),
   sendBulkReminders: (token) => request('/tenants/bulk-remind', { method: 'POST', token }),
   transferTenant: (tenantId, payload, token) => request(`/tenants/${tenantId}/transfer`, { method: 'POST', body: payload, token }),
   revokeVacatingNotice: (tenantId, payload, token) => request(`/tenants/${tenantId}/vacating-notice/revoke`, { method: 'POST', body: payload, token }),
@@ -254,20 +339,20 @@ export const api = {
   getPaymentHistory: (token) => request('/tenants/payment-history', { token }),
   getProfile: (token) => request('/tenants/profile', { token }),
   updateOwnProfile: (payload, token) => request('/tenants/profile', { method: 'PATCH', body: payload, token }),
-  submitVacatingNotice: (payload, token) => request('/tenants/vacating-notice', { method: 'POST', body: payload, token }),
+  submitVacatingNotice: (payload, token) => request('/tenants/vacating-notice', { method: 'POST', body: payload, token, queueable: true, queueDescription: 'Submit vacating notice' }),
   cancelVacatingNotice: (token) => request('/tenants/vacating-notice', { method: 'DELETE', token }),
   initiateRentSTKPush: (payload, token) => request('/payments/stk-push', { method: 'POST', body: payload, token }),
   checkRentPaymentStatus: (checkoutRequestId, token) => request(`/payments/rent-status/${checkoutRequestId}`, { token }),
   checkSubscriptionPaymentStatus: (checkoutRequestId) => request(`/payments/subscription-status/${checkoutRequestId}`),
   submitRegistrationManualPayment: (payload) => request('/payments/subscription-manual/register', { method: 'POST', body: payload }),
   checkRegistrationManualPaymentStatus: (landlordId) => request(`/payments/subscription-manual/register/${landlordId}/status`),
-  submitPaybillTransaction: (payload, token) => request('/payments/paybill-submit', { method: 'POST', body: payload, token }),
+  submitPaybillTransaction: (payload, token) => request('/payments/paybill-submit', { method: 'POST', body: payload, token, queueable: true, queueDescription: `Submit payment confirmation (${payload?.transactionCode || ''})` }),
   // payload: { transactionCode, amountPaid, mpesaPayerName, mpesaSmsTimestamp }
   getMyLatestPaybillConfirmation: (token) => request('/payments/my-latest-confirmation', { token }),
   // payload: { transactionCode, amountPaid, mpesaPayerName, mpesaSmsTimestamp? }
 
   // Payments
-  recordManualPayment: (payload, token) => request('/payments/manual', { method: 'POST', body: payload, token }),
+  recordManualPayment: (payload, token) => request('/payments/manual', { method: 'POST', body: payload, token, queueable: true, queueDescription: 'Record manual payment' }),
 
   // Pending Paybill payment confirmations (landlord/manager side of the
   // manual Paybill flow above)
@@ -278,13 +363,13 @@ export const api = {
     const qs = params.toString();
     return request(`/payments/pending-confirmations${qs ? `?${qs}` : ''}`, { token });
   },
-  confirmPendingPayment: (id, token) => request(`/payments/pending-confirmations/${id}/confirm`, { method: 'PATCH', token }),
-  rejectPendingPayment: (id, payload, token) => request(`/payments/pending-confirmations/${id}/reject`, { method: 'PATCH', body: payload, token }),
+  confirmPendingPayment: (id, token) => request(`/payments/pending-confirmations/${id}/confirm`, { method: 'PATCH', token, queueable: true, queueDescription: 'Confirm pending payment' }),
+  rejectPendingPayment: (id, payload, token) => request(`/payments/pending-confirmations/${id}/reject`, { method: 'PATCH', body: payload, token, queueable: true, queueDescription: 'Reject pending payment' }),
   deletePendingPaymentConfirmation: (id, token) => request(`/payments/pending-confirmations/${id}`, { method: 'DELETE', token }),
 
   // Help
-  submitHelpRequest: (payload, token) => request('/help', { method: 'POST', body: payload, token }),
-  submitMaintenanceRequest: (payload, token) => request('/maintenance', { method: 'POST', body: payload, token }),
+  submitHelpRequest: (payload, token) => request('/help', { method: 'POST', body: payload, token, queueable: true, queueDescription: 'Submit help request' }),
+  submitMaintenanceRequest: (payload, token) => request('/maintenance', { method: 'POST', body: payload, token, queueable: true, queueDescription: 'Submit maintenance request' }),
   getMyMaintenanceRequests: (token) => request('/maintenance/mine', { token }),
   getMaintenanceRequests: (token, params = {}) => {
     const qs = new URLSearchParams(params).toString();
@@ -301,12 +386,12 @@ export const api = {
     if (tenantId) params.set('tenantId', tenantId);
     return request(`/chat/messages?${params.toString()}`, { token });
   },
-  sendChatMessage: (payload, token) => request('/chat/messages', { method: 'POST', body: payload, token }),
+  sendChatMessage: (payload, token) => request('/chat/messages', { method: 'POST', body: payload, token, queueable: true, queueDescription: 'Send message' }),
   deleteChatMessage: (messageId, scope, token) => request(`/chat/messages/${messageId}`, { method: 'DELETE', body: { scope }, token }),
 
   // "Dispute a charge" - flags a payment line item and posts a
   // pre-filled context message into the landlord_tenant chat thread.
-  raiseDispute: (paymentId, reason, token) => request('/disputes', { method: 'POST', body: { paymentId, reason }, token }),
+  raiseDispute: (paymentId, reason, token) => request('/disputes', { method: 'POST', body: { paymentId, reason }, token, queueable: true, queueDescription: 'Raise payment dispute' }),
   listDisputes: (params = {}, token) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/disputes${qs ? `?${qs}` : ''}`, { token });

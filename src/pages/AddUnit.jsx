@@ -20,6 +20,11 @@ export default function AddUnit() {
   const [customUnitType, setCustomUnitType] = useState('');
   const [rentAmount, setRentAmount] = useState('');
   const [dueDayOfMonth, setDueDayOfMonth] = useState(1);
+  // DIRECT REQUEST: whether this unit requires a deposit from a future
+  // tenant, set at creation time (also editable later from the unit's
+  // own page) - shown on the public vacant-unit listing.
+  const [requiresDeposit, setRequiresDeposit] = useState(false);
+  const [depositAmountExpected, setDepositAmountExpected] = useState('');
   const [unitLimit, setUnitLimit] = useState(null);
   const [currentCount, setCurrentCount] = useState(null);
   const [properties, setProperties] = useState([]);
@@ -70,7 +75,15 @@ export default function AddUnit() {
     setSubmitting(true);
     try {
       const res = await api.createUnit(
-        { unitName, unitType: unitType === 'Custom' ? customUnitType.trim() : unitType, rentAmount: Number(rentAmount), dueDayOfMonth: Number(dueDayOfMonth), propertyId: propertyId || undefined },
+        {
+          unitName,
+          unitType: unitType === 'Custom' ? customUnitType.trim() : unitType,
+          rentAmount: Number(rentAmount),
+          dueDayOfMonth: Number(dueDayOfMonth),
+          propertyId: propertyId || undefined,
+          requiresDeposit,
+          depositAmountExpected: requiresDeposit && depositAmountExpected ? Number(depositAmountExpected) : undefined,
+        },
         token
       );
       navigate(`/units/${res.unit.id}`);
@@ -120,7 +133,15 @@ export default function AddUnit() {
       for (let i = 0; i < count; i += 1) {
         const name = `${prefix}${String(startNum + i).padStart(padLength, '0')}`;
         await api.createUnit(
-          { unitName: name, unitType: resolvedUnitType, rentAmount: Number(rentAmount), dueDayOfMonth: Number(dueDayOfMonth), propertyId: propertyId || undefined },
+          {
+            unitName: name,
+            unitType: resolvedUnitType,
+            rentAmount: Number(rentAmount),
+            dueDayOfMonth: Number(dueDayOfMonth),
+            propertyId: propertyId || undefined,
+            requiresDeposit,
+            depositAmountExpected: requiresDeposit && depositAmountExpected ? Number(depositAmountExpected) : undefined,
+          },
           token
         );
         created += 1;
@@ -150,7 +171,7 @@ export default function AddUnit() {
       {atLimit ? (
         <div className="add-tenant-error">
           You've reached your subscription's unit limit ({unitLimit}). Increase your unit count on your subscription to add more.
-          <div style={{ marginTop: '1rem' }}>
+          <div className="u-mt-4">
             <Button variant="primary" onClick={() => navigate('/subscription')}>Manage subscription</Button>
           </div>
         </div>
@@ -184,6 +205,22 @@ export default function AddUnit() {
             <label className="form-field__label">Due day of month</label>
             <input type="number" min="1" max="28" value={dueDayOfMonth} onChange={(e) => setDueDayOfMonth(e.target.value)} />
           </div>
+          <div className="form-field">
+            <label className="u-checkbox-row">
+              <input type="checkbox" checked={requiresDeposit} onChange={(e) => setRequiresDeposit(e.target.checked)} />
+              This unit requires a deposit from a future tenant
+            </label>
+            {requiresDeposit && (
+              <input
+                type="number"
+                min="0"
+                placeholder="Expected deposit amount (optional, KES)"
+                value={depositAmountExpected}
+                onChange={(e) => setDepositAmountExpected(e.target.value)}
+                className="u-mt-2"
+              />
+            )}
+          </div>
           {properties.length > 1 && (
             <div className="form-field">
               <label className="form-field__label">Property</label>
@@ -197,18 +234,18 @@ export default function AddUnit() {
           )}
           <Button type="submit" variant="primary" loading={submitting}>Create unit</Button>
 
-          <div className="form-field" style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px dashed var(--color-border, #d8d8d5)' }}>
+          <div className="form-field u-divider-top-dashed">
             <label className="form-field__label">
               Or create several units like this one at once (e.g. "{unitName || '…'}" \u2192 next 7 numbered onward)
             </label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div className="u-flex-row u-flex-row--end">
               <input
                 type="number"
                 min="1"
                 value={duplicateCount}
                 onChange={(e) => setDuplicateCount(e.target.value)}
                 placeholder="How many?"
-                style={{ maxWidth: '140px' }}
+                className="u-max-140"
               />
               <Button type="button" variant="ghost" loading={submitting} onClick={handleDuplicateSubmit}>
                 Duplicate &amp; create

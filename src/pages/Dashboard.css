@@ -218,7 +218,7 @@
 .subscription-gate__switch label {
   display: block;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-ink-soft);
   margin-bottom: 6px;
 }
 

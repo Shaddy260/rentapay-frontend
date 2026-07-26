@@ -112,7 +112,7 @@ export default function ArchivedTenantsPanel({ token }) {
 
       {restoreTarget && (
         <div className="modal-overlay" onClick={() => setRestoreTarget(null)}>
-          <div className="modal-shell" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+          <div className="modal-shell u-max-420" onClick={(e) => e.stopPropagation()}>
             <h2>Restore {restoreTarget.full_name}</h2>
             <form onSubmit={handleRestore}>
               <div className="form-field">

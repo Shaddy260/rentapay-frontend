@@ -52,7 +52,7 @@
   width: min(420px, calc(100vw - 32px));
   max-height: min(70vh, 560px);
   overflow-y: auto;
-  background: #fff;
+  background: var(--color-surface-raised);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   z-index: 201;
@@ -66,7 +66,7 @@
   gap: 10px;
   padding: 14px 16px;
   font-weight: 700;
-  background: #fff;
+  background: var(--color-surface-raised);
   border-bottom: 1px solid #eee;
   z-index: 1;
 }
@@ -89,14 +89,14 @@
   border: none;
   font-size: 1.4rem;
   line-height: 1;
-  color: #888;
+  color: var(--color-ink-soft);
   cursor: pointer;
   padding: 0 4px;
 }
 
 .announcement-bell__empty {
   padding: 24px 16px;
-  color: #888;
+  color: var(--color-ink-soft);
   text-align: center;
   font-size: 0.9rem;
 }
@@ -134,7 +134,7 @@
 
 .announcement-bell__time {
   font-size: 0.75rem;
-  color: #999;
+  color: var(--color-ink-soft);
 }
 
 .announcement-bell__item-top {
@@ -164,7 +164,7 @@
 .announcement-bell__delete-btn {
   background: none;
   border: none;
-  color: #999;
+  color: var(--color-ink-soft);
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
@@ -191,7 +191,7 @@
 
 .announcement-bell__delete-menu button {
   text-align: left;
-  background: #fff;
+  background: var(--color-surface-raised);
   border: 1px solid #ddd;
   border-radius: 6px;
   padding: 6px 10px;

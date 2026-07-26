@@ -4,6 +4,7 @@ import StepRail from '../components/StepRail.jsx';
 import Button from '../components/Button.jsx';
 import PasswordInput from '../components/PasswordInput.jsx';
 import PaymentDetailsCard from '../components/PaymentDetailsCard.jsx';
+import InfoTip from '../components/InfoTip.jsx';
 import { api } from '../api/client.js';
 import { KENYA_COUNTIES } from '../constants/kenyaCounties.js';
 import { KENYA_CONSTITUENCIES } from '../constants/kenyaConstituencies.js';
@@ -79,8 +80,43 @@ export default function RegisterFlow() {
   // exists), not on every render - a fresh registration in the same
   // tab still works normally because `persisted` will be non-null by
   // the time this check would otherwise matter.
+  // BUG FIX (direct request #9): this used to be inferred purely from
+  // "is there a landlord token sitting in sessionStorage right now",
+  // which is true for TWO very different situations:
+  //   1. Login.jsx just authenticated this person and their onboarding
+  //      is incomplete -> SHOULD resume the wizard mid-flight.
+  //   2. This person fully completed onboarding earlier in this same
+  //      browser tab (token never got cleared, e.g. they never
+  //      explicitly logged out) and is now tapping "Get Started" fresh
+  //      from the Landing page -> should NOT resume anything; Get
+  //      Started always means "start over from step 0", even though
+  //      the account was previously verified.
+  // Login.jsx now sets an explicit one-shot flag immediately before
+  // its resume-wizard redirect, so only case 1 satisfies this check.
+  // Get Started (Landing.jsx -> /register directly) never sets that
+  // flag, so it always falls through to a clean step-0 start below.
   const resumingLoggedInLandlord =
-    !persisted && typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem('rentapay_token') && sessionStorage.getItem('rentapay_role') === 'landlord';
+    !persisted && typeof sessionStorage !== 'undefined' && sessionStorage.getItem('rentapay_resume_setup') === 'true' && sessionStorage.getItem('rentapay_role') === 'landlord';
+
+  // Consume the flag immediately so it can never accidentally apply to
+  // a later, unrelated visit to this page in the same tab.
+  if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('rentapay_resume_setup')) {
+    sessionStorage.removeItem('rentapay_resume_setup');
+  }
+
+  // A fresh "Get Started" entry (no persisted wizard progress, not a
+  // login-driven resume) should never carry forward a stale session
+  // from a previously completed account on this device - clear it so
+  // nothing downstream (e.g. an old token still being sent on API
+  // calls) can leak into what's meant to be a brand-new signup.
+  if (!persisted && !resumingLoggedInLandlord && typeof sessionStorage !== 'undefined') {
+    sessionStorage.removeItem('rentapay_token');
+    sessionStorage.removeItem('rentapay_role');
+    sessionStorage.removeItem('rentapay_role_level');
+    sessionStorage.removeItem('rentapay_phone');
+    sessionStorage.removeItem('rentapay_active_property_id');
+    sessionStorage.removeItem('rentapay_subscription_expired');
+  }
 
   // Set by Login.jsx when it redirects here because the landlord's
   // subscription payment was never confirmed (see the paymentPending
@@ -997,34 +1033,31 @@ export default function RegisterFlow() {
                     <input id="phone" required value={form.phone} onChange={(e) => updateForm('phone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
                   </div>
                   <div className="form-field">
-                    <label className="form-field__label" htmlFor="whatsappNumber">WhatsApp number</label>
+                    <label className="form-field__label" htmlFor="whatsappNumber">WhatsApp number<InfoTip text="Shown publicly on free vacant-unit listings so tenants can reach you on WhatsApp. Can be different from your login phone." /></label>
                     <input id="whatsappNumber" required value={form.whatsappNumber} onChange={(e) => updateForm('whatsappNumber', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
-                    <p className="form-field__hint">Shown publicly on free vacant-unit listings so tenants can reach you on WhatsApp. Can be different from your login phone.</p>
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="email">Email</label>
                     <input id="email" type="email" required value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="jane@example.com" />
                   </div>
                   <div className="form-field">
-                    <label className="form-field__label" htmlFor="gender">I am a (optional)</label>
+                    <label className="form-field__label" htmlFor="gender">I am a (optional)<InfoTip text="Just so the portal addresses you correctly - never shown to tenants." /></label>
                     <select id="gender" value={form.gender} onChange={(e) => updateForm('gender', e.target.value)}>
                       <option value="">Prefer not to say</option>
                       <option value="male">Landlord (male)</option>
                       <option value="female">Landlady (female)</option>
                     </select>
-                    <p className="form-field__hint">Just so the portal addresses you correctly - never shown to tenants.</p>
                   </div>
                   <div className="form-field form-field--full">
-                    <label className="form-field__label" htmlFor="password">Password</label>
+                    <label className="form-field__label" htmlFor="password">Password<InfoTip text="Can't be your phone number or your name." /></label>
                     <PasswordInput id="password" required value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="Min 8 characters, 1 uppercase, 1 number, 1 symbol" />
-                    <p className="form-field__hint">Can't be your phone number or your name.</p>
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="unitsCount">Number of units</label>
                     <input id="unitsCount" type="number" min="1" required value={form.unitsCount} onChange={(e) => updateForm('unitsCount', e.target.value)} />
                   </div>
                   <div className="form-field">
-                    <label className="form-field__label" htmlFor="periodMonths">Subscription period (months)</label>
+                    <label className="form-field__label" htmlFor="periodMonths">Subscription period (months)<InfoTip text="Any length you want - discounts apply automatically at 3, 6, and 12 months." /></label>
                     <input
                       id="periodMonths"
                       type="number"
@@ -1034,7 +1067,6 @@ export default function RegisterFlow() {
                       value={form.periodMonths}
                       onChange={(e) => updateForm('periodMonths', e.target.value)}
                     />
-                    <p className="form-field__hint">Any length you want - discounts apply automatically at 3, 6, and 12 months.</p>
                   </div>
                 </div>
 
@@ -1070,7 +1102,7 @@ export default function RegisterFlow() {
               <button
                 type="button"
                 className="add-tenant-back"
-                style={{ marginBottom: '1rem', display: 'inline-block' }}
+                className="u-mb-4 u-inline-block"
                 onClick={() => setStepIndex(0)}
               >
                 ← Back
@@ -1082,21 +1114,21 @@ export default function RegisterFlow() {
                 Enter your PIN to activate your RentaPay account.
               </p>
               {paymentPollError && <div className="api-error-banner" role="alert">{paymentPollError}</div>}
-              <div style={{ marginTop: '2rem' }}>
+              <div className="u-mt-6">
                 <Button variant="primary" loading={paymentPolling} onClick={handlePaymentConfirmed}>
                   {paymentPolling ? 'Confirming your payment…' : "I've completed the payment"}
                 </Button>
               </div>
               {paymentPolling && (
-                <p className="register-page__intro" style={{ marginTop: '1rem' }}>
+                <p className="register-page__intro u-mt-4">
                   Checking with M-Pesa - this can take up to a minute. Don't close this page.
                 </p>
               )}
 
               {!manualSubmitted ? (
-                <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border, #e5e1d8)', paddingTop: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-                    <h3 style={{ fontSize: 'var(--text-md, 1rem)', margin: 0 }}>Or pay manually</h3>
+                <div className="register-page__section-divider">
+                  <div className="register-page__section-header">
+                    <h3>Or pay manually</h3>
                     <button
                       type="button"
                       className="ghost-link"
@@ -1105,12 +1137,12 @@ export default function RegisterFlow() {
                       {showManualPayment ? 'Hide' : 'Show'}
                     </button>
                   </div>
-                  <p className="register-page__intro" style={{ marginTop: '0.25rem' }}>
+                  <p className="register-page__intro u-mt-1">
                     If the M-Pesa prompt fails, gets cancelled, or never arrives - or you'd simply rather pay this way -
                     send the amount yourself and enter the confirmation details below.
                   </p>
                   {showManualPayment && (
-                    <form onSubmit={handleSubmitManualPayment} style={{ marginTop: '1rem', textAlign: 'left' }}>
+                    <form onSubmit={handleSubmitManualPayment} className="u-mt-4 u-text-left">
                       <PaymentDetailsCard amount={amountDue} note="Enter the M-Pesa confirmation details below - your account will be activated once an admin verifies it (usually within a few minutes)." />
                       {manualError && <div className="api-error-banner" role="alert">{manualError}</div>}
                       <div className="form-field">
@@ -1130,7 +1162,7 @@ export default function RegisterFlow() {
                   )}
                 </div>
               ) : (
-                <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border, #e5e1d8)', paddingTop: '1.5rem' }}>
+                <div className="register-page__section-divider">
                   <p className="register-page__intro">
                     {manualPolling ? 'Waiting for your payment to be verified - this page will move on automatically once it is.' : 'Submitted. Waiting for verification.'}
                   </p>
@@ -1172,7 +1204,7 @@ export default function RegisterFlow() {
                       placeholder="Type to search counties…"
                       value={countySearch}
                       onChange={(e) => setCountySearch(e.target.value)}
-                      style={{ marginBottom: 6 }}
+                      className="u-mb-2"
                     />
                     <select
                       id="county"
@@ -1195,7 +1227,7 @@ export default function RegisterFlow() {
                       value={constituencySearch}
                       disabled={!property.county}
                       onChange={(e) => setConstituencySearch(e.target.value)}
-                      style={{ marginBottom: 6 }}
+                      className="u-mb-2"
                     />
                     <select
                       id="constituency"
@@ -1480,7 +1512,7 @@ export default function RegisterFlow() {
               <p>
                 {units.length} unit{units.length === 1 ? '' : 's'} added, expected monthly revenue KES {totalExpectedRent.toLocaleString()}.
               </p>
-              <div style={{ marginTop: '2rem' }}>
+              <div className="u-mt-6">
                 {/*
                   BUG FIX (direct request): this used to send the
                   landlord back to /login even though completeSetupWizard

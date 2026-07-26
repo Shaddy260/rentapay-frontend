@@ -40,7 +40,7 @@
 }
 
 .install-app-banner__cta {
-  background: #fff;
+  background: var(--color-surface-raised);
   color: var(--color-primary-dark, #1f6f5c);
   border: none;
   border-radius: var(--radius-md, 8px);

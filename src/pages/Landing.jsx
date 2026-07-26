@@ -28,11 +28,16 @@ export default function Landing() {
         <div className="landing__hero-blob landing__hero-blob--b" aria-hidden="true" />
 
         <div className="landing__hero-content">
-          <span className="landing__eyebrow">Built for Kenyan landlords &amp; tenants</span>
+          <span className="landing__eyebrow">✦ Premium property management, built for Kenya</span>
           <h1>Management made simple.</h1>
           <p className="landing__hero-sub">
-            Collect rent over M-Pesa, track every unit, and keep landlords and
-            tenants on the same page — all from one place, on any phone.
+            Easily manage your properties and tenants, take M-Pesa payments,
+            and monitor every unit in real time — all from one place, on any
+            phone.
+          </p>
+          <p className="landing__hero-sub landing__hero-sub--gold">
+            Searching for a home? Discover vacant units in your preferred
+            location in seconds.
           </p>
           <div className="landing__hero-actions">
             <Link to="/register" className="landing__btn landing__btn--primary">Get started free</Link>
@@ -66,27 +71,30 @@ export default function Landing() {
       </section>
 
       <section className="landing__features">
-        <h2>Everything rent management should be</h2>
-        <div className="landing__feature-grid">
-          <div className="landing__feature">
-            <span className="landing__feature-icon">💳</span>
-            <h4>Instant M-Pesa payments</h4>
-            <p>STK push rent collection with automatic receipts and reconciliation.</p>
-          </div>
-          <div className="landing__feature">
-            <span className="landing__feature-icon">📊</span>
-            <h4>One dashboard, every property</h4>
-            <p>See balances, overdue rent, and occupancy across all your units at a glance.</p>
-          </div>
-          <div className="landing__feature">
-            <span className="landing__feature-icon">💬</span>
-            <h4>Built-in messaging</h4>
-            <p>Chat with tenants or landlords, post announcements, and share documents.</p>
-          </div>
-          <div className="landing__feature">
-            <span className="landing__feature-icon">🔒</span>
-            <h4>Secure by design</h4>
-            <p>Bank-grade encryption, fingerprint login, and account-level access control.</p>
+        <div className="landing__features-inner">
+          <h2>Everything rent management should be</h2>
+          <p className="landing__features-sub">Premium tools, no premium price.</p>
+          <div className="landing__feature-grid">
+            <div className="landing__feature">
+              <span className="landing__feature-icon">💳</span>
+              <h4>Instant M-Pesa payments</h4>
+              <p>STK push rent collection with automatic receipts and reconciliation.</p>
+            </div>
+            <div className="landing__feature">
+              <span className="landing__feature-icon">📊</span>
+              <h4>One dashboard, every property</h4>
+              <p>See balances, overdue rent, and occupancy across all your units at a glance.</p>
+            </div>
+            <div className="landing__feature">
+              <span className="landing__feature-icon">💬</span>
+              <h4>Built-in messaging</h4>
+              <p>Chat with tenants or landlords, post announcements, and share documents.</p>
+            </div>
+            <div className="landing__feature">
+              <span className="landing__feature-icon">🔒</span>
+              <h4>Secure by design</h4>
+              <p>Bank-grade encryption, fingerprint login, and account-level access control.</p>
+            </div>
           </div>
         </div>
       </section>

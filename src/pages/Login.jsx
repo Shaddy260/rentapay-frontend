@@ -266,6 +266,18 @@ export default function Login() {
     }
 
     if (res.role === 'landlord' && !res.setupWizardComplete) {
+      // Explicit flag (not just "a token happens to be sitting in
+      // sessionStorage") so RegisterFlow can tell "just logged in with
+      // incomplete onboarding, resume where I left off" apart from
+      // "Get Started was tapped and a stale token from an earlier,
+      // fully-completed session is still sitting in this tab" - see
+      // BUG FIX note in RegisterFlow.jsx.
+      try {
+        sessionStorage.setItem('rentapay_resume_setup', 'true');
+      } catch {
+        // storage unavailable - RegisterFlow falls back to step 0,
+        // a safe (if less convenient) degradation
+      }
       navigate('/register'); // resume setup wizard
       return;
     }
@@ -351,13 +363,14 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="login-page__panel">
+      <div className="login-page__right">
+      <div className={`login-page__panel${matchingBiometricEntries.length > 0 && !accountPickerOptions ? ' login-page__panel--with-fingerprint' : ''}`}>
         <div className="login-page__brand login-page__brand--mobile">RentaPay</div>
         <h1>Welcome back</h1>
         <p className="login-page__intro">Log in to manage your property, or view your account and pay rent.</p>
 
         {infoMessage && (
-          <div className="login-page__error" role="status" style={{ background: '#EAF4E8', color: '#2D7D27' }}>
+          <div className="login-page__error" role="status" className="login-page__error--success">
             <p>{infoMessage}</p>
           </div>
         )}
@@ -378,29 +391,16 @@ export default function Login() {
           </div>
         )}
 
-        {matchingBiometricEntries.length > 0 && !accountPickerOptions && (
-          <div className="login-page__biometric" role="group" aria-label="Fingerprint login">
-            <button
-              type="button"
-              className="login-page__biometric-btn"
-              onClick={() => handleBiometricLogin({ silent: false })}
-              disabled={biometricBusy}
-            >
-              <span className="login-page__biometric-icon" aria-hidden="true">👆</span>
-              {biometricBusy ? 'Waiting for fingerprint…' : 'Log in with fingerprint'}
-            </button>
-            <p className="login-page__biometric-hint">
-              {biometricBusy ? 'Touch the sensor on this device to continue.' : 'Fingerprint login is set up on this device.'}
-            </p>
-          </div>
-        )}
+        {/* Fingerprint login now lives in the separate side panel to
+            the right (see login-page__fingerprint-side below) instead
+            of sitting inside this form. */}
 
         {/* Dual-role account picker: only ever shown when this
             phone/email + password matched more than one account type.
             Everyone else never sees this - login just goes straight through. */}
         {accountPickerOptions && (
           <div className="login-page__account-picker" role="group" aria-label="Choose which account to log into">
-            <p className="login-page__intro" style={{ marginBottom: 'var(--space-3)' }}>
+            <p className="login-page__intro u-mb-3">
               This has more than one RentaPay account. Which one would you like to log into?
             </p>
             {accountPickerOptions.map((opt) => (
@@ -411,7 +411,7 @@ export default function Login() {
                 fullWidth
                 loading={loading}
                 onClick={() => handleAccountPick(opt)}
-                style={{ marginBottom: 'var(--space-2)' }}
+                className="u-mb-2"
               >
                 Continue as {opt.label}
               </Button>
@@ -420,7 +420,7 @@ export default function Login() {
               type="button"
               className="login-page__link-btn"
               onClick={() => { setAccountPickerOptions(null); setLoading(false); }}
-              style={{ marginTop: 8 }}
+              className="u-mt-2"
             >
               Back
             </button>
@@ -467,8 +467,8 @@ export default function Login() {
             />
           </div>
 
-          <p style={{ textAlign: 'right', margin: '0 0 var(--space-4) 0' }}>
-            <Link to="/forgot-password" className="login-page__resend-link" style={{ display: 'inline', marginTop: 0 }}>
+          <p className="login-page__forgot-row">
+            <Link to="/forgot-password" className="login-page__resend-link login-page__resend-link--inline">
               Forgot password?
             </Link>
           </p>
@@ -486,15 +486,14 @@ export default function Login() {
           Looking for a vacant unit? <Link to="/find-a-house">Browse listings</Link> — free, no account needed.
         </p>
 
-        <div style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
+        <div className="u-mt-4 u-text-center">
           <HelpButton renderAs="login-page__help-link" />
         </div>
 
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className="u-mt-4">
           <button
             type="button"
-            className="ghost-link"
-            style={{ display: 'block', margin: '0 auto' }}
+            className="ghost-link u-block-center"
             onClick={() => setShowFaq((v) => !v)}
           >
             {showFaq ? 'Hide FAQs ▲' : 'Frequently asked questions ▼'}
@@ -507,13 +506,46 @@ export default function Login() {
             (see App.jsx) per blueprint 13.3: "Secret Admin URL —
             hidden URL, not linked anywhere on platform." */}
 
-        <p style={{ marginTop: 'var(--space-4)', textAlign: 'center', fontSize: 'var(--text-xs)' }}>
+        <p className="u-mt-4 u-text-center u-text-xs">
           <Link to="/terms" className="ghost-link">Terms of Service</Link>
           {' · '}
           <Link to="/privacy" className="ghost-link">Privacy Policy</Link>
           {' · '}
           <Link to="/status" className="ghost-link">System Status</Link>
         </p>
+      </div>
+
+      {/* FEATURE (direct request): fingerprint login as a separate,
+          flat print icon in its own strip beside the login form -
+          only rendered (and only takes up the space) when this device
+          actually has biometric login enrolled; otherwise the panel
+          above stays at its normal full size. Tapping the icon
+          launches the sensor prompt directly. The auto-prompt on page
+          load (autoPromptedRef effect above) is unchanged. */}
+      {matchingBiometricEntries.length > 0 && !accountPickerOptions && (
+        <div className="login-page__fingerprint-side">
+          <button
+            type="button"
+            className={`login-page__fingerprint-side-btn${biometricBusy ? ' login-page__fingerprint-side-btn--busy' : ''}`}
+            onClick={() => handleBiometricLogin({ silent: false })}
+            disabled={biometricBusy}
+            aria-label={biometricBusy ? 'Waiting for fingerprint - touch the sensor to continue' : 'Log in with fingerprint'}
+            title={biometricBusy ? 'Touch the sensor to continue' : 'Log in with fingerprint'}
+          >
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+              <path d="M12 2a7 7 0 0 0-7 7v2c0 3 1 5.5 2 7" />
+              <path d="M12 2a7 7 0 0 1 7 7v2c0 1.5-.15 2.8-.4 4" />
+              <path d="M8.5 21c-1-2-1.5-4-1.5-7V9a5 5 0 0 1 10 0v3" />
+              <path d="M12 6.5a3.5 3.5 0 0 0-3.5 3.5v2c0 3.2.6 5.6 1.6 7.5" />
+              <path d="M15.5 10v2c0 1.7-.1 3-.35 4.2" />
+              <path d="M12 10a1.5 1.5 0 0 0-1.5 1.5V13c0 2.6.5 4.6 1.2 6" />
+            </svg>
+          </button>
+          <span className="login-page__fingerprint-side-label">
+            {biometricBusy ? 'Touch sensor…' : 'Fingerprint login'}
+          </span>
+        </div>
+      )}
       </div>
     </div>
   );

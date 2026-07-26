@@ -5,6 +5,7 @@ import PaymentDetailsCard from '../components/PaymentDetailsCard.jsx';
 import { api, ApiError } from '../api/client.js';
 import './AddTenant.css';
 import Skeleton from '../components/Skeleton.jsx';
+import InfoTip from '../components/InfoTip.jsx';
 
 const PERIOD_DISCOUNTS = { 1: 0, 3: 0.05, 6: 0.10, 12: 0.15 };
 // Updated per direct request: KES 150 -> 70 -> 50/unit/month
@@ -268,11 +269,11 @@ export default function SubscriptionManage() {
           <span className="add-tenant-success__icon">📲</span>
           <h2>Check your phone</h2>
           <p>An M-Pesa prompt for KES {pending.amountDue?.toLocaleString()} was sent. Enter your PIN to complete renewal.</p>
-          <p style={{ opacity: 0.7, fontSize: '0.9rem' }}>This page will automatically continue to your dashboard once the payment goes through - no need to refresh.</p>
+          <p className="u-text-muted">This page will automatically continue to your dashboard once the payment goes through - no need to refresh.</p>
           <button
             type="button"
             className="ghost-link"
-            style={{ marginTop: '0.5rem' }}
+            className="u-mt-2"
             onClick={() => { setShowManualPay(true); setPending(null); }}
           >
             Didn't get the prompt? Pay manually instead
@@ -309,7 +310,7 @@ export default function SubscriptionManage() {
             Your manual payment (transaction {myManualPayment.transaction_code}, KES {Number(myManualPayment.amount_paid).toLocaleString()}) has been
             submitted and is awaiting admin confirmation.
           </p>
-          <p style={{ opacity: 0.7, fontSize: '0.9rem' }}>This page will automatically continue to your dashboard once it's confirmed - no need to refresh.</p>
+          <p className="u-text-muted">This page will automatically continue to your dashboard once it's confirmed - no need to refresh.</p>
           <Button variant="primary" onClick={() => navigate('/dashboard')}>Back to dashboard</Button>
         </div>
       </div>
@@ -329,7 +330,7 @@ export default function SubscriptionManage() {
         </p>
       )}
 
-      <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Renew or change period</h3>
+      <h3 className="u-mt-5 u-mb-3">Renew or change period</h3>
       <form className="add-tenant-form" onSubmit={handleRenew}>
         <div className="add-tenant-grid">
           <div className="form-field">
@@ -337,7 +338,7 @@ export default function SubscriptionManage() {
             <input type="number" min="1" value={unitsCount} onChange={(e) => setUnitsCount(e.target.value)} />
           </div>
           <div className="form-field">
-            <label className="form-field__label">Period (months)</label>
+            <label className="form-field__label">Period (months)<InfoTip text="Enter any length you want - discounts still apply automatically at 3, 6, and 12 months." /></label>
             <input
               type="number"
               min="1"
@@ -345,10 +346,9 @@ export default function SubscriptionManage() {
               value={periodMonths}
               onChange={(e) => setPeriodMonths(e.target.value)}
             />
-            <p className="form-field__hint">Enter any length you want - discounts still apply automatically at 3, 6, and 12 months.</p>
           </div>
         </div>
-        <p style={{ fontWeight: 700, marginBottom: '1rem' }}>Total: KES {totalCost.toLocaleString()} (KES {rate}/unit/month)</p>
+        <p className="u-font-strong u-mb-4">Total: KES {totalCost.toLocaleString()} (KES {rate}/unit/month)</p>
         <Button type="submit" variant="mpesa" loading={submitting}>Pay via M-Pesa</Button>
       </form>
 
@@ -357,12 +357,12 @@ export default function SubscriptionManage() {
           behind a "pending" state - same fix as the tenant duplicate-
           confirmation bug) so a landlord/manager/caretaker always has
           a way to pay. */}
-      <button type="button" className="ghost-link" style={{ marginTop: '0.75rem' }} onClick={() => setShowManualPay((o) => !o)}>
+      <button type="button" className="ghost-link u-mt-3" onClick={() => setShowManualPay((o) => !o)}>
         {showManualPay ? 'Hide manual payment form' : "Didn't receive the popup? Pay manually"}
       </button>
 
       {myManualPayment?.status === 'pending' && (
-        <div className="stk-pending paybill-pending" style={{ marginTop: '1rem' }}>
+        <div className="stk-pending paybill-pending u-mt-4">
           <p>⏳ Manual payment submitted, waiting for admin approval.</p>
           <div className="paybill-pending__details">
             <div><span>Transaction code</span><span>{myManualPayment.transaction_code}</span></div>
@@ -372,14 +372,14 @@ export default function SubscriptionManage() {
         </div>
       )}
       {myManualPayment?.status === 'rejected' && (
-        <div className="paybill-rejected-banner" style={{ marginTop: '1rem' }}>
+        <div className="paybill-rejected-banner u-mt-4">
           <p>❌ Your last manual payment submission was not approved.</p>
           {myManualPayment.rejection_reason && <p className="paybill-rejected-banner__reason">Reason: {myManualPayment.rejection_reason}</p>}
         </div>
       )}
 
       {showManualPay && (
-        <div className="add-tenant-form" style={{ marginTop: '1rem', border: '1px solid var(--color-hairline, #e5e7eb)', borderRadius: 10, padding: '1rem' }}>
+        <div className="add-tenant-form add-tenant-form--bordered">
           <PaymentDetailsCard note="Once you've paid, fill in the details below exactly as shown on your M-Pesa confirmation SMS - the same way your tenants submit theirs." />
           {manualError && <p className="add-tenant-error">{manualError}</p>}
           <form onSubmit={handleManualSubmit}>
@@ -398,12 +398,12 @@ export default function SubscriptionManage() {
             <label className="form-field__label">M-Pesa SMS time</label>
             <input type="datetime-local" value={manualForm.mpesaSmsTimestamp} onChange={(e) => setManualForm((f) => ({ ...f, mpesaSmsTimestamp: e.target.value }))} />
 
-            <Button type="submit" variant="mpesa" loading={manualSubmitting} style={{ marginTop: '0.75rem' }}>Submit for review</Button>
+            <Button type="submit" variant="mpesa" loading={manualSubmitting} className="u-mt-3">Submit for review</Button>
           </form>
         </div>
       )}
 
-      <p className="add-tenant-subtitle" style={{ marginTop: '2rem' }}>
+      <p className="add-tenant-subtitle u-mt-6">
         Looking for how rent reaches you? Payment method is now managed from <Link to="/settings">Settings</Link>.
       </p>
     </div>

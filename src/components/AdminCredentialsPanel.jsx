@@ -114,7 +114,7 @@ export default function AdminCredentialsPanel({ token }) {
           : 'Every password-reset (forgot-password) OTP requested platform-wide, including by landlords themselves this time. Each code disappears automatically the moment it expires - anything shown here is still live.'}
       </p>
 
-      <div className="login-page__toggle" role="tablist" style={{ marginBottom: 12 }}>
+      <div className="login-page__toggle u-mb-2" role="tablist">
         <button type="button" role="tab" aria-selected={isFirstLogin} className={isFirstLogin ? 'is-active' : ''} onClick={() => setCategory('first-login')}>
           First-Time Login
         </button>
@@ -123,7 +123,7 @@ export default function AdminCredentialsPanel({ token }) {
         </button>
       </div>
 
-      <div className="login-page__toggle" role="tablist" style={{ marginBottom: 16 }}>
+      <div className="login-page__toggle u-mb-4" role="tablist">
         {roleOrder.map((r) => (
           <button key={r} type="button" role="tab" aria-selected={activeRole === r} className={activeRole === r ? 'is-active' : ''} onClick={() => setActiveRole(r)}>
             {ROLE_LABELS[r]} {groups ? `(${(groups[r] || []).length})` : ''}
@@ -137,7 +137,7 @@ export default function AdminCredentialsPanel({ token }) {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="admin-search-input"
-        style={{ marginBottom: 16, maxWidth: 380 }}
+        className="u-mb-4 u-max-380"
         aria-label="Search platform-wide first-time credentials"
       />
 
@@ -146,7 +146,7 @@ export default function AdminCredentialsPanel({ token }) {
       {groups && rowsForRole.length === 0 && <p className="tenant-portal-hint">No {ROLE_LABELS[activeRole].toLowerCase()} found.</p>}
 
       {tree.map((yearGroup) => (
-        <div key={yearGroup.year} className="activity-day" style={{ marginBottom: 8 }}>
+        <div key={yearGroup.year} className="activity-day u-mb-2">
           <div className="activity-day__header" onClick={() => toggleYear(yearGroup.year)}>
             <span className="activity-day__toggle">{expandedYears.includes(yearGroup.year) ? '▾' : '▸'}</span>
             <span className="activity-day__label"><strong>{yearGroup.year}</strong></span>
@@ -154,7 +154,7 @@ export default function AdminCredentialsPanel({ token }) {
           </div>
 
           {expandedYears.includes(yearGroup.year) && yearGroup.months.map((monthGroup) => (
-            <div key={monthGroup.monthKey} className="activity-day" style={{ marginLeft: 20, marginTop: 6 }}>
+            <div key={monthGroup.monthKey} className="activity-day activity-day--nested">
               <div className="activity-day__header" onClick={() => toggleMonth(monthGroup.monthKey)}>
                 <span className="activity-day__toggle">{expandedMonths.includes(monthGroup.monthKey) ? '▾' : '▸'}</span>
                 <span className="activity-day__label">{monthGroup.label}</span>
@@ -162,7 +162,7 @@ export default function AdminCredentialsPanel({ token }) {
               </div>
 
               {expandedMonths.includes(monthGroup.monthKey) && monthGroup.days.map((dayGroup) => (
-                <div key={dayGroup.dayKey} className="activity-day" style={{ marginLeft: 20, marginTop: 6 }}>
+                <div key={dayGroup.dayKey} className="activity-day activity-day--nested">
                   <div className="activity-day__header" onClick={() => toggleDay(dayGroup.dayKey)}>
                     <span className="activity-day__toggle">{expandedDays.includes(dayGroup.dayKey) ? '▾' : '▸'}</span>
                     <span className="activity-day__label">{dayGroup.label}</span>
@@ -190,7 +190,7 @@ export default function AdminCredentialsPanel({ token }) {
                           {dayGroup.rows.map((c) => (
                             <tr key={c.id}>
                               <td>
-                                <button type="button" onClick={() => setSelectedPerson(c)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} aria-label={`View details for ${c.full_name}`}>
+                                <button type="button" onClick={() => setSelectedPerson(c)} className="u-btn-reset" aria-label={`View details for ${c.full_name}`}>
                                   <Avatar name={c.full_name} photoUrl={c.photo_url} size={32} />
                                 </button>
                               </td>
@@ -218,12 +218,12 @@ export default function AdminCredentialsPanel({ token }) {
 
       {selectedPerson && (
         <div className="modal-overlay" role="dialog" aria-modal="true" onClick={() => setSelectedPerson(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 380 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div className="modal-card u-max-380" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-credentials-modal__header">
               <Avatar name={selectedPerson.full_name} photoUrl={selectedPerson.photo_url} size={64} />
               <div>
-                <h3 style={{ margin: 0 }}>{selectedPerson.full_name}</h3>
-                <p style={{ margin: 0, color: '#666' }}>{ROLE_LABELS[selectedPerson.role] || selectedPerson.role}</p>
+                <h3 className="u-m-0">{selectedPerson.full_name}</h3>
+                <p className="u-m-0 u-text-muted">{ROLE_LABELS[selectedPerson.role] || selectedPerson.role}</p>
               </div>
             </div>
             <p><strong>Phone:</strong> {selectedPerson.phone}</p>

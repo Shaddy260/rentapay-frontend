@@ -20,6 +20,7 @@ import MyReputationPanel from '../components/MyReputationPanel.jsx';
 import DisputeChargeButton from '../components/DisputeChargeButton.jsx';
 import PaymentPlanRequest from '../components/PaymentPlanRequest.jsx';
 import RateLandlordWidget from '../components/RateLandlordWidget.jsx';
+import RatePropertyWidget from '../components/RatePropertyWidget.jsx';
 import AnnouncementBell from '../components/AnnouncementBell.jsx';
 import { useSharedPoll } from '../utils/sharedPoll.js';
 import PaymentMethodBadge from '../components/PaymentMethodBadge.jsx';
@@ -554,7 +555,7 @@ export default function TenantPortal() {
                   breakdown above, and with no way for a tenant to
                   edit it from here. */}
               {profile?.deposit_amount ? (
-                <div className="rent-breakdown" style={{ marginTop: 16 }}>
+                <div className="rent-breakdown u-mt-4">
                   <div className="rent-breakdown__row">
                     <span>Security deposit {profile.deposit_paid_at ? `(paid ${new Date(profile.deposit_paid_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })})` : ''}</span>
                     <span>KES {Number(profile.deposit_amount).toLocaleString()}</span>
@@ -662,7 +663,7 @@ export default function TenantPortal() {
                     <div><span className="profile-grid__label">Emergency contact</span><span>{profile?.emergency_contact_name} ({profile?.emergency_contact_phone})</span></div>
                   </div>
                   <p className="tenant-portal-hint">
-                    Name, ID number, and move-in date are kept by your landlord for their records - contact them to change those. Everything else you can update yourself above.
+                    Name, ID number, move-in date, and email are kept by your landlord for their records - contact them to change those. Everything else you can update yourself above.
                   </p>
                 </>
               ) : (
@@ -683,8 +684,8 @@ export default function TenantPortal() {
                       id="email"
                       type="email"
                       value={detailsDraft.email}
-                      onChange={(e) => setDetailsDraft((d) => ({ ...d, email: e.target.value }))}
-                      placeholder="you@example.com"
+                      disabled
+                      title="Your primary email is locked after registration. Contact your landlord to change it."
                     />
                   </div>
                   <div className="form-field">
@@ -720,6 +721,7 @@ export default function TenantPortal() {
           <>
             <MyReputationPanel token={token} tenantId={profile?.id} />
             <RateLandlordWidget token={token} />
+            <RatePropertyWidget token={token} />
           </>
         )}
 

@@ -87,7 +87,7 @@
 
 .chat-bubble {
   max-width: 78%;
-  background: #fff;
+  background: var(--color-surface-raised);
   border-radius: 10px;
   padding: 8px 10px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
@@ -142,7 +142,7 @@
 
 .chat-bubble__meta span {
   font-size: 0.68rem;
-  color: #999;
+  color: var(--color-ink-soft);
 }
 
 .chat-bubble__reply-btn {
@@ -156,7 +156,7 @@
 
 .chat-bubble__body--deleted {
   font-style: italic;
-  color: #999;
+  color: var(--color-ink-soft);
 }
 
 .chat-bubble__menu {
@@ -164,7 +164,7 @@
   right: 0;
   bottom: 100%;
   margin-bottom: 4px;
-  background: #fff;
+  background: var(--color-surface-raised);
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
@@ -181,7 +181,7 @@
   padding: 8px 12px;
   font-size: 0.8rem;
   cursor: pointer;
-  color: #333;
+  color: var(--color-ink-soft);
 }
 
 .chat-bubble__menu button:hover {
@@ -223,7 +223,7 @@
 
 .chat-reply-preview__text {
   font-size: 0.8rem;
-  color: #555;
+  color: var(--color-ink-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -241,7 +241,7 @@
   display: flex;
   gap: 8px;
   padding: 10px;
-  background: #fff;
+  background: var(--color-surface-raised);
   border-top: 1px solid #e5e2da;
 }
 

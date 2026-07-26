@@ -122,7 +122,7 @@ export default function AdminSqlPanel({ token }) {
         />
       )}
 
-      {notice && <p style={{ color: '#1a7a3c' }}>{notice}</p>}
+      {notice && <p className="u-text-success">{notice}</p>}
       {error && <p className="modal-error">{error}</p>}
       {rows === null && <Skeleton rows={5} />}
 

@@ -8,7 +8,7 @@
 }
 
 .status-page__card {
-  background: #fff;
+  background: var(--color-surface-raised);
   border-radius: 16px;
   padding: 32px;
   max-width: 420px;
@@ -31,7 +31,7 @@
   margin-bottom: 16px;
 }
 
-.status-page__badge--checking { background: #eee; color: #666; }
+.status-page__badge--checking { background: #eee; color: var(--color-ink-soft); }
 .status-page__badge--ok { background: rgba(46, 139, 87, 0.12); color: #2e8b57; }
 .status-page__badge--degraded { background: rgba(184, 134, 11, 0.12); color: #b8860b; }
 .status-page__badge--down { background: rgba(192, 57, 43, 0.12); color: #c0392b; }
@@ -54,13 +54,13 @@
 
 .status-page__hint {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-ink-soft);
   margin-bottom: 16px;
 }
 
 .status-page__timestamp {
   font-size: 0.75rem;
-  color: #999;
+  color: var(--color-ink-soft);
   margin-bottom: 12px;
 }
 
@@ -70,7 +70,7 @@
   padding: 10px;
   border-radius: 8px;
   border: 1px solid #ddd;
-  background: #fff;
+  background: var(--color-surface-raised);
   cursor: pointer;
   margin-bottom: 12px;
 }

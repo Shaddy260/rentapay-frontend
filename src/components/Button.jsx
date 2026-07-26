@@ -9,9 +9,13 @@ import './Button.css';
  *                      to be asked for their M-Pesa PIN)
  * variant="ghost"    - secondary/back actions
  */
-export default function Button({ variant = 'primary', loading, children, ...props }) {
+export default function Button({ variant = 'primary', loading, children, className, ...props }) {
+  // className is merged (not overridden) so callers can layer utility/
+  // spacing classes onto the button without losing its btn/btn--variant
+  // styling - spreading {...props} after a fixed className would
+  // otherwise silently drop it if a caller passes their own className.
   return (
-    <button className={`btn btn--${variant}`} disabled={loading || props.disabled} {...props}>
+    <button className={`btn btn--${variant}${className ? ` ${className}` : ''}`} disabled={loading || props.disabled} {...props}>
       {loading ? <span className="btn__spinner" aria-hidden="true" /> : null}
       <span>{loading ? 'Please wait…' : children}</span>
     </button>

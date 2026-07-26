@@ -5,6 +5,7 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { api, ApiError } from '../api/client.js';
 import './AddTenant.css';
 import Skeleton from '../components/Skeleton.jsx';
+import InfoTip from '../components/InfoTip.jsx';
 
 /**
  * Blueprint section 4: Tenant Onboarding. Reached from a vacant unit's
@@ -166,9 +167,8 @@ export default function AddTenant() {
             <input type="number" min="1" max="28" value={form.dueDayOfMonth} onChange={(e) => update('dueDayOfMonth', e.target.value)} placeholder={`Default: ${unit?.due_day_of_month}`} />
           </div>
           <div className="form-field">
-            <label className="form-field__label">Security deposit paid (KES)</label>
+            <label className="form-field__label">Security deposit paid (KES)<InfoTip text="Refundable at move-out, separate from rent - this is not added to what the tenant owes." /></label>
             <input type="number" min="0" value={form.depositAmount} onChange={(e) => update('depositAmount', e.target.value)} placeholder="Leave blank if none was collected" />
-            <p className="form-field__hint">Refundable at move-out, separate from rent - this is not added to what the tenant owes.</p>
           </div>
           {form.depositAmount ? (
             <div className="form-field">

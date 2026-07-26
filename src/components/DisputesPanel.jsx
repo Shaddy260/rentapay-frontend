@@ -101,7 +101,7 @@ export default function DisputesPanel({ token, role = 'landlord' }) {
                   </td>
                   <td>{d.reason || <span className="tenant-portal-hint">No reason given</span>}</td>
                   <td><span className={`payment-status payment-status--${d.status === 'open' ? 'pending' : 'completed'}`}>{d.status}</span></td>
-                  <td style={{ display: 'flex', gap: 8 }}>
+                  <td className="u-flex-row">
                     <button
                       type="button"
                       className="ghost-link"

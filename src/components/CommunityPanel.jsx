@@ -3,6 +3,21 @@ import Button from './Button.jsx';
 import { api } from '../api/client.js';
 import './CommunityPanel.css';
 import Skeleton from './Skeleton.jsx';
+import PhotoLightbox from './PhotoLightbox.jsx';
+
+// Best-effort, UI-only decode of the JWT payload (id/role) so the
+// panel can tell "is this my own post" apart from "someone else's" -
+// purely cosmetic (whether the Delete button renders at all). The
+// backend re-checks ownership on every delete request regardless, so
+// there's no security reliance on this being unspoofable.
+function decodeTokenPayload(token) {
+  try {
+    const [, payload] = token.split('.');
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Community board + marketplace - the one tenant<->tenant surface in
@@ -25,6 +40,30 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
   const [price, setPrice] = useState('');
   const [busy, setBusy] = useState(false);
   const [replyDrafts, setReplyDrafts] = useState({});
+  const [photoFiles, setPhotoFiles] = useState([]); // File[] selected for the new post
+  const [photoPreviews, setPhotoPreviews] = useState([]); // matching object URLs
+  const [lightbox, setLightbox] = useState(null); // { photos, index, title }
+
+  const currentUser = React.useMemo(() => decodeTokenPayload(token), [token]);
+  // Mirrors the backend's authorTypeFor(role) exactly, so "is this my
+  // post" lines up with how author_type was actually stored.
+  const currentAuthorType = currentUser?.role === 'tenant' ? 'tenant' : currentUser?.role === 'manager' ? 'manager' : 'landlord';
+
+  const MAX_PHOTOS = 5;
+
+  function handlePhotoSelect(e) {
+    const files = Array.from(e.target.files || []).slice(0, MAX_PHOTOS);
+    photoPreviews.forEach((url) => URL.revokeObjectURL(url));
+    setPhotoFiles(files);
+    setPhotoPreviews(files.map((f) => URL.createObjectURL(f)));
+    e.target.value = ''; // allow re-selecting the same file(s) later
+  }
+
+  function removeSelectedPhoto(index) {
+    URL.revokeObjectURL(photoPreviews[index]);
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+  }
 
   const load = useCallback(() => {
     setLoading(true);
@@ -44,13 +83,18 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
     setBusy(true);
     setError('');
     try {
-      await api.createCommunityPost(
-        { kind, title: title.trim() || undefined, body: body.trim(), price: kind === 'marketplace' && price ? Number(price) : undefined, propertyId },
-        token
-      );
+      const payload = { kind, title: title.trim() || undefined, body: body.trim(), price: kind === 'marketplace' && price ? Number(price) : undefined, propertyId };
+      if (photoFiles.length > 0) {
+        await api.createCommunityPostWithPhotos(payload, photoFiles, token);
+      } else {
+        await api.createCommunityPost(payload, token);
+      }
       setTitle('');
       setBody('');
       setPrice('');
+      photoPreviews.forEach((url) => URL.revokeObjectURL(url));
+      setPhotoFiles([]);
+      setPhotoPreviews([]);
       setShowForm(false);
       load();
     } catch (err) {
@@ -157,6 +201,22 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
               min="0"
             />
           )}
+          <label className="community-panel__photo-attach">
+            📷 Attach photos (up to {MAX_PHOTOS})
+            <input type="file" accept="image/*" multiple onChange={handlePhotoSelect} hidden />
+          </label>
+          {photoPreviews.length > 0 && (
+            <div className="community-panel__photo-previews">
+              {photoPreviews.map((url, i) => (
+                <div className="community-panel__photo-preview" key={url}>
+                  <img src={url} alt={`Attachment ${i + 1}`} />
+                  <button type="button" className="community-panel__photo-remove" onClick={() => removeSelectedPhoto(i)} aria-label="Remove photo">
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <Button type="submit" variant="primary" disabled={busy}>
             {busy ? 'Posting…' : 'Post'}
           </Button>
@@ -182,15 +242,42 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
               <p className="community-panel__post-body">{post.body}</p>
               {post.price != null && <p className="community-panel__price">KES {Number(post.price).toLocaleString()}</p>}
 
+              {(() => {
+                const photos = (Array.isArray(post.photo_urls) && post.photo_urls.length ? post.photo_urls : post.photo_url ? [post.photo_url] : []);
+                if (photos.length === 0) return null;
+                return (
+                  <div className={`community-panel__gallery community-panel__gallery--count-${Math.min(photos.length, 4)}`}>
+                    {photos.slice(0, 4).map((url, i) => (
+                      <button
+                        type="button"
+                        key={url}
+                        className="community-panel__gallery-item"
+                        onClick={() => setLightbox({ photos, index: i, title: post.title || 'Post photo' })}
+                        aria-label={`View photo ${i + 1} of ${photos.length}`}
+                      >
+                        <img src={url} alt="" loading="lazy" />
+                        {i === 3 && photos.length > 4 && <span className="community-panel__gallery-more">+{photos.length - 4}</span>}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+
               <div className="community-panel__post-actions">
                 {canModerate && (
                   <button className="ghost-link" onClick={() => togglePin(post)}>
                     {post.is_pinned ? 'Unpin' : 'Pin'}
                   </button>
                 )}
-                <button className="ghost-link" onClick={() => deletePost(post.id)}>
-                  Delete
-                </button>
+                {/* Direct request: every user can delete their OWN posts,
+                    in every portal - only show the button when it will
+                    actually work, i.e. this is either the author's own
+                    post or the viewer is a moderator (landlord/manager). */}
+                {(canModerate || (post.author_type === currentAuthorType && post.author_id === currentUser?.id)) && (
+                  <button className="ghost-link" onClick={() => deletePost(post.id)}>
+                    Delete
+                  </button>
+                )}
               </div>
 
               {(post.community_post_replies || []).length > 0 && (
@@ -224,6 +311,16 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
             </li>
           ))}
         </ul>
+      )}
+
+      {lightbox && (
+        <PhotoLightbox
+          photos={lightbox.photos}
+          index={lightbox.index}
+          title={lightbox.title}
+          onIndexChange={(i) => setLightbox((prev) => ({ ...prev, index: i }))}
+          onClose={() => setLightbox(null)}
+        />
       )}
     </section>
   );

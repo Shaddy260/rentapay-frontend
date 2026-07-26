@@ -117,7 +117,7 @@ export default function DocumentsPanel({ token, tenantId, unitId, canManage = fa
                   <a href={d.file_url} target="_blank" rel="noreferrer" className="ghost-link">View / Download</a>
                 )}
                 {canManage && (
-                  <button disabled={deletingId === d.id} onClick={() => handleDelete(d.id)} style={{ color: '#b3261e' }}>
+                  <button disabled={deletingId === d.id} onClick={() => handleDelete(d.id)} className="u-text-error">
                     {deletingId === d.id ? 'Deleting…' : 'Delete'}
                   </button>
                 )}

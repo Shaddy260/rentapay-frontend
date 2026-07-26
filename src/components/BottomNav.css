@@ -18,13 +18,15 @@
 
   .bottom-nav__item {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
     gap: 2px;
     background: none;
     border: none;
-    padding: 8px 4px 6px;
+    padding: 8px 2px 6px;
     color: var(--color-text-muted, #8a8374);
     font-size: 0.68rem;
     cursor: pointer;
@@ -39,11 +41,23 @@
     line-height: 1;
   }
 
+  /* FIX (direct request: "big fonts... hide features - show all
+     features on screen, don't hide a single UI"): this used to be
+     `white-space: nowrap` + `text-overflow: ellipsis`, so once a
+     phone's font size was large enough, a label like "Dashboard" or
+     "Messages" got silently cut down to "Dash…" or worse - the exact
+     "hidden feature" being described, and the person had no way to
+     even tell a label was being cut off. Letting the label wrap onto
+     a second line instead means the full word is always visible - the
+     bar is slightly taller when it wraps, but nothing is ever
+     truncated or invisible.
+   */
   .bottom-nav__label {
-    white-space: nowrap;
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: center;
+    line-height: 1.15;
   }
 
   /* Leave room at the bottom of the page so this bar never covers

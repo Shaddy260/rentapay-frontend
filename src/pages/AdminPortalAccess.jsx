@@ -94,7 +94,7 @@ export default function AdminPortalAccess() {
         )}
 
         {message && !error && (
-          <div className="login-page__error" role="status" style={{ background: '#EAF4E8', color: '#2D7D27' }}>
+          <div className="login-page__error" role="status" className="login-page__error--success">
             <p>{message}</p>
           </div>
         )}

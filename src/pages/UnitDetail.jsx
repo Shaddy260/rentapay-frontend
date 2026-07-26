@@ -14,7 +14,6 @@ import './TenantPortal.css';
 const STATUS_OPTIONS = [
   { value: 'occupied', label: 'Occupied' },
   { value: 'vacant', label: 'Vacant' },
-  { value: 'maintenance', label: 'Maintenance' },
 ];
 
 // Mirrors backend src/utils/prepayment.js buildPrepaymentSummary exactly,
@@ -148,6 +147,34 @@ export default function UnitDetail() {
     }
   }
 
+  const [listingBusy, setListingBusy] = useState(false);
+  // DIRECT REQUEST: landlord/manager/caretaker confirms whether this
+  // vacant unit is still active, already booked, or planned for -
+  // shown on the public listings page while status stays 'vacant'.
+  const [listingStatusBusy, setListingStatusBusy] = useState(false);
+  const [depositBusy, setDepositBusy] = useState(false);
+  const [depositAmountDraft, setDepositAmountDraft] = useState('');
+  // DIRECT REQUEST: "add an option in the landlord/manager portal that
+  // they choose whether their vacant units should be listed public or
+  // not." Toggle-able regardless of the unit's current status - a
+  // landlord filling a unit privately (waiting list, agent, word of
+  // mouth) can decide that ahead of the unit actually going vacant,
+  // rather than racing to flip it the moment a tenant moves out.
+  async function handleTogglePublicListing() {
+    setListingBusy(true);
+    setError('');
+    try {
+      const nextValue = !unit.is_publicly_listed;
+      await api.updatePublicListing(unitId, nextValue, token);
+      setNotice(nextValue ? 'This unit is now public — anyone can see it and message the WhatsApp number on file once it\'s vacant.' : 'This unit is now private and will not appear on the public listings page.');
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setListingBusy(false);
+    }
+  }
+
   async function handleStatusChange(newStatus) {
     if (newStatus === unit.status) return;
     setBusy(true);
@@ -160,6 +187,64 @@ export default function UnitDetail() {
       setError(err.message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  // DIRECT REQUEST: confirm whether this vacant unit is still active,
+  // already booked (someone has committed, but not yet moved in/marked
+  // occupied), or planned for (earmarked, not really open right now).
+  async function handleListingStatusChange(newListingStatus) {
+    if (newListingStatus === unit.listing_status) return;
+    setListingStatusBusy(true);
+    setError('');
+    try {
+      await api.updateListingStatus(unitId, newListingStatus, token);
+      setNotice(`Listing confirmed as "${newListingStatus}".`);
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setListingStatusBusy(false);
+    }
+  }
+
+  // DIRECT REQUEST: whether this unit requires a deposit from a future
+  // tenant - shown on the public vacant-unit listing, independent of
+  // any deposit already collected from a tenant currently living there.
+  async function handleToggleRequiresDeposit() {
+    const nextValue = !unit.requires_deposit;
+    setDepositBusy(true);
+    setError('');
+    try {
+      await api.updateDepositSettings(
+        unitId,
+        { requiresDeposit: nextValue, depositAmountExpected: nextValue && depositAmountDraft ? Number(depositAmountDraft) : undefined },
+        token
+      );
+      setNotice(nextValue ? 'This unit now shows as requiring a deposit.' : 'This unit now shows as not requiring a deposit.');
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDepositBusy(false);
+    }
+  }
+
+  async function handleSaveDepositAmount() {
+    setDepositBusy(true);
+    setError('');
+    try {
+      await api.updateDepositSettings(
+        unitId,
+        { requiresDeposit: true, depositAmountExpected: depositAmountDraft ? Number(depositAmountDraft) : undefined },
+        token
+      );
+      setNotice('Expected deposit amount saved.');
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDepositBusy(false);
     }
   }
 
@@ -415,21 +500,122 @@ export default function UnitDetail() {
             </p>
           )}
           {unit.status === 'vacant' && (
-            <div style={{ marginTop: 10 }}>
+            <div className="u-mt-3">
               <Button type="button" variant="secondary" loading={verifyBusy} onClick={handleVerifyUnit}>
                 Still vacant — confirm
               </Button>
               {unit.last_verified_at ? (
-                <p className="unit-detail-hint" style={{ marginTop: 6 }}>
+                <p className="unit-detail-hint u-mt-2">
                   Last confirmed vacant: {new Date(unit.last_verified_at).toLocaleString('en-GB')}
                 </p>
               ) : (
-                <p className="unit-detail-hint" style={{ marginTop: 6 }}>
+                <p className="unit-detail-hint u-mt-2">
                   Not yet confirmed — this will only show as "Updated," not "Verified."
                 </p>
               )}
+
+              {/* DIRECT REQUEST: landlord/manager/caretaker confirms
+                  whether this vacancy is still open, already booked, or
+                  planned for - shown alongside the unit on the public
+                  listings page while it stays vacant. */}
+              <div className="u-mt-3">
+                <p className="unit-detail-hint u-mt-2 u-label-strong">
+                  Confirm listing status
+                </p>
+                <div className="u-flex-row">
+                  {[
+                    { value: 'active', label: 'Still active' },
+                    { value: 'booked', label: 'Already booked' },
+                    { value: 'planned', label: 'Planned for' },
+                  ].map((opt) => (
+                    <Button
+                      key={opt.value}
+                      type="button"
+                      variant={unit.listing_status === opt.value ? 'primary' : 'ghost'}
+                      loading={listingStatusBusy}
+                      onClick={() => handleListingStatusChange(opt.value)}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+                {unit.listing_status_updated_at && (
+                  <p className="unit-detail-hint u-mt-2">
+                    Confirmed as "{unit.listing_status || 'active'}" on {new Date(unit.listing_status_updated_at).toLocaleString('en-GB')}.
+                  </p>
+                )}
+              </div>
             </div>
           )}
+
+          {/* DIRECT REQUEST: show (and let a landlord/manager/caretaker
+              set) whether this unit requires a deposit from a future
+              tenant - separate from any deposit already collected from
+              whoever lives here now. Shown regardless of current
+              status, same as the public-listing toggle below, since a
+              landlord may want to set expectations ahead of the unit
+              actually going vacant. */}
+          <div className="unit-detail-hint u-divider-top">
+            <label className="u-checkbox-row u-checkbox-row--strong">
+              <input
+                type="checkbox"
+                checked={!!unit.requires_deposit}
+                disabled={depositBusy}
+                onChange={handleToggleRequiresDeposit}
+              />
+              This unit requires a deposit from a future tenant
+            </label>
+            {unit.requires_deposit && (
+              <div className="u-flex-row u-mt-2">
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Expected deposit amount (optional, KES)"
+                  defaultValue={unit.deposit_amount_expected ?? ''}
+                  onChange={(e) => setDepositAmountDraft(e.target.value)}
+                  className="u-max-240"
+                />
+                <Button type="button" variant="ghost" loading={depositBusy} onClick={handleSaveDepositAmount}>
+                  Save amount
+                </Button>
+              </div>
+            )}
+            <p className="u-mt-1">
+              {unit.requires_deposit
+                ? 'Prospective tenants browsing the public listing will see this unit requires a deposit.'
+                : 'Prospective tenants browsing the public listing will see this unit does not require a deposit.'}
+            </p>
+          </div>
+
+          <div className="unit-detail-hint u-divider-top">
+            <label className="u-checkbox-row u-checkbox-row--strong">
+              <input
+                type="checkbox"
+                checked={!!unit.is_publicly_listed}
+                disabled={listingBusy}
+                onChange={handleTogglePublicListing}
+              />
+              List this unit on the public listings page when vacant
+            </label>
+            {/* DIRECT REQUEST: make clear, before someone opts in, that
+                this isn't just "the unit becomes visible" - it also
+                means anyone browsing the page can reach whichever
+                WhatsApp number is on file for this unit (manager,
+                then caretaker, then the landlord themself - see
+                getUnitContact in public.controller.js) with zero
+                login or vetting on their end. Shown regardless of the
+                checkbox's current state so it reads as something to
+                weigh before turning it on, not just an after-the-fact
+                description. */}
+            <p className="u-mt-1">
+              Heads up: anyone browsing RentaPay's free listings page — no account needed — will be able to see this unit and message the WhatsApp number on file for it (your manager/caretaker's number, or yours if none is set) directly. There's no way to screen who reaches out first.
+            </p>
+            <p className="u-mt-1">
+              {unit.is_publicly_listed
+                ? "This unit is currently public and will show up there once it's vacant."
+                : "This unit is currently private — it will never appear on RentaPay's public listings page, even while vacant."}
+            </p>
+          </div>
         </section>
 
         {/* Rent + due date card */}
@@ -523,8 +709,8 @@ export default function UnitDetail() {
             Paybill/Till/STK setup just for this unit - only this unit's tenant will see it.
           </p>
           {editingPaymentOverride ? (
-            <div className="edit-row__editing" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="edit-row__editing edit-row__editing--stacked">
+              <label className="u-flex-row">
                 <input
                   type="checkbox"
                   checked={paymentOverrideDraft.enabled}
@@ -630,7 +816,7 @@ export default function UnitDetail() {
           {activeTenant ? (
             <div className="tenant-panel">
               <div className="tenant-panel__info">
-                <span className="tenant-panel__name" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="tenant-panel__name u-flex-row">
                   {activeTenant.full_name}
                   <TenantContactCard tenant={{ ...activeTenant, unit_name: unit.unit_name }} size={26} token={token} canRate />
                 </span>
@@ -772,7 +958,7 @@ export default function UnitDetail() {
             <p className="unit-detail-hint">
               This removes {activeTenant.full_name} as the active tenant and marks this unit vacant. Their payment history is kept, and you can add a new tenant to this unit right away.
             </p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <div className="u-flex-end">
               <button type="button" className="ghost-link" onClick={() => setShowArchiveConfirm(false)}>Cancel</button>
               <Button variant="primary" onClick={handleArchiveTenant} loading={busy}>Archive tenant</Button>
             </div>

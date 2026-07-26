@@ -57,7 +57,7 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
 
             {landlordContact && (
               <div className="help-channels help-channels--landlord">
-                <p className="help-modal-or" style={{ marginTop: 0 }}>For rent/unit issues, contact directly:</p>
+                <p className="help-modal-or" className="u-mt-0">For rent/unit issues, contact directly:</p>
                 <a href={`tel:${landlordContact.phone}`} className="help-channel">
                   {landlordContact.label || 'Landlord'}: {landlordContact.name} — {landlordContact.phone}
                 </a>

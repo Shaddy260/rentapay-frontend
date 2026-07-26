@@ -224,7 +224,7 @@ a.tenant-contact-card__row:hover {
   font-size: var(--text-sm, 0.9375rem);
   cursor: pointer;
   border: 1px solid var(--color-border, #D8D2C8);
-  background: white;
+  background: var(--color-surface-raised);
 }
 
 .tenant-contact-card__rate-submit {

@@ -11,6 +11,41 @@ html, body {
   width: 100%;
 }
 
+/* =====================================================================
+   FIX (direct request: "some users have big fonts on their phones and
+   some features are hidden... the platform does not respond to auto
+   rotate - it should respond to auto rotate and side scrolling when
+   the font is big and should show all features on screen").
+   -------------------------------------------------------------------
+   Mobile Safari and some Android browsers silently INFLATE font size
+   beyond what the page's own CSS asks for (its own "readability"
+   heuristic, separate from the OS-level large-text accessibility
+   setting) - and by default it recalculates that inflation differently
+   in portrait vs. landscape, so text can visibly jump in size the
+   moment someone rotates their phone. Combined with any container
+   built for one specific font size, that jump is exactly what makes
+   buttons/labels overflow their box and get visually cut off/hidden.
+   Turning that specific auto-inflation off makes text size consistent
+   across rotation; it does NOT disable or override the OS-level large
+   text/zoom accessibility settings people actually rely on - those
+   still work normally through rem/em units, which every font-size in
+   this codebase already uses (see tokens.css).
+   ===================================================================== */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Any element explicitly marked "must not wrap or grow" is still
+   allowed to scroll internally rather than clip its content outright -
+   a plain `overflow: hidden` on a fixed-size UI chrome element (a
+   button, a pill, a nav item) can otherwise hide part of its own label
+   the moment a user's font size is larger than what the layout was
+   built for. */
+.btn, button, .status-option, .bottom-nav__item, .portal-sidebar__item {
+  min-width: 0;
+}
+
 body {
   background: var(--color-surface);
   color: var(--color-ink);
@@ -132,7 +167,7 @@ a {
 
 .broadcast-panel__hint {
   padding: 0 var(--space-4, 16px);
-  color: #666;
+  color: var(--color-ink-soft);
   font-size: 0.85rem;
   margin: 4px 0 0;
 }
@@ -147,7 +182,7 @@ a {
 }
 
 .broadcast-panel__empty {
-  color: #888;
+  color: var(--color-ink-soft);
   text-align: center;
   margin-top: var(--space-4, 16px);
 }
@@ -165,7 +200,7 @@ a {
   justify-content: space-between;
   gap: 8px;
   font-size: 0.7rem;
-  color: #888;
+  color: var(--color-ink-soft);
   margin-bottom: 4px;
 }
 
@@ -203,4 +238,163 @@ a {
   padding: 8px;
   border-radius: 8px;
   border: 1px solid #ccc;
+}
+
+/* =====================================================================
+   UTILITY CLASSES (design-system pass, direct request)
+   ---------------------------------------------------------------------
+   The codebase leans heavily on inline `style={{...}}` for one-off
+   spacing/flex tweaks. That works, but (a) it doesn't scale as the page
+   count grows, (b) it's inconsistent (same visual gap expressed as
+   raw px in one file, rem in another), and (c) it silently breaks dark
+   mode whenever a hardcoded hex sneaks into an inline style instead of
+   a --color-* token (see tokens.css DARK MODE note above).
+
+   This is a small, generic utility layer - not a full migration of
+   every page. Start here for new code and when touching a file that
+   already has inline styles; move its inline styles onto these (or a
+   page-specific class) rather than adding more inline styles on top.
+   ===================================================================== */
+.u-flex-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.u-flex-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.u-flex-end {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.u-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.u-checkbox-row--strong {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.u-mt-1 { margin-top: var(--space-1); }
+.u-mt-2 { margin-top: var(--space-2); }
+.u-mt-3 { margin-top: var(--space-3); }
+.u-mt-4 { margin-top: var(--space-4); }
+.u-mt-5 { margin-top: var(--space-5); }
+.u-mt-6 { margin-top: var(--space-6); }
+.u-mt-0 { margin-top: 0; }
+
+.u-mb-1 { margin-bottom: var(--space-1); }
+.u-mb-2 { margin-bottom: var(--space-2); }
+.u-mb-3 { margin-bottom: var(--space-3); }
+.u-mb-4 { margin-bottom: var(--space-4); }
+.u-mb-0 { margin-bottom: 0; }
+
+.u-m-0 { margin: 0; }
+
+.u-text-muted {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.u-text-error {
+  color: var(--color-error);
+}
+
+.u-text-success {
+  color: var(--color-mpesa-dark);
+}
+
+.u-text-xs { font-size: var(--text-xs); }
+.u-text-sm { font-size: var(--text-sm); }
+.u-text-center { text-align: center; }
+.u-text-right { text-align: right; }
+.u-text-left { text-align: left; }
+.u-text-capitalize { text-transform: capitalize; }
+.u-font-mono { font-family: monospace; }
+.u-font-strong { font-weight: 600; }
+
+.u-inline-block { display: inline-block; }
+.u-hidden { display: none; }
+
+.u-full-width { width: 100%; }
+
+.u-block-center {
+  display: block;
+  margin: 0 auto;
+}
+
+.app-loading-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  color: var(--color-ink-soft);
+}
+
+.u-max-160 { max-width: 160px; }
+.u-max-280 { max-width: 280px; }
+.u-max-380 { max-width: 380px; }
+.u-max-420 { max-width: 420px; }
+
+.u-divider-top {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.u-max-240 { max-width: 240px; }
+.u-max-140 { max-width: 140px; }
+
+.u-label-strong {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.u-divider-top-dashed {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-hairline);
+}
+
+.u-flex-row--end {
+  align-items: flex-end;
+}
+
+.u-flex-col--stretch {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.u-flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.u-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.u-btn-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }

@@ -11,6 +11,7 @@ import AdminStatistics from '../components/AdminStatistics.jsx';
 import AdminRevenueDashboard from '../components/AdminRevenueDashboard.jsx';
 import AdminCredentialsPanel from '../components/AdminCredentialsPanel.jsx';
 import AdminSqlPanel from '../components/AdminSqlPanel.jsx';
+import AdminRatingFlags from '../components/AdminRatingFlags.jsx';
 import LandlordEditModal from '../components/LandlordEditModal.jsx';
 import { downloadCsv } from '../utils/downloadCsv.js';
 import Faq from '../components/Faq.jsx';
@@ -570,6 +571,7 @@ export default function AdminDashboard() {
           { key: 'manual-subscription-payments', label: 'Landlord Manual Payments', icon: '💳', badge: sidebarCounts.landlordPayments, onClick: () => setActiveTab('manual-subscription-payments') },
           { key: 'messages', label: 'Messages', icon: '💬', badge: sidebarCounts.messages, onClick: () => setActiveTab('messages') },
           { key: 'broadcast', label: 'Broadcast', icon: '📢', onClick: () => setShowBroadcastModal(true) },
+          { key: 'rating-flags', label: 'Rating Flags', icon: '🚩', onClick: () => setActiveTab('rating-flags') },
           { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
           { key: 'faq', label: 'FAQs', icon: '📚', onClick: () => setActiveTab('faq') },
           ...(canOfferInstall
@@ -723,6 +725,7 @@ export default function AdminDashboard() {
         {activeTab === 'faq' && <Faq audience="admin" />}
         {activeTab === 'credentials' && <AdminCredentialsPanel token={token} />}
         {activeTab === 'sql' && <AdminSqlPanel token={token} />}
+        {activeTab === 'rating-flags' && <AdminRatingFlags token={token} />}
         {activeTab === 'manual-subscription-payments' && <LandlordManualPaymentConfirmations token={token} />}
 
 

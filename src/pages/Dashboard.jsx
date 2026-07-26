@@ -34,6 +34,8 @@ import FirstTimeCredentialsPanel from '../components/FirstTimeCredentialsPanel.j
 import PendingPaymentConfirmations from '../components/PendingPaymentConfirmations.jsx';
 import ComplaintsPanel from '../components/ComplaintsPanel.jsx';
 import CommunityPanel from '../components/CommunityPanel.jsx';
+import MyOwnRatingPanel from '../components/MyOwnRatingPanel.jsx';
+import PropertyReputationPanel from '../components/PropertyReputationPanel.jsx';
 import AttentionFeed from '../components/AttentionFeed.jsx';
 import AtAGlanceSummary from '../components/AtAGlanceSummary.jsx';
 import MaintenanceManagePanel from '../components/MaintenanceManagePanel.jsx';
@@ -387,7 +389,11 @@ export default function Dashboard() {
           { key: 'pending-confirmations', label: 'Pending Payments', icon: '✅', onClick: () => setActiveView('pending-confirmations') },
           { key: 'archived-tenants', label: 'Archived Tenants', icon: '🗄️', onClick: () => setActiveView('archived-tenants') },
           { key: 'tenant-reputations', label: 'Tenant Reputations', icon: '⭐', onClick: () => setActiveView('tenant-reputations') },
-          { key: 'first-time-credentials', label: 'First-Time Login Details', icon: '🔑', onClick: () => setActiveView('first-time-credentials') },
+          { key: 'my-rating', label: 'My Rating', icon: '🌟', onClick: () => setActiveView('my-rating') },
+          // Direct request: caretakers should have the First-Time Login
+          // Details UI removed entirely (not just narrowed) - only
+          // landlord and manager portals keep this nav item.
+          ...(!isCaretaker ? [{ key: 'first-time-credentials', label: 'First-Time Login Details', icon: '🔑', onClick: () => setActiveView('first-time-credentials') }] : []),
           { key: 'tenant-lists', label: 'Tenant Lists', icon: '📋', onClick: () => setActiveView('tenant-lists') },
           // FIX (direct request: "help requests should be available to
           // all roles, not just tenants") - ComplaintsPanel already
@@ -631,9 +637,14 @@ export default function Dashboard() {
         <main className="dashboard-main">
           <TenantReputationsPanel token={token} />
         </main>
-      ) : activeView === 'first-time-credentials' ? (
+      ) : activeView === 'my-rating' ? (
         <main className="dashboard-main">
-          <FirstTimeCredentialsPanel token={token} viewerRole={isCaretaker ? 'caretaker' : isManager ? 'manager' : 'landlord'} />
+          <MyOwnRatingPanel token={token} viewerRole={isManager || isCaretaker ? 'manager' : 'landlord'} roleLevel={isCaretaker ? 'caretaker' : 'manager'} />
+          <PropertyReputationPanel token={token} propertyId={activePropertyId} viewerRole={isManager || isCaretaker ? 'manager' : 'landlord'} />
+        </main>
+      ) : activeView === 'first-time-credentials' && !isCaretaker ? (
+        <main className="dashboard-main">
+          <FirstTimeCredentialsPanel token={token} viewerRole={isManager ? 'manager' : 'landlord'} />
         </main>
       ) : activeView === 'tenant-lists' ? (
         <main className="dashboard-main">

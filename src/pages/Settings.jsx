@@ -7,6 +7,7 @@ import EmptyState from '../components/EmptyState.jsx';
 import { api, ApiError } from '../api/client.js';
 import './Settings.css';
 import Skeleton from '../components/Skeleton.jsx';
+import InfoTip from '../components/InfoTip.jsx';
 
 /**
  * Settings hub - shared by landlords and property managers (a manager
@@ -462,7 +463,7 @@ export default function Settings() {
                   // actual account on its own.
                   <div className="settings-manager-row__display">
                     <span>{p.liveCaretaker.name} · {p.liveCaretaker.phone}</span>
-                    <span className="tenant-portal-hint" style={{ margin: 0 }}>Assigned caretaker account - manage assignment under Team below.</span>
+                    <span className="tenant-portal-hint u-m-0">Assigned caretaker account - manage assignment under Team below.</span>
                   </div>
                 ) : (
                   <div className="settings-manager-row__display">
@@ -505,16 +506,16 @@ export default function Settings() {
           </p>
 
           {!isManager && justAddedManager && (
-            <div id="manager-added-confirmation" className="settings-banner settings-banner--ok" style={{ marginBottom: '1rem' }}>
+            <div id="manager-added-confirmation" className="settings-banner settings-banner--ok u-mb-4">
               <strong>{justAddedManager.name} was added.</strong>
-              <p style={{ margin: '0.4rem 0 0' }}>
+              <p className="u-mt-2 u-mb-0">
                 Their login details were sent to <strong>{justAddedManager.email}</strong> by email. If it
                 doesn't arrive, share these directly:
               </p>
-              <p style={{ margin: '0.4rem 0 0', fontFamily: 'monospace' }}>
+              <p className="u-mt-2 u-mb-0 u-font-mono">
                 Temp password: <strong>{justAddedManager.tempPassword}</strong>
               </p>
-              <button type="button" className="ghost-link" onClick={() => setJustAddedManager(null)} style={{ marginTop: '0.5rem' }}>Dismiss</button>
+              <button type="button" className="ghost-link u-mt-2" onClick={() => setJustAddedManager(null)}>Dismiss</button>
             </div>
           )}
 
@@ -587,12 +588,12 @@ export default function Settings() {
           ))}
 
           {managers.length > 0 && (
-            <ul className="settings-manager-list" style={{ marginTop: 'var(--space-4)' }}>
+            <ul className="settings-manager-list u-mt-4">
               {managers.map((m) => (
                 <li key={m.id} className="settings-manager-row">
                   <div className="settings-manager-row__name">
                     <strong>{m.full_name}</strong>
-                    <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: 0.7, textTransform: 'capitalize' }}>
+                    <span className="settings-manager-role-tag">
                       ({m.role_level === 'caretaker' ? 'Caretaker' : 'Property Manager'})
                     </span>
                     {!m.is_active && <span className="settings-manager-row__empty"> (removed)</span>}
@@ -610,7 +611,7 @@ export default function Settings() {
                       </div>
                     </div>
                   ) : !isManager && editingAssignmentsId === m.id ? (
-                    <div className="settings-manager-row__edit" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                    <div className="settings-manager-row__edit u-flex-col--stretch">
                       <div className="settings-property-picker">
                         {properties.map((p) => (
                           <label className="settings-property-picker__item" key={p.id}>
@@ -642,7 +643,7 @@ export default function Settings() {
                           {m.is_active && (
                             confirmingRemoveManagerId === m.id ? (
                               <>
-                                <span className="settings-manager-row__empty" style={{ color: '#b91c1c', fontWeight: 600 }}>Remove permanently?</span>
+                                <span className="settings-manager-row__empty u-text-error u-font-strong">Remove permanently?</span>
                                 <button type="button" className="ghost-link danger-link" onClick={() => removeManagerAccount(m.id, m.full_name)}>Yes, remove</button>
                                 <button type="button" className="ghost-link" onClick={() => setConfirmingRemoveManagerId(null)}>Cancel</button>
                               </>
@@ -679,16 +680,15 @@ export default function Settings() {
             <div className="settings-payment-form__grid">
               <div className="form-field">
                 <label className="form-field__label">Phone</label>
-                <input required placeholder="07XXXXXXXX or 2547XXXXXXXX" value={myContact.phone} onChange={(e) => setMyContact((c) => ({ ...c, phone: e.target.value }))} />
+                <input required disabled title="Your primary phone number is locked after registration. Contact support to change it." placeholder="07XXXXXXXX or 2547XXXXXXXX" value={myContact.phone} />
               </div>
               <div className="form-field">
-                <label className="form-field__label">WhatsApp number</label>
+                <label className="form-field__label">WhatsApp number<InfoTip text="Shown publicly on free vacant-unit listings." /></label>
                 <input required placeholder="07XXXXXXXX or 2547XXXXXXXX" value={myContact.whatsappNumber} onChange={(e) => setMyContact((c) => ({ ...c, whatsappNumber: e.target.value }))} />
-                <p className="form-field__hint">Shown publicly on free vacant-unit listings.</p>
               </div>
               <div className="form-field">
                 <label className="form-field__label">Email</label>
-                <input type="email" value={myContact.email} onChange={(e) => setMyContact((c) => ({ ...c, email: e.target.value }))} />
+                <input type="email" disabled title="Your primary email is locked after registration. Contact support to change it." value={myContact.email} />
               </div>
               <div className="form-field">
                 <label className="form-field__label">{isManager && myAccess?.role_level === 'caretaker' ? 'Gender' : 'I am a'} (optional)</label>
@@ -700,13 +700,12 @@ export default function Settings() {
               </div>
               {!isManager && (
                 <div className="form-field">
-                  <label className="form-field__label">Notifications</label>
+                  <label className="form-field__label">Notifications<InfoTip text={'How push notifications on your device should get your attention. "Ring" uses your phone\'s own notification sound - we can\'t override it with a custom tone.'} /></label>
                   <select value={myContact.notificationStyle} onChange={(e) => setMyContact((c) => ({ ...c, notificationStyle: e.target.value }))}>
                     <option value="ring">Ring (normal sound)</option>
                     <option value="vibrate">Vibrate only</option>
                     <option value="silent">Silent (inbox only)</option>
                   </select>
-                  <p className="form-field__hint">How push notifications on your device should get your attention. "Ring" uses your phone's own notification sound - we can't override it with a custom tone.</p>
                 </div>
               )}
             </div>
@@ -731,8 +730,8 @@ export default function Settings() {
         )}
 
         {!isManager && properties.length > 0 && (
-          <div style={{ marginTop: 'var(--space-5)' }}>
-            <h3 style={{ fontSize: 'var(--text-md)', marginBottom: 'var(--space-2)' }}>Who tenants see as the contact, per property</h3>
+          <div className="u-mt-5">
+            <h3 className="u-mb-2">Who tenants see as the contact, per property</h3>
             <ul className="settings-manager-list">
               {properties.map((p) => (
                 <li key={p.id} className="settings-manager-row">
@@ -770,7 +769,7 @@ export default function Settings() {
           payment method - changing one apartment&apos;s method never affects any other apartment.
         </p>
         {properties.length > 1 && !isCaretaker && (
-          <div className="form-field" style={{ marginBottom: '0.75rem' }}>
+          <div className="form-field u-mb-3">
             <label className="form-field__label">Apply to</label>
             <select
               value={paymentPropertyId}
@@ -807,13 +806,12 @@ export default function Settings() {
               )}
               {paymentMethod.method === 'stk' && (
                 <div className="form-field">
-                  <label className="form-field__label">STK push phone number</label>
+                  <label className="form-field__label">STK push phone number<InfoTip text={`The M-Pesa prompt for this ${paymentPropertyId ? 'apartment' : 'account'} goes to this number.`} /></label>
                   <input
                     value={paymentMethod.stkPhoneNumber || ''}
                     onChange={(e) => setPaymentMethod((p) => ({ ...p, stkPhoneNumber: e.target.value }))}
                     placeholder="e.g. 0712345678"
                   />
-                  <p className="form-field__hint">The M-Pesa prompt for this {paymentPropertyId ? 'apartment' : 'account'} goes to this number.</p>
                 </div>
               )}
               {paymentMethod.method === 'till' && (

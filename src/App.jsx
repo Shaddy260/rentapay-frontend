@@ -1,6 +1,8 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/Toast.jsx';
+import InactivityLogout from './components/InactivityLogout.jsx';
+import OfflineBanner from './components/OfflineBanner.jsx';
 
 // PERFORMANCE FIX (direct request: "reduce how long the code takes to
 // load"). Every page used to be imported eagerly at the top of this
@@ -50,7 +52,7 @@ const ADMIN_PATH = import.meta.env.VITE_ADMIN_PATH || '/admin-portal-access-secr
 // actual page's chunk is still being fetched.
 function RouteFallback() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'sans-serif', color: '#6b6558' }}>
+    <div className="app-loading-fallback">
       Loading…
     </div>
   );
@@ -60,6 +62,8 @@ export default function App() {
   return (
     <ToastProvider>
       <BrowserRouter>
+        <OfflineBanner />
+        <InactivityLogout />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
           <Route path="/" element={<Landing />} />
