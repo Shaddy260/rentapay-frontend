@@ -57,7 +57,7 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
 
             {landlordContact && (
               <div className="help-channels help-channels--landlord">
-                <p className="help-modal-or" className="u-mt-0">For rent/unit issues, contact directly:</p>
+                <p className="help-modal-or u-mt-0">For rent/unit issues, contact directly:</p>
                 <a href={`tel:${landlordContact.phone}`} className="help-channel">
                   {landlordContact.label || 'Landlord'}: {landlordContact.name} — {landlordContact.phone}
                 </a>
@@ -78,11 +78,17 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
               </a>
             </div>
 
-            <p className="help-modal-or">Or chat directly with an agent — your message lands in our team's inbox instantly and replies come straight back here:</p>
+            <p className="help-modal-or">
+              {token
+                ? "Or chat directly with an agent — your message lands in our team's inbox instantly and replies come straight back here:"
+                : 'Log in to chat directly with an agent, or reach us through WhatsApp or email above.'}
+            </p>
 
-            <div className="help-chat-cta">
-              <ChatWidget role={role} label="Chat with an agent" directThread={agentThread} onNavigate={close} />
-            </div>
+            {token && (
+              <div className="help-chat-cta">
+                <ChatWidget role={role} label="Chat with an agent" directThread={agentThread} onNavigate={close} />
+              </div>
+            )}
           </div>
         </div>
       )}

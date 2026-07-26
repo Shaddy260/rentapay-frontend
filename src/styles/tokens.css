@@ -63,6 +63,32 @@
   --shadow-lg: 0 12px 32px rgba(15, 61, 62, 0.14);
 
   --max-width: 1080px;
+
+  /* Aliases. A number of component stylesheets reference these names
+     (--color-bg, --color-border, --color-text, --color-danger, etc.)
+     which never had a definition anywhere in this file - they always
+     silently fell back to each rule's own hardcoded fallback color,
+     which is why large parts of the app didn't visibly change under
+     dark mode even though the toggle itself worked correctly. Defining
+     them here, aliased to the tokens above, is what actually connects
+     those components to the theme. */
+  --color-bg: var(--color-surface);
+  --color-border: var(--color-hairline);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-ink-soft);
+  --color-text-secondary: var(--color-ink-soft);
+  --color-danger: var(--color-error);
+  --color-danger-bg: var(--color-error-bg);
+  --color-success: #2E7D32;
+  --color-warning: #B8860B;
+  --color-on-primary: #FFFFFF;
+  --color-accent-dark: #9A4C20;
+  --color-accent-soft: #FFF4E5;
+  --color-primary-tint: #EAF4F3;
+  --color-surface-muted: #F7F4EC;
+  --color-surface-soft: #F7F7F5;
+  --color-surface-subtle: #F3F4F6;
+  --color-surface-sunken: rgba(0, 0, 0, 0.05);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -106,4 +132,22 @@
   --color-error: #E5766D;
   --color-error-bg: #3A211F;
   --color-success-bg: #1F3320;
+
+  --color-bg: var(--color-surface);
+  --color-border: var(--color-hairline);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-ink-soft);
+  --color-text-secondary: var(--color-ink-soft);
+  --color-danger: var(--color-error);
+  --color-danger-bg: var(--color-error-bg);
+  --color-success: #6FCF7C;
+  --color-warning: #E0B34D;
+  --color-on-primary: #0B211D;
+  --color-accent-dark: #B96F3D;
+  --color-accent-soft: rgba(224, 147, 94, 0.15);
+  --color-primary-tint: rgba(61, 168, 138, 0.12);
+  --color-surface-muted: #1A2926;
+  --color-surface-soft: #1A2926;
+  --color-surface-subtle: #1A2926;
+  --color-surface-sunken: rgba(255, 255, 255, 0.06);
 }

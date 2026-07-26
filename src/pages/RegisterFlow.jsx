@@ -138,8 +138,8 @@ export default function RegisterFlow() {
     email: '',
     password: '',
     gender: '',
-    unitsCount: 5,
-    periodMonths: 1,
+    unitsCount: '',
+    periodMonths: '',
     ...(persisted?.form || {}),
   });
 
@@ -379,7 +379,7 @@ export default function RegisterFlow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex, landlordId]);
 
-  const cost = previewCost(Number(form.unitsCount) || 1, Number(form.periodMonths));
+  const cost = previewCost(Number(form.unitsCount) || 1, Number(form.periodMonths) || 1);
 
   function updateForm(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -391,6 +391,14 @@ export default function RegisterFlow() {
   async function handleSubmitDetails(e) {
     e.preventDefault();
     setError('');
+    if (!form.unitsCount || Number(form.unitsCount) < 1) {
+      setError('Please enter the number of units you want to register.');
+      return;
+    }
+    if (!form.periodMonths || Number(form.periodMonths) < 1) {
+      setError('Please enter your subscription period in months.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.registerLandlord({

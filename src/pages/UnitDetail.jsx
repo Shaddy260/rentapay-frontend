@@ -6,6 +6,7 @@ import { api, ApiError } from '../api/client.js';
 import { downloadCsv } from '../utils/downloadCsv.js';
 import DocumentsPanel from '../components/DocumentsPanel.jsx';
 import TenantContactCard from '../components/TenantContactCard.jsx';
+import TenantRatingPanel from '../components/TenantRatingPanel.jsx';
 import UnitPhotosPanel from '../components/UnitPhotosPanel.jsx';
 import { useToast } from '../components/Toast.jsx';
 import './UnitDetail.css';
@@ -851,6 +852,7 @@ export default function UnitDetail() {
                   </span>
                 ) : null}
               </div>
+              <TenantRatingPanel tenantId={activeTenant.id} token={token} />
               <div className="tenant-panel__actions">
                 <button onClick={() => setShowEditTenantModal(true)}>Edit details</button>
                 <button onClick={handleRemind} disabled={busy}>Remind</button>

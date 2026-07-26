@@ -1,8 +1,3 @@
-/* ===================================================================
-   Login — premium split layout
-   Left: animated brand/hero panel (desktop only)
-   Right: the login card, fading/sliding in on load.
-   ================================================================= */
 
 .login-page {
   min-height: 100vh;
@@ -11,9 +6,6 @@
   background: var(--color-surface);
 }
 
-/* ---------------------------------------------------------------
-   Hero / brand panel
-   --------------------------------------------------------------- */
 .login-page__hero {
   position: relative;
   overflow: hidden;
@@ -123,11 +115,6 @@
   font-size: 1.05rem;
 }
 
-/* ---------------------------------------------------------------
-   Right-hand column: login form, plus (only when this device has
-   fingerprint login enrolled) a separate flat-icon side panel next
-   to it - see login-page__fingerprint-side below.
-   --------------------------------------------------------------- */
 .login-page__right {
   display: flex;
   align-items: center;
@@ -151,9 +138,6 @@
   animation-delay: 0.08s;
 }
 
-/* Only shrinks when the fingerprint side panel is actually rendered
-   next to it, so the login form stays full-size for everyone who
-   hasn't set up fingerprint login on this device. */
 .login-page__panel--with-fingerprint {
   max-width: 380px;
 }
@@ -259,14 +243,6 @@
   background: var(--color-surface);
 }
 
-/* FEATURE (direct request): fingerprint login as its own flat-icon
-   side panel next to the login form, instead of a boxy full-width
-   button+caption block inside it or a corner-pinned icon on top of
-   it. Only rendered when this device has fingerprint login enrolled -
-   see login-page__panel--with-fingerprint above for how the form
-   shrinks to make room for it, only in that case. Tapping the icon
-   launches the sensor directly; the auto-prompt on page load (see
-   Login.jsx's autoPromptedRef effect) is unchanged. */
 .login-page__fingerprint-side {
   display: flex;
   flex-direction: column;
@@ -322,9 +298,6 @@
   50% { box-shadow: 0 0 0 8px rgba(15, 61, 62, 0.08); }
 }
 
-/* Below tablet width there's no room for the form and the side panel
-   side by side without either getting cramped - stack the fingerprint
-   strip above the form instead of squeezing them into one row. */
 @media (max-width: 700px) {
   .login-page__right {
     flex-direction: column;
@@ -362,8 +335,30 @@
   text-align: center;
   font-size: var(--text-sm);
   color: var(--color-ink-soft);
-  margin-top: var(--space-5);
-  margin-bottom: 0;
+  margin: 0;
+}
+
+.login-page__footer-links {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.login-page__help-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.login-page__legal-links {
+  margin-top: var(--space-3);
+  text-align: center;
+  font-size: var(--text-xs);
 }
 
 .login-page__resend-link {
@@ -419,10 +414,6 @@
   margin: 0;
 }
 
-/* ---------------------------------------------------------------
-   Responsive: collapse to a single column, hide the hero panel,
-   show the compact inline brand mark instead.
-   --------------------------------------------------------------- */
 @media (max-width: 900px) {
   .login-page {
     grid-template-columns: 1fr;
