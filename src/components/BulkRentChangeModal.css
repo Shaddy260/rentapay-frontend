@@ -1,0 +1,44 @@
+.bulk-rent-modal label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.bulk-rent-modal select,
+.bulk-rent-modal input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  box-sizing: border-box;
+}
+
+.bulk-rent-modal__mode-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.bulk-rent-modal__mode-toggle button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  background: var(--color-surface, #fff);
+  cursor: pointer;
+}
+
+.bulk-rent-modal__mode-toggle button.is-active {
+  background: var(--color-accent, #2b6777);
+  color: #fff;
+  border-color: var(--color-accent, #2b6777);
+}
+
+.bulk-rent-modal__hint {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #8a8374);
+  margin-top: 14px;
+}
+
+.bulk-rent-modal__result {
+  margin: 16px 0;
+}

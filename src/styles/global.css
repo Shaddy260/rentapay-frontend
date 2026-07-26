@@ -1,0 +1,206 @@
+@import './tokens.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  margin: 0;
+  color: var(--color-primary-dark);
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: var(--font-body);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+/* Visible keyboard focus everywhere - accessibility floor */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* Shared centered-modal shell, used by every dialog in the app
+   (announcements, broadcasts, confirmations, etc) so they always open
+   in the middle of the screen with nothing clipped or pushed off to
+   the side, on any device. */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 36, 33, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-4, 16px);
+}
+
+.modal-shell {
+  background: var(--color-surface-raised, #fff);
+  border-radius: var(--radius-lg, 14px);
+  padding: var(--space-5, 20px);
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,0.2));
+}
+
+/* =====================================================================
+   FIX (direct request): on a phone, every list/table on the platform
+   (tenants, payments, complaints, admin lists - anything that's a
+   plain <table>) used to get cut off at the edge of the screen with
+   no way to reach the columns past that point, short of tilting the
+   phone to landscape. This makes every table on the platform scroll
+   horizontally within itself on narrow screens - the list scrolls,
+   nothing else on the page does. Deliberately scoped to `table`
+   only, not a blanket "make everything scrollable" rule, since the
+   request was specifically "lists only, not the whole platform".
+   ===================================================================== */
+@media (max-width: 720px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  table thead,
+  table tbody,
+  table tr {
+    display: table;
+    width: 100%;
+    table-layout: auto;
+  }
+}
+
+/* Broadcast panel - continuous conversation view for sent
+   announcements (direct request: moved out of the header into the
+   side menu, remembers history, allows delete). */
+.broadcast-panel {
+  background: var(--color-surface-raised, #fff);
+  border-radius: var(--radius-lg, 14px);
+  width: 100%;
+  max-width: 480px;
+  max-height: min(80vh, 640px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,0.2));
+}
+
+.broadcast-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4, 16px) var(--space-4, 16px) 0;
+}
+
+.broadcast-panel__hint {
+  padding: 0 var(--space-4, 16px);
+  color: #666;
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+
+.broadcast-panel__thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.broadcast-panel__empty {
+  color: #888;
+  text-align: center;
+  margin-top: var(--space-4, 16px);
+}
+
+.broadcast-panel__bubble {
+  background: var(--color-surface-subtle, #f3f4f6);
+  border-radius: 12px;
+  padding: 10px 12px;
+  align-self: flex-end;
+  max-width: 85%;
+}
+
+.broadcast-panel__bubble-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.broadcast-panel__bubble-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.broadcast-panel__delete {
+  border: none;
+  background: none;
+  color: #b3261e;
+  font-size: 0.75rem;
+  padding: 4px 0 0;
+  cursor: pointer;
+}
+
+.broadcast-panel__composer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: var(--space-4, 16px);
+  border-top: 1px solid var(--color-border, #e2e2e2);
+}
+
+.broadcast-panel__audience {
+  flex: 1 1 100%;
+}
+
+.broadcast-panel__input {
+  flex: 1 1 100%;
+  resize: vertical;
+  font-family: inherit;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
