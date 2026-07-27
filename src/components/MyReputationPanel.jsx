@@ -16,24 +16,67 @@ function BigStars({ average }) {
   );
 }
 
+const CATEGORY_LABELS = {
+  overall: 'Overall',
+  payment: 'Payment reliability',
+  property_care: 'Property care',
+  communication: 'Communication',
+  conduct: 'Conduct',
+};
+
 /**
  * Direct request: the tenant should be able to see their own
  * reputation profile before/same as any landlord does - same
  * distilled, email-portable aggregate a new landlord would see
  * (never raw amounts/dates from another landlord's ledger), scoped
  * server-side so a tenant can only ever fetch their own.
+ *
+ * FEATURE (direct request): tenants get the same recourse landlords
+ * already have (ratingFlag.controller.js / MyOwnRatingPanel.jsx) -
+ * every individual rating is now listed (not just the ones with a
+ * comment) with WHO left it, and a "Flag as unfair" action per rating
+ * instead of the old passive "contact support" line. See
+ * 2026-07-tenant-rating-flag.sql for why attribution is fine to show
+ * here even though the landlord-side ratings deliberately hide it.
  */
 export default function MyReputationPanel({ token, tenantId }) {
   const [reputation, setReputation] = useState(null);
   const [error, setError] = useState('');
+  const [flaggingId, setFlaggingId] = useState(null);
+  const [flagReason, setFlagReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [notice, setNotice] = useState('');
 
-  useEffect(() => {
+  function load() {
     if (!tenantId) return;
     api
       .getTenantReputation(tenantId, token)
       .then((res) => setReputation(res.reputation))
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load your reputation.'));
-  }, [token, tenantId]);
+  }
+
+  useEffect(load, [token, tenantId]);
+
+  async function submitFlag(ratingId) {
+    if (!flagReason.trim()) {
+      setSubmitError('Please explain why you believe this rating is unfair.');
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const res = await api.flagTenantRating(ratingId, { reason: flagReason.trim() }, token);
+      setReputation(res.reputation);
+      setFlaggingId(null);
+      setFlagReason('');
+      setNotice('Rating flagged for review. It will be excluded from your average while pending.');
+    } catch (err) {
+      setSubmitError(err instanceof ApiError ? err.message : 'Failed to flag rating.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   if (error) return <p className="dashboard-main__empty">{error}</p>;
   if (!reputation) return <Skeleton rows={2} />;
@@ -77,24 +120,50 @@ export default function MyReputationPanel({ token, tenantId }) {
         </div>
       )}
 
-      {reputation.ratings?.some((r) => r.comment) && (
+      {notice && <p className="my-reputation-panel__notice">{notice}</p>}
+
+      {reputation.ratings?.length > 0 && (
         <div className="my-reputation-panel__comments">
-          <h4>Feedback from landlords</h4>
-          {reputation.ratings.filter((r) => r.comment).map((r, i) => (
-            <div key={i} className="my-reputation-panel__comment">
+          <h4>Individual ratings</h4>
+          {reputation.ratings.map((r) => (
+            <div key={r.id} className="my-reputation-panel__comment">
               <div className="my-reputation-panel__comment-head">
-                <span>{'★'.repeat(r.rating)}</span>
+                <span>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
                 <span className="my-reputation-panel__comment-landlord">{r.landlordName}</span>
+                <span className="my-reputation-panel__comment-category">{CATEGORY_LABELS[r.category] || r.category}</span>
               </div>
-              <p>{r.comment}</p>
+              {r.comment && <p>{r.comment}</p>}
+
+              {r.flagStatus === 'none' && flaggingId !== r.id && (
+                <button type="button" className="my-reputation-panel__flag-btn" onClick={() => { setFlaggingId(r.id); setSubmitError(''); }}>
+                  Flag as unfair
+                </button>
+              )}
+              {r.flagStatus === 'flagged' && <span className="my-reputation-panel__flag-status">Flagged — pending review, excluded from your average.</span>}
+              {r.flagStatus === 'upheld' && <span className="my-reputation-panel__flag-status">Reviewed — kept as-is.</span>}
+              {r.flagStatus === 'removed' && <span className="my-reputation-panel__flag-status">Reviewed — removed from your average.</span>}
+
+              {flaggingId === r.id && (
+                <div className="my-reputation-panel__flag-form">
+                  <textarea
+                    placeholder="Why do you believe this rating is unfair?"
+                    value={flagReason}
+                    onChange={(e) => setFlagReason(e.target.value)}
+                    rows={2}
+                  />
+                  {submitError && <p className="my-reputation-panel__flag-error">{submitError}</p>}
+                  <div className="my-reputation-panel__flag-actions">
+                    <button type="button" onClick={() => { setFlaggingId(null); setFlagReason(''); setSubmitError(''); }} disabled={submitting}>Cancel</button>
+                    <button type="button" className="my-reputation-panel__flag-submit" onClick={() => submitFlag(r.id)} disabled={submitting}>
+                      {submitting ? 'Submitting…' : 'Submit flag'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
-
-      <p className="my-reputation-panel__disagree">
-        See something that isn't right? Contact support so we can look into it.
-      </p>
     </div>
   );
 }

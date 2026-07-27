@@ -255,6 +255,7 @@ export const api = {
   // by email so it follows the tenant to their next landlord too.
   rateTenant: (tenantId, payload, token) => request(`/tenants/${tenantId}/rate`, { method: 'POST', body: payload, token }),
   getTenantReputation: (tenantId, token) => request(`/tenants/${tenantId}/reputation`, { token }),
+  flagTenantRating: (ratingId, payload, token) => request(`/tenants/my-ratings/${ratingId}/flag`, { method: 'POST', body: payload, token }),
   listTenantReputations: (token) => request('/tenants/reputations', { token }),
   rateLandlord: (payload, token) => request('/tenants/rate-landlord', { method: 'POST', body: payload, token }),
   getMyLandlordReputation: (token) => request('/tenants/landlord-reputation', { token }),

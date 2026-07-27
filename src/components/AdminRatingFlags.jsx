@@ -8,6 +8,7 @@ const TABLE_LABEL = {
   landlord_ratings: 'Landlord rating',
   staff_ratings: 'Staff rating',
   property_ratings: 'Property rating',
+  tenant_ratings: 'Tenant rating (flagged by tenant)',
 };
 
 /**
