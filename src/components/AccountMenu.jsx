@@ -99,61 +99,59 @@ export default function AccountMenu({ name, photoUrl, role, phone, roleLevel, to
         <span className="account-menu__chevron">{open ? '▲' : '▼'}</span>
       </button>
 
-      {open && (
-        <div className="account-menu__dropdown" role="menu">
-          {onPhotoChange && (
-            <>
-              <div className="account-menu__photo-row">
-                <Avatar name={name} photoUrl={photoUrl} size={44} />
-                <div className="account-menu__photo-actions">
-                  <button type="button" className="account-menu__item account-menu__item--compact" onClick={triggerFilePicker} disabled={uploading}>
-                    {uploading ? 'Working…' : 'Update profile picture'}
+      <div className={`account-menu__dropdown${open ? '' : ' account-menu__dropdown--closed'}`} role="menu" aria-hidden={!open}>
+        {onPhotoChange && (
+          <>
+            <div className="account-menu__photo-row">
+              <Avatar name={name} photoUrl={photoUrl} size={44} />
+              <div className="account-menu__photo-actions">
+                <button type="button" className="account-menu__item account-menu__item--compact" onClick={triggerFilePicker} disabled={uploading}>
+                  {uploading ? 'Working…' : 'Update profile picture'}
+                </button>
+                {photoUrl && (
+                  <button type="button" className="account-menu__item account-menu__item--compact account-menu__item--danger" onClick={handleRemovePhoto} disabled={uploading}>
+                    Remove photo
                   </button>
-                  {photoUrl && (
-                    <button type="button" className="account-menu__item account-menu__item--compact account-menu__item--danger" onClick={handleRemovePhoto} disabled={uploading}>
-                      Remove photo
-                    </button>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  style={{ display: 'none' }}
-                  onChange={handleFileSelected}
-                />
+                )}
               </div>
-              {photoError && <p className="account-menu__photo-error">{photoError}</p>}
-              <div className="account-menu__divider" />
-            </>
-          )}
-          <button type="button" className="account-menu__item" role="menuitem" onClick={() => { setOpen(false); navigate('/change-password'); }}>
-            Change password
-          </button>
-          <button
-            type="button"
-            className="account-menu__item"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              // Only landlord/manager have a real Settings page with a
-              // #security section - every other role (tenant)
-              // gets the same modal-based flow instead of a dead link.
-              if (role === 'landlord' || role === 'manager') navigate('/settings#security');
-              else setShowSecurityModal(true);
-            }}
-          >
-            Fingerprint / device login
-          </button>
-          <HelpButton role={role} token={token} renderAs="account-menu__item" onOpen={() => setOpen(false)} />
-          <ThemeToggleItem className="account-menu__item" onToggle={() => setOpen(false)} />
-          <InstallAppMenuItem className="account-menu__item" onClick={() => setOpen(false)} />
-          <div className="account-menu__divider" />
-          <button type="button" className="account-menu__item account-menu__item--danger" role="menuitem" onClick={handleLogout}>
-            Log out
-          </button>
-        </div>
-      )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                onChange={handleFileSelected}
+              />
+            </div>
+            {photoError && <p className="account-menu__photo-error">{photoError}</p>}
+            <div className="account-menu__divider" />
+          </>
+        )}
+        <button type="button" className="account-menu__item" role="menuitem" onClick={() => { setOpen(false); navigate('/change-password'); }}>
+          Change password
+        </button>
+        <button
+          type="button"
+          className="account-menu__item"
+          role="menuitem"
+          onClick={() => {
+            setOpen(false);
+            // Only landlord/manager have a real Settings page with a
+            // #security section - every other role (tenant)
+            // gets the same modal-based flow instead of a dead link.
+            if (role === 'landlord' || role === 'manager') navigate('/settings#security');
+            else setShowSecurityModal(true);
+          }}
+        >
+          Fingerprint / device login
+        </button>
+        <HelpButton role={role} token={token} renderAs="account-menu__item" onOpen={() => setOpen(false)} />
+        <ThemeToggleItem className="account-menu__item" onToggle={() => setOpen(false)} />
+        <InstallAppMenuItem className="account-menu__item" onClick={() => setOpen(false)} />
+        <div className="account-menu__divider" />
+        <button type="button" className="account-menu__item account-menu__item--danger" role="menuitem" onClick={handleLogout}>
+          Log out
+        </button>
+      </div>
 
       {showSecurityModal && (
         <div className="modal-overlay" onClick={() => setShowSecurityModal(false)}>

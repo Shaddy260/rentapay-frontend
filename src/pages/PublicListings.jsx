@@ -52,6 +52,59 @@ function PropertyReputationBadge({ reputation }) {
  * confirmation (still active / already booked / planned for) and
  * whether a deposit is required.
  */
+function UnitCard({ unit: u, showMeta, contactingId, onPhotoClick, onContact }) {
+  const photos = u.photoUrls || [];
+  const statusInfo = LISTING_STATUS_LABEL[u.listingStatus] || LISTING_STATUS_LABEL.active;
+  return (
+    <div className="public-listings__card">
+      <button
+        type="button"
+        className="public-listings__photo"
+        onClick={() => photos.length && onPhotoClick(photos, u.unitName)}
+        disabled={!photos.length}
+        aria-label={photos.length ? `View ${photos.length} photo${photos.length > 1 ? 's' : ''} of ${u.unitName}` : 'No photos available'}
+      >
+        {photos[0] ? (
+          <>
+            <img src={photos[0]} alt={u.unitName} loading="lazy" />
+            {photos.length > 1 && (
+              <span className="public-listings__photo-count">📷 {photos.length}</span>
+            )}
+          </>
+        ) : (
+          <div className="public-listings__photo-placeholder">🏠</div>
+        )}
+      </button>
+      <div className="public-listings__info">
+        {showMeta && (
+          <div className="public-listings__card-meta">
+            <strong>{u.unitName}</strong>
+            {showMeta.location && <span className="public-listings__location">{u.unitName ? ' · ' : ''}{showMeta.location}</span>}
+            <PropertyReputationBadge reputation={showMeta.reputation} />
+          </div>
+        )}
+        <div className="public-listings__badges">
+          <span className={`public-listings__status-badge ${statusInfo.className}`}>{statusInfo.label}</span>
+          <span className={`public-listings__deposit-badge ${u.requiresDeposit ? 'public-listings__deposit-badge--required' : 'public-listings__deposit-badge--none'}`}>
+            {u.requiresDeposit
+              ? `Deposit required${u.depositAmountExpected ? ` (KES ${Number(u.depositAmountExpected).toLocaleString()})` : ''}`
+              : 'No deposit required'}
+          </span>
+        </div>
+        <h3>{u.unitType || 'Unit'}{!showMeta && u.unitName ? ` · ${u.unitName}` : ''}</h3>
+        <p className="public-listings__rent">KES {Number(u.rentAmount).toLocaleString()} / month</p>
+        <button
+          className="public-listings__contact-btn"
+          disabled={contactingId === u.unitId}
+          onClick={() => onContact(u.unitId)}
+        >
+          {contactingId === u.unitId ? 'Opening…' : '💬 Contact on WhatsApp'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function PublicListings() {
   const [searchText, setSearchText] = useState('');
   const [listings, setListings] = useState(null);
@@ -59,7 +112,7 @@ export default function PublicListings() {
   const [error, setError] = useState('');
   const [contactingId, setContactingId] = useState(null);
   const [lightbox, setLightbox] = useState(null); // { photos, index, title }
-  const [collapsed, setCollapsed] = useState({}); // propertyKey -> bool
+  const [openKey, setOpenKey] = useState(null); // only one property group open at a time
 
   useEffect(() => {
     setLoading(true);
@@ -115,8 +168,8 @@ export default function PublicListings() {
     return Array.from(map.values());
   }, [listings]);
 
-  function toggleCollapsed(key) {
-    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+  function toggleOpen(key) {
+    setOpenKey((prev) => (prev === key ? null : key));
   }
 
   return (
@@ -146,73 +199,56 @@ export default function PublicListings() {
       ) : (
         <div className="public-listings__groups">
           {groups.map((group) => {
-            const isCollapsed = !!collapsed[group.key];
+            if (group.units.length === 1) {
+              // Only one vacant unit here - an accordion header with
+              // nothing else behind it just adds an extra tap for no
+              // reason, so the name/location/rating that would have
+              // gone in the header is shown directly on the card instead.
+              const u = group.units[0];
+              return (
+                <section className="public-listings__property-group public-listings__property-group--single" key={group.key}>
+                  <UnitCard
+                    unit={u}
+                    showMeta={{ location: group.location, reputation: group.propertyReputation }}
+                    contactingId={contactingId}
+                    onPhotoClick={(photos, title) => setLightbox({ photos, index: 0, title })}
+                    onContact={handleContact}
+                  />
+                </section>
+              );
+            }
+
+            const isOpen = openKey === group.key;
             return (
               <section className="public-listings__property-group" key={group.key}>
                 <button
                   type="button"
                   className="public-listings__property-header"
-                  onClick={() => toggleCollapsed(group.key)}
-                  aria-expanded={!isCollapsed}
+                  onClick={() => toggleOpen(group.key)}
+                  aria-expanded={isOpen}
                 >
                   <span className="public-listings__property-header-main">
-                    <span className="public-listings__property-toggle">{isCollapsed ? '▶' : '▼'}</span>
-                    <span>
+                    <span className="public-listings__property-toggle">{isOpen ? '▼' : '▶'}</span>
+                    <span className="public-listings__property-header-text">
                       <strong>{group.estateName}</strong>
-                      {group.location && <span className="public-listings__location"> · {group.location}</span>}
+                      {group.location && <span className="public-listings__location">{group.location}</span>}
+                      <PropertyReputationBadge reputation={group.propertyReputation} />
                     </span>
                   </span>
-                  {!group.isUngrouped && <PropertyReputationBadge reputation={group.propertyReputation} />}
                   <span className="public-listings__unit-count">{group.units.length} unit{group.units.length === 1 ? '' : 's'}</span>
                 </button>
 
-                {!isCollapsed && (
+                {isOpen && (
                   <div className="public-listings__grid">
-                    {group.units.map((u) => {
-                      const photos = u.photoUrls || [];
-                      const statusInfo = LISTING_STATUS_LABEL[u.listingStatus] || LISTING_STATUS_LABEL.active;
-                      return (
-                        <div className="public-listings__card" key={u.unitId}>
-                          <button
-                            type="button"
-                            className="public-listings__photo"
-                            onClick={() => photos.length && setLightbox({ photos, index: 0, title: u.unitName })}
-                            disabled={!photos.length}
-                            aria-label={photos.length ? `View ${photos.length} photo${photos.length > 1 ? 's' : ''} of ${u.unitName}` : 'No photos available'}
-                          >
-                            {photos[0] ? (
-                              <>
-                                <img src={photos[0]} alt={u.unitName} loading="lazy" />
-                                {photos.length > 1 && (
-                                  <span className="public-listings__photo-count">📷 {photos.length}</span>
-                                )}
-                              </>
-                            ) : (
-                              <div className="public-listings__photo-placeholder">🏠</div>
-                            )}
-                          </button>
-                          <div className="public-listings__info">
-                            <div className="public-listings__badges">
-                              <span className={`public-listings__status-badge ${statusInfo.className}`}>{statusInfo.label}</span>
-                              <span className={`public-listings__deposit-badge ${u.requiresDeposit ? 'public-listings__deposit-badge--required' : 'public-listings__deposit-badge--none'}`}>
-                                {u.requiresDeposit
-                                  ? `Deposit required${u.depositAmountExpected ? ` (KES ${Number(u.depositAmountExpected).toLocaleString()})` : ''}`
-                                  : 'No deposit required'}
-                              </span>
-                            </div>
-                            <h3>{u.unitType || 'Unit'}{u.unitName ? ` · ${u.unitName}` : ''}</h3>
-                            <p className="public-listings__rent">KES {Number(u.rentAmount).toLocaleString()} / month</p>
-                            <button
-                              className="public-listings__contact-btn"
-                              disabled={contactingId === u.unitId}
-                              onClick={() => handleContact(u.unitId)}
-                            >
-                              {contactingId === u.unitId ? 'Opening…' : '💬 Contact on WhatsApp'}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {group.units.map((u) => (
+                      <UnitCard
+                        key={u.unitId}
+                        unit={u}
+                        contactingId={contactingId}
+                        onPhotoClick={(photos, title) => setLightbox({ photos, index: 0, title })}
+                        onContact={handleContact}
+                      />
+                    ))}
                   </div>
                 )}
               </section>

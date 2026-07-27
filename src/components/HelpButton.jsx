@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import ChatWidget from './ChatWidget.jsx';
 import './HelpButton.css';
 
@@ -47,7 +48,7 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
         Help
       </button>
 
-      {open && (
+      {open && createPortal(
         <div className="help-modal-overlay" onClick={close}>
           <div className="help-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="help-modal-card__header">
@@ -90,7 +91,8 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

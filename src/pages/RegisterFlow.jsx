@@ -899,7 +899,7 @@ export default function RegisterFlow() {
     // count exceeding the subscription, duplicate names showing up
     // elsewhere): this used to fire every unit's createUnit
     // call at once with Promise.all, which raced on the same "next
-    // payment code" number and could fail (or exceed the subscription
+    // code" number and could fail (or exceed the subscription
     // limit) unpredictably.
     //
     // DIRECT REQUEST FIX ("duplication of units takes soo long...
@@ -909,7 +909,7 @@ export default function RegisterFlow() {
     // the correctness bug but made adding many duplicated units feel
     // slow - each unit was a full separate round trip. The backend's
     // new POST /units/bulk endpoint does the same race-free work
-    // (existing names, next payment code, subscription limit) but only
+    // (existing names, next code, subscription limit) but only
     // ONCE for the whole batch, inserting every unit together - so
     // this is now a single request no matter how many units were
     // duplicated, typically finishing in a couple of seconds. Units

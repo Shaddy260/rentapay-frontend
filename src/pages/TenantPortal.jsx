@@ -725,7 +725,7 @@ export default function TenantPortal() {
           </>
         )}
 
-        {activeTab === 'documents' && <DocumentsPanel token={token} canManage={false} />}
+        {activeTab === 'documents' && <DocumentsPanel token={token} canManage={false} isTenant />}
 
         {activeTab === 'maintenance' && <MaintenancePanel token={token} />}
 

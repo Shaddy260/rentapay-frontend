@@ -10,10 +10,12 @@ import Skeleton from './Skeleton.jsx';
  * Landlord/manager mode (pass tenantId + canManage): upload a lease/ID
  * for this tenant, and delete any document they uploaded.
  * Tenant mode (no tenantId/canManage, just token+role='tenant' on the
- * backend): view/download only - a tenant can see their own lease but
- * never delete it (flagged design decision, built as agreed).
+ * backend): view/download their own documents, AND upload their own
+ * (e.g. a signed lease scan, ID copy) - the backend pins tenantId to
+ * the caller's own id regardless of what's sent. Tenants still can't
+ * delete (flagged design decision, kept as-is).
  */
-export default function DocumentsPanel({ token, tenantId, unitId, canManage = false }) {
+export default function DocumentsPanel({ token, tenantId, unitId, canManage = false, isTenant = false }) {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,7 +47,7 @@ export default function DocumentsPanel({ token, tenantId, unitId, canManage = fa
     setError('');
     try {
       const formData = new FormData();
-      formData.append('tenantId', tenantId);
+      if (tenantId) formData.append('tenantId', tenantId);
       formData.append('label', label.trim());
       formData.append('file', file);
       await api.uploadDocument(formData, token);
@@ -83,11 +85,11 @@ export default function DocumentsPanel({ token, tenantId, unitId, canManage = fa
 
       {error && <p className="modal-error">{error}</p>}
 
-      {canManage && tenantId && (
+      {(isTenant || (canManage && tenantId)) && (
         <form className="documents-panel__form" onSubmit={handleUpload}>
           <input
             type="text"
-            placeholder="Label (e.g. Lease agreement 2026)"
+            placeholder={isTenant ? 'Label (e.g. Signed lease, ID copy)' : 'Label (e.g. Lease agreement 2026)'}
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />

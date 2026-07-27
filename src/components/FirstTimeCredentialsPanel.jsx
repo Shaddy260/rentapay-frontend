@@ -6,28 +6,25 @@ import Skeleton from './Skeleton.jsx';
 
 const ROLE_LABELS = { tenant: 'Tenants', manager: 'Managers', caretaker: 'Caretakers' };
 
-// Direct request, narrowed by a later direct request to exactly:
-//   - Landlord: first-time logins for tenant/manager/caretaker, AND
-//     password-reset OTPs for tenant/manager/caretaker. Full access.
+// FIRST-TIME LOGIN DETAILS ONLY (direct request: the "Password
+// Resets" viewer that used to live alongside this - showing the OTP
+// whenever someone requested a forgot-password reset - has been
+// removed. Reset codes are still emailed to the account as always;
+// there's just no longer an in-app screen for a landlord/manager to
+// go read them back. This first-time view stays, since a temp
+// password issued at account creation expiring on its own (once the
+// person actually logs in and changes it) is a different, lower-risk
+// thing to leave visible than a live reset code.
+//   - Landlord: first-time logins for tenant/manager/caretaker.
 //   - Full manager (role_level='manager'): first-time logins for
-//     tenant AND caretaker ONLY - never manager-level rows, and NO
-//     password-reset access at all.
-//   - Caretaker (role_level='caretaker'): first-time logins for
-//     tenant ONLY. Nothing else - no manager/caretaker rows, no
-//     password-reset access at all.
+//     tenant AND caretaker ONLY - never manager-level rows.
+//   - Caretaker: never reaches this panel at all (see Dashboard.jsx).
 //
-// viewerRole drives all of this: 'landlord' | 'manager' | 'caretaker'.
+// viewerRole drives all of this: 'landlord' | 'manager'.
 export default function FirstTimeCredentialsPanel({ token, viewerRole }) {
   const isLandlord = viewerRole === 'landlord';
-  const isFullManager = viewerRole === 'manager';
-  const isCaretaker = viewerRole === 'caretaker';
 
-  // Only a landlord ever gets the password-reset category at all -
-  // managers and caretakers are first-time-login only, per direct
-  // request, so there's nothing to toggle for them.
-  const [category, setCategory] = useState('first-login'); // 'first-login' | 'password-reset'
-
-  const availableRoles = isLandlord ? ['tenant', 'manager', 'caretaker'] : isFullManager ? ['tenant', 'caretaker'] : ['tenant'];
+  const availableRoles = isLandlord ? ['tenant', 'manager', 'caretaker'] : ['tenant', 'caretaker'];
   const [activeRole, setActiveRole] = useState(availableRoles[0]);
 
   const [rows, setRows] = useState(null);
@@ -35,38 +32,24 @@ export default function FirstTimeCredentialsPanel({ token, viewerRole }) {
   const [search, setSearch] = useState('');
   const [selectedPerson, setSelectedPerson] = useState(null);
 
-  const isFirstLogin = category === 'first-login' || !isLandlord;
-
   useEffect(() => {
     setRows(null);
     const handle = setTimeout(() => {
-      const fetcher = isFirstLogin ? api.listFirstTimeCredentials : api.listPasswordResetRequests;
-      fetcher(activeRole, token, search)
-        .then((res) => setRows(res.credentials || res.requests || []))
+      api.listFirstTimeCredentials(activeRole, token, search)
+        .then((res) => setRows(res.credentials || []))
         .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load.'));
     }, 250); // small debounce so every keystroke doesn't fire a request
     return () => clearTimeout(handle);
-  }, [category, activeRole, token, search, isFirstLogin]);
+  }, [activeRole, token, search]);
 
   return (
     <section className="statistics-panel">
-      <h2>{isLandlord ? 'Login & Password-Reset Codes' : 'First-Time Login Details'}</h2>
+      <h2>First-Time Login Details</h2>
       <p className="tenant-portal-hint">
-        {isFirstLogin
-          ? "The temp password and OTP each person was given when their account was created - use this if the email with their details never reached them. These are the ORIGINAL values from account creation, not their current password."
-          : 'The OTP sent whenever someone requests a password reset (forgot password). Each code disappears from here automatically once it expires - the same expiry the person sees when entering it.'}
+        The temp password and OTP each person was given when their account was created - use this if the email
+        with their details never reached them. These are the ORIGINAL values from account creation, not their
+        current password.
       </p>
-
-      {isLandlord && (
-        <div className="login-page__toggle" role="tablist" style={{ marginBottom: 12 }}>
-          <button type="button" role="tab" aria-selected={category === 'first-login'} className={category === 'first-login' ? 'is-active' : ''} onClick={() => setCategory('first-login')}>
-            First-Time Login
-          </button>
-          <button type="button" role="tab" aria-selected={category === 'password-reset'} className={category === 'password-reset' ? 'is-active' : ''} onClick={() => setCategory('password-reset')}>
-            Password Resets
-          </button>
-        </div>
-      )}
 
       {availableRoles.length > 1 && (
         <div className="login-page__toggle" role="tablist" style={{ marginBottom: 16 }}>
@@ -98,11 +81,11 @@ export default function FirstTimeCredentialsPanel({ token, viewerRole }) {
                 <th>Photo</th>
                 <th>Name</th>
                 <th>Phone</th>
-                {isFirstLogin && activeRole === 'tenant' && <th>Unit</th>}
-                {isFirstLogin && <th>Property</th>}
-                {isFirstLogin && <th>Temp password</th>}
-                {(!isFirstLogin || activeRole === 'tenant') && <th>OTP</th>}
-                <th>{isFirstLogin ? 'Created' : 'Requested'}</th>
+                {activeRole === 'tenant' && <th>Unit</th>}
+                <th>Property</th>
+                <th>Temp password</th>
+                {activeRole === 'tenant' && <th>OTP</th>}
+                <th>Created</th>
                 <th>Expires</th>
               </tr>
             </thead>
@@ -122,11 +105,11 @@ export default function FirstTimeCredentialsPanel({ token, viewerRole }) {
                   </td>
                   <td>{c.full_name}</td>
                   <td>{c.phone}</td>
-                  {isFirstLogin && activeRole === 'tenant' && <td>{c.unit_name || '—'}</td>}
-                  {isFirstLogin && <td>{c.property_name || '—'}</td>}
-                  {isFirstLogin && <td><code>{c.temp_password}</code></td>}
-                  {(!isFirstLogin || activeRole === 'tenant') && <td><code>{c.otp}</code></td>}
-                  <td>{new Date(c.created_at || c.requested_at).toLocaleString()}</td>
+                  {activeRole === 'tenant' && <td>{c.unit_name || '—'}</td>}
+                  <td>{c.property_name || '—'}</td>
+                  <td><code>{c.temp_password}</code></td>
+                  {activeRole === 'tenant' && <td><code>{c.otp}</code></td>}
+                  <td>{new Date(c.created_at).toLocaleString()}</td>
                   <td>{c.expires_at ? new Date(c.expires_at).toLocaleString() : 'No expiry — verified automatically'}</td>
                 </tr>
               ))}

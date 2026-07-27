@@ -47,6 +47,10 @@
   flex-direction: column;
 }
 
+.account-menu__dropdown--closed {
+  display: none;
+}
+
 .account-menu__photo-row {
   display: flex;
   align-items: center;

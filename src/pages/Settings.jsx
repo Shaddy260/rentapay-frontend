@@ -413,11 +413,10 @@ export default function Settings() {
 
       {/* ---------------- Caretaker contacts ---------------- */}
       <section className="settings-card">
-        <h2>Caretaker contacts</h2>
-        <p className="settings-card__caption">
-          A plain contact per property - no login, just a name and number tenants can reach for day-to-day
-          things. Separate from Property Managers below, who get their own login to the portal. Editable any time.
-        </p>
+        <h2>
+          Caretaker contacts
+          <InfoTip text="A plain contact per property - no login, just a name and number tenants can reach for day-to-day things. Separate from Property Managers below, who get their own login to the portal. Editable any time." />
+        </h2>
 
         {loading ? (
           <Skeleton rows={3} />
@@ -498,12 +497,16 @@ export default function Settings() {
           Caretaker: this section doesn't render at all. */}
       {canViewTeamSection && (
         <section className="settings-card">
-          <h2>Property Managers</h2>
-          <p className="settings-card__caption">
-            {isManager
-              ? "Everyone with their own login to this landlord's portal. Adding, removing, or reassigning access is handled by the landlord."
-              : "Give someone their own login to the portal - they'll see everything you see, scoped to the properties you assign them, but can't add/remove other managers, change assignments, or touch billing. Caretakers have the same login but are additionally blocked from removing tenants, transferring tenants, changing rent amounts, or adding/removing units."}
-          </p>
+          <h2>
+            Property Managers
+            <InfoTip
+              text={
+                isManager
+                  ? "Everyone with their own login to this landlord's portal. Adding, removing, or reassigning access is handled by the landlord."
+                  : "Give someone their own login to the portal - they'll see everything you see, scoped to the properties you assign them, but can't add/remove other managers, change assignments, or touch billing. Caretakers have the same login but are additionally blocked from removing tenants, transferring tenants, changing rent amounts, or adding/removing units."
+              }
+            />
+          </h2>
 
           {!isManager && justAddedManager && (
             <div id="manager-added-confirmation" className="settings-banner settings-banner--ok u-mb-4">
@@ -664,12 +667,16 @@ export default function Settings() {
 
       {/* ---------------- Contact Details ---------------- */}
       <section className="settings-card">
-        <h2>Contact Details</h2>
-        <p className="settings-card__caption">
-          {isManager
-            ? "Your own contact info - the landlord's stays untouched. Whichever properties you're set as the contact for, tenants there see this number."
-            : "Your own contact info. If a property manager is set as the contact for a property instead, tenants there see the manager's number rather than yours."}
-        </p>
+        <h2>
+          Contact Details
+          <InfoTip
+            text={
+              isManager
+                ? "Your own contact info - the landlord's stays untouched. Whichever properties you're set as the contact for, tenants there see this number."
+                : "Your own contact info. If a property manager is set as the contact for a property instead, tenants there see the manager's number rather than yours."
+            }
+          />
+        </h2>
 
         {editingMyContact ? (
           <form className="settings-payment-form" onSubmit={saveMyContact}>
@@ -763,11 +770,10 @@ export default function Settings() {
           paying, but read-only - editing stays landlord-only since
           it's the account's actual M-Pesa collection setup. */}
       <section className="settings-card">
-        <h2>Payment method (how rent reaches {isManager ? 'the landlord' : 'you'})</h2>
-        <p className="settings-card__caption">
-          Linked directly to M-Pesa via Safaricom Daraja. Each apartment can use the account default below, or its own
-          payment method - changing one apartment&apos;s method never affects any other apartment.
-        </p>
+        <h2>
+          Payment method (how rent reaches {isManager ? 'the landlord' : 'you'})
+          <InfoTip text="Linked directly to M-Pesa via Safaricom Daraja. Each apartment can use the account default below, or its own payment method - changing one apartment's method never affects any other apartment." />
+        </h2>
         {properties.length > 1 && !isCaretaker && (
           <div className="form-field u-mb-3">
             <label className="form-field__label">Apply to</label>

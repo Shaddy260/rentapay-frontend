@@ -269,7 +269,7 @@ export default function Login() {
       </div>
 
       <div className="login-page__right">
-        <div className={`login-page__panel${matchingBiometricEntries.length > 0 && !accountPickerOptions ? ' login-page__panel--with-fingerprint' : ''}`}>
+        <div className="login-page__panel">
           <div className="login-page__brand login-page__brand--mobile">RentaPay</div>
           <h1>Welcome back</h1>
           <p className="login-page__intro">Log in to manage your property, or view your account and pay rent.</p>
@@ -367,9 +367,32 @@ export default function Login() {
                   </Link>
                 </p>
 
-                <Button type="submit" variant="primary" loading={loading} fullWidth>
-                  Log in
-                </Button>
+                <div className="login-page__submit-row">
+                  {matchingBiometricEntries.length > 0 && (
+                    <button
+                      type="button"
+                      className={`login-page__fingerprint-badge${biometricBusy ? ' login-page__fingerprint-badge--busy' : ''}`}
+                      onClick={() => handleBiometricLogin({ silent: false })}
+                      disabled={biometricBusy}
+                      aria-label={biometricBusy ? 'Waiting for fingerprint - touch the sensor to continue' : 'Log in with fingerprint'}
+                      title={biometricBusy ? 'Touch the sensor to continue' : 'Log in with fingerprint'}
+                    >
+                      <span className="login-page__fingerprint-bracket" aria-hidden="true">{'{'}</span>
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                        <path d="M12 2a7 7 0 0 0-7 7v2c0 3 1 5.5 2 7" />
+                        <path d="M12 2a7 7 0 0 1 7 7v2c0 1.5-.15 2.8-.4 4" />
+                        <path d="M8.5 21c-1-2-1.5-4-1.5-7V9a5 5 0 0 1 10 0v3" />
+                        <path d="M12 6.5a3.5 3.5 0 0 0-3.5 3.5v2c0 3.2.6 5.6 1.6 7.5" />
+                        <path d="M15.5 10v2c0 1.7-.1 3-.35 4.2" />
+                        <path d="M12 10a1.5 1.5 0 0 0-1.5 1.5V13c0 2.6.5 4.6 1.2 6" />
+                      </svg>
+                      <span className="login-page__fingerprint-bracket" aria-hidden="true">{'}'}</span>
+                    </button>
+                  )}
+                  <Button type="submit" variant="primary" loading={loading} fullWidth>
+                    Log in
+                  </Button>
+                </div>
               </form>
             </>
           )}
@@ -403,31 +426,6 @@ export default function Login() {
             </p>
           </div>
         </div>
-
-        {matchingBiometricEntries.length > 0 && !accountPickerOptions && (
-          <div className="login-page__fingerprint-side">
-            <button
-              type="button"
-              className={`login-page__fingerprint-side-btn${biometricBusy ? ' login-page__fingerprint-side-btn--busy' : ''}`}
-              onClick={() => handleBiometricLogin({ silent: false })}
-              disabled={biometricBusy}
-              aria-label={biometricBusy ? 'Waiting for fingerprint - touch the sensor to continue' : 'Log in with fingerprint'}
-              title={biometricBusy ? 'Touch the sensor to continue' : 'Log in with fingerprint'}
-            >
-              <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
-                <path d="M12 2a7 7 0 0 0-7 7v2c0 3 1 5.5 2 7" />
-                <path d="M12 2a7 7 0 0 1 7 7v2c0 1.5-.15 2.8-.4 4" />
-                <path d="M8.5 21c-1-2-1.5-4-1.5-7V9a5 5 0 0 1 10 0v3" />
-                <path d="M12 6.5a3.5 3.5 0 0 0-3.5 3.5v2c0 3.2.6 5.6 1.6 7.5" />
-                <path d="M15.5 10v2c0 1.7-.1 3-.35 4.2" />
-                <path d="M12 10a1.5 1.5 0 0 0-1.5 1.5V13c0 2.6.5 4.6 1.2 6" />
-              </svg>
-            </button>
-            <span className="login-page__fingerprint-side-label">
-              {biometricBusy ? 'Touch sensor…' : 'Fingerprint login'}
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
