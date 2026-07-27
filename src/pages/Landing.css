@@ -134,6 +134,30 @@
   animation: landing-fade-up 0.7s ease forwards;
 }
 
+.landing__hero-photos {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.landing__hero-photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 1.4s ease-in-out;
+}
+
+.landing__hero-photo-overlay {
+  position: absolute;
+  inset: 0;
+  /* Matches the same dark-gradient-over-photo pattern used in the
+     onboarding screenshot referenced for this feature - photo stays
+     visible but text on top stays legible. */
+  background:
+    linear-gradient(180deg, rgba(20, 30, 22, 0.55) 0%, rgba(20, 30, 22, 0.72) 55%, rgba(20, 30, 22, 0.88) 100%);
+}
+
 .landing__eyebrow {
   display: inline-block;
   font-size: var(--text-xs);

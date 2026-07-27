@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
+import CommentReveal from './CommentReveal.jsx';
 import './AdminRatingFlags.css';
 
 const TABLE_LABEL = {
@@ -91,7 +92,7 @@ export default function AdminRatingFlags({ token }) {
                   <span className="admin-rating-flags__stars">{f.rating} / 5</span>
                   {f.category && <span className="admin-rating-flags__category">{f.category.replace(/_/g, ' ')}</span>}
                 </div>
-                {f.comment && <p className="admin-rating-flags__comment">“{f.comment}”</p>}
+                {f.comment && <CommentReveal text={f.comment} />}
                 <p className="admin-rating-flags__reason">
                   <strong>Landlord's reason:</strong> {f.flag_reason}
                 </p>

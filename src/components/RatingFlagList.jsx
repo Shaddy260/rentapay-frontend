@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
+import CommentReveal from './CommentReveal.jsx';
 import './RatingFlagList.css';
 
 function Stars({ value }) {
@@ -96,7 +97,7 @@ export default function RatingFlagList({ token, table, title, canFlag = true, pr
               {r.category && <span className="rating-flag-list__category">{r.category.replace(/_/g, ' ')}</span>}
               <span className="rating-flag-list__date">{new Date(r.created_at).toLocaleDateString()}</span>
             </div>
-            {r.comment && <p className="rating-flag-list__comment">“{r.comment}”</p>}
+            {r.comment && <CommentReveal text={r.comment} />}
 
             {r.flag_status !== 'none' && (
               <p className={`rating-flag-list__status rating-flag-list__status--${r.flag_status}`}>

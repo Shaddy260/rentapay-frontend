@@ -77,7 +77,11 @@
   box-shadow: 4px 0 18px -1px rgba(46, 125, 50, 0.6);
 }
 .public-listings__photo {
-  aspect-ratio: 4 / 3;
+  /* DIRECT REQUEST: banner was too tall (4:3 at full card width made
+     it dominate the card, especially on a single-column mobile
+     layout). 16/3 is roughly a quarter of the old height at the same
+     width. */
+  aspect-ratio: 16 / 3;
   background: #f2f2f2;
   position: relative;
   width: 100%;
@@ -112,7 +116,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5em;
+  font-size: 1.4em;
   color: #ccc;
 }
 .public-listings__info {

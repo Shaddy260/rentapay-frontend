@@ -379,7 +379,14 @@ export default function RegisterFlow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex, landlordId]);
 
-  const cost = previewCost(Number(form.unitsCount) || 1, Number(form.periodMonths) || 1);
+  // DIRECT FIX: this used to fall back to `|| 1` for both units and
+  // period, so an empty form silently priced itself as "1 unit x 1
+  // month" and showed KES 50 before the landlord had entered
+  // anything. Only preview a real cost once both fields actually have
+  // a value; otherwise show 0.
+  const cost = form.unitsCount && form.periodMonths
+    ? previewCost(Number(form.unitsCount), Number(form.periodMonths))
+    : { rate: BASE_RATE, discount: 0, total: 0 };
 
   function updateForm(field, value) {
     setForm((f) => ({ ...f, [field]: value }));

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import HeroPhotoBackground from '../components/HeroPhotoBackground.jsx';
 import './Landing.css';
 
 /**
@@ -26,6 +27,7 @@ export default function Landing() {
       <section className="landing__hero">
         <div className="landing__hero-blob landing__hero-blob--a" aria-hidden="true" />
         <div className="landing__hero-blob landing__hero-blob--b" aria-hidden="true" />
+        <HeroPhotoBackground />
 
         <div className="landing__hero-content">
           <span className="landing__eyebrow">✦ Premium property management, built for Kenya</span>

@@ -137,3 +137,34 @@
   color: white;
   font-weight: 600;
 }
+
+.tenant-rating-panel__by-role {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--color-hairline);
+  padding-top: 10px;
+}
+
+.tenant-rating-panel__role-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--text-sm);
+}
+
+.tenant-rating-panel__role-label {
+  color: var(--color-ink-soft);
+}
+
+.tenant-rating-panel__no-email {
+  background: var(--color-warning-bg, #FFF6E5);
+  color: var(--color-warning-dark, #8A5A00);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: var(--text-sm);
+  margin-top: 8px;
+}
+

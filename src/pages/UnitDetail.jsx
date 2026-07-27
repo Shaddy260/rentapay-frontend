@@ -7,6 +7,7 @@ import { downloadCsv } from '../utils/downloadCsv.js';
 import DocumentsPanel from '../components/DocumentsPanel.jsx';
 import TenantContactCard from '../components/TenantContactCard.jsx';
 import TenantRatingPanel from '../components/TenantRatingPanel.jsx';
+import ModalShell from '../components/ModalShell.jsx';
 import UnitPhotosPanel from '../components/UnitPhotosPanel.jsx';
 import { useToast } from '../components/Toast.jsx';
 import './UnitDetail.css';
@@ -852,12 +853,12 @@ export default function UnitDetail() {
                   </span>
                 ) : null}
               </div>
-              <TenantRatingPanel tenantId={activeTenant.id} token={token} />
               <div className="tenant-panel__actions">
                 <button onClick={() => setShowEditTenantModal(true)}>Edit details</button>
                 <button onClick={handleRemind} disabled={busy}>Remind</button>
                 {!isCaretaker && <button onClick={() => setShowPaymentModal(true)}>Record payment</button>}
                 {!isCaretaker && <button onClick={() => setShowBalanceModal(true)}>Edit balance</button>}
+                <TenantRatingPanel tenantId={activeTenant.id} token={token} />
                 {!isCaretaker && activeTenant.deposit_amount && activeTenant.deposit_status === 'held' && (
                   <button onClick={() => setShowDepositModal(true)}>Settle deposit</button>
                 )}
@@ -986,21 +987,9 @@ export default function UnitDetail() {
 // -----------------------------------------------------------------
 // Small inline modals - kept in this file since each is only used
 // here and is short; not worth splitting into separate files yet.
+// ModalShell itself now lives in components/ModalShell.jsx since
+// TenantRatingPanel needs it too.
 // -----------------------------------------------------------------
-
-function ModalShell({ title, children, onClose }) {
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-card__header">
-          <h3>{title}</h3>
-          <button className="modal-card__close" onClick={onClose}>×</button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 function EditBalanceModal({ tenant, token, onClose, onDone }) {
   const [newBalance, setNewBalance] = useState(tenant.balance_due || 0);

@@ -199,25 +199,6 @@ export default function PublicListings() {
       ) : (
         <div className="public-listings__groups">
           {groups.map((group) => {
-            if (group.units.length === 1) {
-              // Only one vacant unit here - an accordion header with
-              // nothing else behind it just adds an extra tap for no
-              // reason, so the name/location/rating that would have
-              // gone in the header is shown directly on the card instead.
-              const u = group.units[0];
-              return (
-                <section className="public-listings__property-group public-listings__property-group--single" key={group.key}>
-                  <UnitCard
-                    unit={u}
-                    showMeta={{ location: group.location, reputation: group.propertyReputation }}
-                    contactingId={contactingId}
-                    onPhotoClick={(photos, title) => setLightbox({ photos, index: 0, title })}
-                    onContact={handleContact}
-                  />
-                </section>
-              );
-            }
-
             const isOpen = openKey === group.key;
             return (
               <section className="public-listings__property-group" key={group.key}>
