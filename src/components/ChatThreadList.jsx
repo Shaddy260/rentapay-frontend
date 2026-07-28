@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
+import Skeleton from './Skeleton.jsx';
 import './ChatThreadList.css';
 
 const POLL_MS = 6000;
@@ -43,7 +44,7 @@ export default function ChatThreadList({ token, onSelect, selectedKey }) {
 
   return (
     <div className="chat-thread-list">
-      {loading && <p className="chat-thread-list__hint">Loading conversations…</p>}
+      {loading && <Skeleton rows={3} />}
       {error && <p className="chat-thread-list__error">{error}</p>}
       {!loading && threads.length === 0 && <p className="chat-thread-list__hint">No conversations yet.</p>}
       {threads.map((t) => (

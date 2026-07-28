@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-function isStandalone() {
+export function isStandalone() {
   return (
     window.matchMedia?.('(display-mode: standalone)').matches ||
     window.navigator.standalone === true // iOS Safari's own flag

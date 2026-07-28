@@ -7,8 +7,10 @@ import { downloadCsv } from '../utils/downloadCsv.js';
 import DocumentsPanel from '../components/DocumentsPanel.jsx';
 import TenantContactCard from '../components/TenantContactCard.jsx';
 import TenantRatingPanel from '../components/TenantRatingPanel.jsx';
+import Skeleton from '../components/Skeleton.jsx';
 import ModalShell from '../components/ModalShell.jsx';
 import UnitPhotosPanel from '../components/UnitPhotosPanel.jsx';
+import { MissingPhotosBanner } from '../components/MissingPhotosNudge.jsx';
 import { useToast } from '../components/Toast.jsx';
 import './UnitDetail.css';
 import './TenantPortal.css';
@@ -408,7 +410,14 @@ export default function UnitDetail() {
     }
   }
 
-  if (loading) return <div className="unit-detail-page unit-detail-page--center">Loading unit…</div>;
+  if (loading) {
+    return (
+      <div className="unit-detail-page unit-detail-page--center">
+        <Skeleton variant="card" count={1} />
+        <Skeleton rows={5} />
+      </div>
+    );
+  }
   if (error && !unit) {
     return (
       <div className="unit-detail-page unit-detail-page--center">
@@ -468,6 +477,8 @@ export default function UnitDetail() {
         </div>
         <p className="unit-detail-type">{unit.unit_type}</p>
       </header>
+
+      <MissingPhotosBanner units={[unit]} scopeKey={`unit:${unitId}`} />
 
       <UnitPhotosPanel
         unitId={unitId}

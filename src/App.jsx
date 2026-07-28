@@ -23,6 +23,7 @@ const VerifyAccount = lazy(() => import('./pages/VerifyAccount.jsx'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword.jsx'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
 const PublicListings = lazy(() => import('./pages/PublicListings.jsx'));
+const SharedReputation = lazy(() => import('./pages/SharedReputation.jsx'));
 const RegisterFlow = lazy(() => import('./pages/RegisterFlow.jsx'));
 const AdminPortalAccess = lazy(() => import('./pages/AdminPortalAccess.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
@@ -72,6 +73,7 @@ export default function App() {
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/find-a-house" element={<PublicListings />} />
+          <Route path="/reputation/:token" element={<SharedReputation />} />
           <Route path="/register" element={<RegisterFlow />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} /><Route path="/status" element={<StatusPage />} />

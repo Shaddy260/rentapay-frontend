@@ -6,6 +6,7 @@ import {
   removeBiometricEntry,
   enrollBiometric,
 } from '../utils/biometricAuth.js';
+import { isStandalone } from '../utils/useInstallPrompt.js';
 
 /**
  * "Set and use fingerprints to log in" (menu → Security). Lets the
@@ -21,6 +22,12 @@ export default function BiometricSettingsPanel({ phone, role, roleLevel, token, 
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const supported = isBiometricSupported();
+  // DIRECT REQUEST: fingerprint login is only ever usable at the
+  // login screen when RentaPay is running as the installed app (see
+  // Login.jsx) - enrolling from a plain browser tab would create a
+  // credential that could never actually be used to sign in, which is
+  // worse than just not offering it. See useInstallPrompt.js.
+  const installed = isStandalone();
 
   useEffect(() => {
     setEntries(listBiometricEntries());
@@ -59,7 +66,14 @@ export default function BiometricSettingsPanel({ phone, role, roleLevel, token, 
         <p className="settings-banner settings-banner--error">This browser or device doesn't support fingerprint/device login.</p>
       )}
 
-      {supported && (
+      {supported && !installed && (
+        <p className="settings-banner">
+          Fingerprint login is only available in the installed RentaPay app, not in a regular browser tab.
+          Install the app first, then come back here to set it up.
+        </p>
+      )}
+
+      {supported && installed && (
         <>
           {entries.length === 0 ? (
             <Button variant="secondary" onClick={handleEnroll} loading={busy} disabled={busy}>

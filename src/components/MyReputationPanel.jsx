@@ -48,6 +48,38 @@ export default function MyReputationPanel({ token, tenantId }) {
   const [submitError, setSubmitError] = useState('');
   const [notice, setNotice] = useState('');
 
+  // FEATURE (direct request #4): opt-in shareable link to this
+  // reputation summary, for pasting into a WhatsApp inquiry to a
+  // landlord about a vacant unit. Generated on demand, never
+  // automatically - the tenant decides when/whether to share it.
+  const [shareUrl, setShareUrl] = useState(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareError, setShareError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  async function generateShareLink() {
+    setShareLoading(true);
+    setShareError('');
+    try {
+      const res = await api.getMyReputationShareLink(token);
+      setShareUrl(res.shareUrl);
+    } catch (err) {
+      setShareError(err instanceof ApiError ? err.message : 'Failed to generate share link.');
+    } finally {
+      setShareLoading(false);
+    }
+  }
+
+  async function copyShareLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard API unavailable - link is still shown as selectable text
+    }
+  }
+
   function load() {
     if (!tenantId) return;
     api
@@ -89,9 +121,55 @@ export default function MyReputationPanel({ token, tenantId }) {
           No landlord has rated you yet. Once they do, your score will appear here first - and it's the same score that will
           follow you (by this email address) to any future landlord who adds you on RentaPay.
         </p>
+        <div style={{ marginTop: 16, padding: 12, background: '#f7fbf8', border: '1px solid #dceee1', borderRadius: 10 }}>
+          <p style={{ margin: '0 0 8px', fontSize: 13, color: '#333' }}>
+            You can still share your (currently empty) RentaPay profile link with a landlord - it'll fill in automatically
+            as ratings come in.
+          </p>
+          {!shareUrl ? (
+            <button type="button" onClick={generateShareLink} disabled={shareLoading} style={{ background: '#1f7a3f', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontSize: 13 }}>
+              {shareLoading ? 'Generating…' : 'Get shareable link'}
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} style={{ flex: 1, minWidth: 200, padding: '6px 8px', fontSize: 12, borderRadius: 6, border: '1px solid #ccc' }} />
+              <button type="button" onClick={copyShareLink} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #1f7a3f', background: copied ? '#1f7a3f' : '#fff', color: copied ? '#fff' : '#1f7a3f', cursor: 'pointer', fontSize: 12 }}>
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          )}
+          {shareError && <p style={{ color: '#a33', fontSize: 12, marginTop: 6 }}>{shareError}</p>}
+        </div>
       </div>
     );
   }
+
+  const shareSection = (
+    <div style={{ marginTop: 16, padding: 12, background: '#f7fbf8', border: '1px solid #dceee1', borderRadius: 10 }}>
+      <p style={{ margin: '0 0 8px', fontSize: 13, color: '#333' }}>
+        Contacting a landlord about a vacant unit? Share this score with them - it's optional, and only your score is
+        shown, never individual comments.
+      </p>
+      {!shareUrl ? (
+        <button
+          type="button"
+          onClick={generateShareLink}
+          disabled={shareLoading}
+          style={{ background: '#1f7a3f', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', cursor: 'pointer', fontSize: 13 }}
+        >
+          {shareLoading ? 'Generating…' : 'Get shareable link'}
+        </button>
+      ) : (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} style={{ flex: 1, minWidth: 200, padding: '6px 8px', fontSize: 12, borderRadius: 6, border: '1px solid #ccc' }} />
+          <button type="button" onClick={copyShareLink} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #1f7a3f', background: copied ? '#1f7a3f' : '#fff', color: copied ? '#fff' : '#1f7a3f', cursor: 'pointer', fontSize: 12 }}>
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+      )}
+      {shareError && <p style={{ color: '#a33', fontSize: 12, marginTop: 6 }}>{shareError}</p>}
+    </div>
+  );
 
   return (
     <div className="my-reputation-panel">
@@ -164,6 +242,8 @@ export default function MyReputationPanel({ token, tenantId }) {
           ))}
         </div>
       )}
+
+      {shareSection}
     </div>
   );
 }

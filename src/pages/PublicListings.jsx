@@ -4,6 +4,7 @@ import { api, ApiError } from '../api/client.js';
 import Skeleton from '../components/Skeleton.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import PhotoLightbox from '../components/PhotoLightbox.jsx';
+import ModalShell from '../components/ModalShell.jsx';
 import './TenantPortal.css';
 import './PublicListings.css';
 
@@ -55,6 +56,11 @@ function PropertyReputationBadge({ reputation }) {
 function UnitCard({ unit: u, showMeta, contactingId, onPhotoClick, onContact }) {
   const photos = u.photoUrls || [];
   const statusInfo = LISTING_STATUS_LABEL[u.listingStatus] || LISTING_STATUS_LABEL.active;
+  // DIRECT REQUEST: show county/constituency/location directly on the
+  // photo banner itself, not just once in the property group header -
+  // useful when scrolling through many cards, or if a card is shared/
+  // screenshotted on its own.
+  const locationLine = [u.location, u.constituency, u.county].filter(Boolean).join(', ');
   return (
     <div className="public-listings__card">
       <button
@@ -74,6 +80,7 @@ function UnitCard({ unit: u, showMeta, contactingId, onPhotoClick, onContact }) 
         ) : (
           <div className="public-listings__photo-placeholder">🏠</div>
         )}
+        {locationLine && <span className="public-listings__photo-location">📍 {locationLine}</span>}
       </button>
       <div className="public-listings__info">
         {showMeta && (
@@ -130,16 +137,49 @@ export default function PublicListings() {
     return () => clearTimeout(handle);
   }, [searchText]);
 
+  const [contactPicker, setContactPicker] = useState(null); // { unitId, options } while choosing who to message
+  // FEATURE (direct request #4 - tenant reputation flow): a tenant who
+  // already has a RentaPay reputation share link can paste it here so
+  // it rides along in the WhatsApp message text. Purely optional, and
+  // never fetched or generated for them here - they get the link from
+  // their own tenant portal (see MyReputationPanel.jsx) and bring it.
+  const [reputationLink, setReputationLink] = useState('');
+
   async function handleContact(unitId) {
     setContactingId(unitId);
+    setContactPicker(null);
     try {
       const res = await api.getPublicListingContact(unitId);
-      window.open(res.whatsappLink, '_blank', 'noopener,noreferrer');
+      const options = res.options || [];
+      if (options.length === 0) {
+        setError('No contact number is available for this unit yet.');
+      } else {
+        // DIRECT REQUEST: let the tenant choose who to message
+        // (landlord / manager / caretaker) instead of always being
+        // silently routed to whichever one the backend used to pick
+        // first - see public.controller.js's getUnitContact. Always
+        // routes through the picker now (even for a single option) so
+        // there's a consistent place to offer the optional reputation
+        // link, rather than sometimes skipping straight to WhatsApp.
+        setContactPicker({ unitId, options });
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not open WhatsApp for this unit.');
     } finally {
       setContactingId(null);
     }
+  }
+
+  function openContactOption(link) {
+    // Appends the tenant's optional reputation link to the end of the
+    // pre-filled WhatsApp message text, rather than replacing it -
+    // link is only additional context, not the whole message.
+    const finalLink = reputationLink.trim()
+      ? `${link}${encodeURIComponent(`\n\nMy RentaPay tenancy reputation: ${reputationLink.trim()}`)}`
+      : link;
+    window.open(finalLink, '_blank', 'noopener,noreferrer');
+    setContactPicker(null);
+    setReputationLink('');
   }
 
   // Group listings by property. Units with no property_id belong to no
@@ -246,6 +286,36 @@ export default function PublicListings() {
           onIndexChange={(i) => setLightbox((prev) => ({ ...prev, index: i }))}
           onClose={() => setLightbox(null)}
         />
+      )}
+
+      {contactPicker && (
+        <ModalShell title="Who would you like to message?" onClose={() => { setContactPicker(null); setReputationLink(''); }}>
+          <div className="public-listings__contact-picker">
+            {contactPicker.options.map((opt) => (
+              <button
+                key={opt.role}
+                type="button"
+                className="public-listings__contact-option"
+                onClick={() => openContactOption(opt.whatsappLink)}
+              >
+                <span aria-hidden="true">💬</span> Message the {opt.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #eee' }}>
+            <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 4 }}>
+              Have a RentaPay tenancy reputation link? Paste it below to share it with the landlord (optional).
+            </label>
+            <input
+              type="text"
+              value={reputationLink}
+              onChange={(e) => setReputationLink(e.target.value)}
+              placeholder="https://rentapay.co.ke/reputation/..."
+              style={{ width: '100%', padding: '7px 10px', fontSize: 13, borderRadius: 6, border: '1px solid #ccc' }}
+            />
+          </div>
+        </ModalShell>
       )}
     </div>
   );

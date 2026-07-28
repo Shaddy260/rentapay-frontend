@@ -404,7 +404,17 @@
 
   .login-page__panel {
     max-width: 440px;
-    padding: var(--space-8) var(--space-5);
+    padding: var(--space-6) var(--space-5);
+    margin: var(--space-5) auto;
+    background: var(--color-surface-raised, #fff);
+    border: 1px solid var(--color-hairline, #E4DFD8);
+    border-radius: var(--radius-lg, 14px);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .login-page__right {
+    padding: 0 var(--space-3);
+    align-items: flex-start;
   }
 }
 
@@ -521,6 +531,7 @@
 
 .login-page__input-icon-wrap {
   position: relative;
+  width: 100%;
 }
 
 .login-page__input-icon {
@@ -535,6 +546,8 @@
 
 .login-page__input-with-icon,
 .login-page__input-icon-wrap input {
+  width: 100%;
+  box-sizing: border-box;
   padding-left: 36px !important;
 }
 

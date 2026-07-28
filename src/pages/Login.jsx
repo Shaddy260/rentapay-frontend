@@ -8,6 +8,7 @@ import InstallAppBanner from '../components/InstallAppBanner.jsx';
 import GoogleSignInButton from '../components/GoogleSignInButton.jsx';
 import { api, ApiError } from '../api/client.js';
 import { isBiometricSupported, listBiometricEntries, unlockWithBiometric } from '../utils/biometricAuth.js';
+import { isStandalone } from '../utils/useInstallPrompt.js';
 import './Login.css';
 
 function describeError(err) {
@@ -77,7 +78,16 @@ export default function Login() {
   const [googleError, setGoogleError] = useState('');
 
   React.useEffect(() => {
-    if (isBiometricSupported()) setBiometricEntries(listBiometricEntries());
+    // DIRECT REQUEST: fingerprint login should only ever be offered
+    // when RentaPay is actually running as the installed app
+    // (standalone display mode) - not in a regular browser tab, even
+    // if this device happens to have a biometric entry saved from a
+    // time it WAS installed (e.g. someone opened the site directly in
+    // Chrome later). isBiometricSupported() only checks whether the
+    // device/browser has WebAuthn platform-authenticator support at
+    // all - it says nothing about install state, so that check alone
+    // isn't enough here.
+    if (isBiometricSupported() && isStandalone()) setBiometricEntries(listBiometricEntries());
   }, []);
 
   const matchingBiometricEntries = biometricEntries;
@@ -103,7 +113,7 @@ export default function Login() {
         setErrorInfo(
           err instanceof ApiError && err.lockedDown
             ? describeError(err)
-            : { title: 'Fingerprint login failed', detail: err.message || 'Please log in with your phone number/email and password instead.' }
+            : { title: 'Fingerprint login failed', detail: err.message || 'Please log in with your email and password instead.' }
         );
       }
     } finally {
@@ -299,10 +309,6 @@ export default function Login() {
             <span>Sign in to your account</span>
           </div>
 
-          <div className="login-page__register-callout">
-            New here? <Link to="/register">Register as a landlord →</Link>
-          </div>
-
           <h1>Welcome back</h1>
           <p className="login-page__intro">Log in to manage your property, or view your account and pay rent.</p>
 
@@ -367,7 +373,7 @@ export default function Login() {
               </div>
 
               <div className="login-page__divider">
-                <span>or log in with phone/email</span>
+                <span>or log in with email</span>
               </div>
 
               <form onSubmit={handleSubmit}>

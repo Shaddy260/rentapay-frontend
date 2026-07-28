@@ -12,6 +12,7 @@ import GlobalSearch from '../components/GlobalSearch.jsx';
 import Skeleton from '../components/Skeleton.jsx';
 import OnboardingChecklist from '../components/OnboardingChecklist.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import { MissingPhotosBanner, MissingPhotosBadge } from '../components/MissingPhotosNudge.jsx';
 import { downloadCsv } from '../utils/downloadCsv.js';
 import AddPropertyModal from '../components/AddPropertyModal.jsx';
 import BulkRentChangeModal from '../components/BulkRentChangeModal.jsx';
@@ -445,6 +446,7 @@ export default function Dashboard() {
             <span className="property-switcher__label">
               {properties.find((p) => p.id === activePropertyId)?.name || 'Select property'}
             </span>
+            <MissingPhotosBadge units={units} />
             <span className="property-switcher__caret">▾</span>
           </button>
           {switcherOpen && (
@@ -693,6 +695,12 @@ export default function Dashboard() {
           onToggle={() => setShowFullDetails((v) => !v)}
           onOpenOverdue={() => { setShowFullDetails(true); openDrillDown('overdue'); }}
           onOpenSubscription={() => navigate('/subscription')}
+        />
+
+        <MissingPhotosBanner
+          units={units}
+          scopeKey={`dashboard:${activePropertyId || 'all'}`}
+          onAddPhotos={(target) => navigate(`/units/${Array.isArray(target) ? target[0].id : target.id}`)}
         />
 
         {showFullDetails && (

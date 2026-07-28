@@ -406,6 +406,10 @@ export const api = {
   },
   getPublicListingAreas: () => request('/public/listings/counties'),
   getPublicListingContact: (unitId) => request(`/public/listings/${unitId}/contact`),
+  // Tenant reputation sharing (direct request #4): tenant generates a
+  // link to their own portable score; anyone can resolve it, no login.
+  getMyReputationShareLink: (token) => request('/tenants/reputation-share-link', { token }),
+  getSharedReputation: (shareToken) => request(`/public/reputation/${shareToken}`),
   createPaymentPlanRequest: (payload, token) => request('/payment-plans', { method: 'POST', body: payload, token }),
   listPaymentPlanRequests: (params, token) => {
     const qs = new URLSearchParams(params || {}).toString();

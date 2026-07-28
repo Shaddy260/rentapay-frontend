@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Button from './Button.jsx';
 import { api } from '../api/client.js';
+import Skeleton from './Skeleton.jsx';
 import './ComplaintsPanel.css';
 
 /**
@@ -80,7 +81,7 @@ export default function ComplaintsPanel({ token, name, defaultPhone }) {
       )}
 
       {loading ? (
-        <p className="tenant-portal-hint">Loading your complaints…</p>
+        <Skeleton rows={3} />
       ) : requests.length === 0 ? (
         <p className="tenant-portal-hint">No complaints filed yet.</p>
       ) : (

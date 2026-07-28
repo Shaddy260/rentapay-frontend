@@ -109,7 +109,6 @@ const STEPS = [
   { key: 'property', title: 'Your property', subtitle: 'Estate & location' },
   { key: 'method', title: 'Payment method', subtitle: 'How rent reaches you' },
   { key: 'units', title: 'Add your units', subtitle: 'Rent per unit' },
-  { key: 'charges', title: 'Extra charges', subtitle: 'Water, garbage, etc' },
   { key: 'done', title: 'All set', subtitle: 'Dashboard unlocked' },
 ];
 
@@ -262,102 +261,6 @@ export default function RegisterFlow() {
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [duplicateCount, setDuplicateCount] = useState('');
   const [newUnit, setNewUnit] = useState({ unitName: '', unitType: 'Bedsitter', customUnitType: '', rentAmount: '' });
-
-  // Draft input values for the extra-charges step, keyed by unit
-  // index, so each unit's "add a charge" form has independent
-  // in-progress text without needing one useState per unit.
-  const [chargeDrafts, setChargeDrafts] = useState({});
-
-  function updateChargeDraft(unitIndex, draft) {
-    setChargeDrafts((d) => ({ ...d, [unitIndex]: draft }));
-  }
-
-  async function handleAddCharge(e, unitIndex) {
-    e.preventDefault();
-    const draft = chargeDrafts[unitIndex];
-    if (!draft || !draft.name || !draft.amount) return;
-
-    const unit = units[unitIndex];
-    const token = sessionStorage.getItem('rentapay_token');
-
-    if (token && unit.id) {
-      // Real unit exists in the database (created in handleUnitsSubmit)
-      // - persist the charge for real instead of only updating local
-      // state, which is what silently happened before this fix.
-      try {
-        await api.addExtraCharge(unit.id, { name: draft.name, amount: Number(draft.amount) }, token);
-      } catch (err) {
-        setError(`Could not save charge: ${err.message}`);
-        return; // don't update local state if the save failed - keeps UI honest
-      }
-    }
-
-    setUnits((prevUnits) =>
-      prevUnits.map((u, i) =>
-        i === unitIndex
-          ? { ...u, extraCharges: [...(u.extraCharges || []), { name: draft.name, amount: Number(draft.amount) }] }
-          : u
-      )
-    );
-    setChargeDrafts((d) => ({ ...d, [unitIndex]: { name: '', amount: '' } }));
-  }
-
-  function handleRemoveCharge(unitIndex, chargeIndex) {
-    // NOTE: there is currently no backend endpoint to remove a single
-    // extra charge (only to add one - see unit.controller.js
-    // addExtraCharge). This removes it from local display only; if the
-    // charge was already saved via handleAddCharge above, it will
-    // still exist in the database until a delete-charge endpoint is
-    // added. Flagging this honestly rather than pretending it's fully
-    // wired - same standard as everything else in this file.
-    setUnits((prevUnits) =>
-      prevUnits.map((u, i) => (i === unitIndex ? { ...u, extraCharges: u.extraCharges.filter((_, ci) => ci !== chargeIndex) } : u))
-    );
-  }
-
-  // Direct request: "the extra charges should also have a duplicate
-  // button that will duplicate" - mirrors the units-step duplicate
-  // feature (handleDuplicateUnits above), but for a single charge:
-  // copies one unit's charge (e.g. "Water KES 300") onto every OTHER
-  // unit in the wizard in one tap, instead of retyping the same
-  // charge name/amount for each unit individually. Units that already
-  // have a charge with this exact name are skipped rather than given
-  // a second, duplicate entry.
-  const [duplicatingCharge, setDuplicatingCharge] = useState(null); // { unitIndex, chargeIndex } while a duplicate-to-all is in flight
-
-  async function handleDuplicateChargeToAll(unitIndex, chargeIndex) {
-    const source = units[unitIndex];
-    const charge = source?.extraCharges?.[chargeIndex];
-    if (!charge) return;
-
-    setDuplicatingCharge({ unitIndex, chargeIndex });
-    setError('');
-    const token = sessionStorage.getItem('rentapay_token');
-
-    try {
-      const targets = units
-        .map((u, i) => ({ u, i }))
-        .filter(({ u, i }) => i !== unitIndex && !(u.extraCharges || []).some((c) => c.name.trim().toLowerCase() === charge.name.trim().toLowerCase()));
-
-      if (token) {
-        await Promise.all(
-          targets
-            .filter(({ u }) => u.id) // only units already saved to the backend
-            .map(({ u }) => api.addExtraCharge(u.id, { name: charge.name, amount: Number(charge.amount) }, token))
-        );
-      }
-
-      setUnits((prevUnits) =>
-        prevUnits.map((u, i) =>
-          targets.some((t) => t.i === i) ? { ...u, extraCharges: [...(u.extraCharges || []), { name: charge.name, amount: Number(charge.amount) }] } : u
-        )
-      );
-    } catch (err) {
-      setError(`Could not duplicate charge to all units: ${err.message}`);
-    } finally {
-      setDuplicatingCharge(null);
-    }
-  }
 
   // The real, authoritative unit quota the landlord paid for. We do
   // NOT trust form.unitsCount for this - that value only reflects
@@ -975,7 +878,7 @@ export default function RegisterFlow() {
       // persist. Let the person continue with local-only data rather
       // than trap them; they can finish setup and add units properly
       // once logged in normally.
-      setStepIndex(5);
+      await doHandleFinishSetup();
       return;
     }
 
@@ -1004,7 +907,7 @@ export default function RegisterFlow() {
     const pending = units.filter((u) => !u.id);
     if (pending.length === 0) {
       setLoading(false);
-      setStepIndex(5);
+      await doHandleFinishSetup();
       return;
     }
     try {
@@ -1034,7 +937,7 @@ export default function RegisterFlow() {
         );
         return;
       }
-      setStepIndex(5);
+      await doHandleFinishSetup();
     } catch (err) {
       setLoading(false);
       setError(`Could not save units: ${err.message}. Nothing was lost - tap "Continue" again to retry.`);
@@ -1081,7 +984,7 @@ export default function RegisterFlow() {
         // of the wizard silently lying about having finished.
         setError(
           `Could not save your setup as complete: ${err.message}. ` +
-            `Your units and property details ARE saved - tap "Finish setup" again to retry, ` +
+            `Your units and property details ARE saved - tap "Continue with ${units.length} unit${units.length === 1 ? '' : 's'}" again to retry, ` +
             `or you'll be brought back here automatically next time you log in.`
         );
         setLoading(false);
@@ -1091,7 +994,7 @@ export default function RegisterFlow() {
     }
     // No token (e.g. testing wizard UI in isolation without ever
     // having logged in) - nothing to call, just show the done screen.
-    setStepIndex(6);
+    setStepIndex(5);
   }
 
   const totalExpectedRent = units.reduce((sum, u) => sum + u.rentAmount, 0);
@@ -1273,7 +1176,7 @@ export default function RegisterFlow() {
             <>
               <span className="success-badge">✓ Payment confirmed</span>
               <h1>Tell us about your property</h1>
-              <p className="register-page__intro">Setup Wizard — Step 1 of 5</p>
+              <p className="register-page__intro">Setup Wizard — Step 1 of 4</p>
               <form onSubmit={handlePropertySubmit}>
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="estateName">Estate name</label>
@@ -1362,7 +1265,7 @@ export default function RegisterFlow() {
           {stepIndex === 3 && (
             <>
               <h1>How will rent reach you?</h1>
-              <p className="register-page__intro">Setup Wizard — Step 2 of 5</p>
+              <p className="register-page__intro">Setup Wizard — Step 2 of 4</p>
               <form onSubmit={handlePaymentMethodSubmit}>
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="method">Method</label>
@@ -1403,7 +1306,7 @@ export default function RegisterFlow() {
             <>
               <h1>Add your units</h1>
               <p className="register-page__intro">
-                Setup Wizard — Step 3 of 5. Each unit gets a permanent payment code automatically.
+                Setup Wizard — Step 3 of 4. Each unit gets a permanent payment code automatically.
                 {' '}
                 {(unitLimit ?? form.unitsCount) != null && (
                   <strong>
@@ -1519,89 +1422,15 @@ export default function RegisterFlow() {
                   Continue with {units.length} unit{units.length === 1 ? '' : 's'}
                 </Button>
               </div>
-            </>
-          )}
-
-          {/* STEP 6: Setup Wizard Step 4 — Extra charges (real per-unit entry) */}
-          {stepIndex === 5 && (
-            <>
-              <h1>Add extra charges</h1>
-              <p className="register-page__intro">
-                Setup Wizard — Step 4 of 5. Optional — water, garbage, security, or electricity, per unit. Skip any unit and add charges later from the dashboard.
+              <p className="register-page__intro u-mt-3">
+                Need to add water, garbage, or other extra charges per unit? You can do that anytime after
+                setup from each unit's page on your dashboard.
               </p>
-
-              {units.map((u, unitIndex) => {
-                const unitCharges = u.extraCharges || [];
-                const chargesTotal = unitCharges.reduce((sum, c) => sum + Number(c.amount || 0), 0);
-                const draft = chargeDrafts[unitIndex] || { name: '', amount: '' };
-
-                return (
-                  <div className="charge-unit-card" key={unitIndex}>
-                    <div className="charge-unit-card__header">
-                      <span className="charge-unit-card__name">{u.unitName}</span>
-                      <span className="charge-unit-card__rent">Rent KES {u.rentAmount.toLocaleString()}</span>
-                    </div>
-
-                    {unitCharges.length > 0 && (
-                      <div className="charge-unit-card__list">
-                        {unitCharges.map((c, chargeIndex) => (
-                          <div className="charge-unit-card__row" key={chargeIndex}>
-                            <span>{c.name}</span>
-                            <span>KES {Number(c.amount).toLocaleString()}</span>
-                            <button
-                              type="button"
-                              className="charge-unit-card__duplicate"
-                              disabled={units.length < 2 || (duplicatingCharge?.unitIndex === unitIndex && duplicatingCharge?.chargeIndex === chargeIndex)}
-                              title="Copy this charge onto every other unit"
-                              onClick={() => handleDuplicateChargeToAll(unitIndex, chargeIndex)}
-                            >
-                              {duplicatingCharge?.unitIndex === unitIndex && duplicatingCharge?.chargeIndex === chargeIndex ? 'Duplicating…' : 'Duplicate to all units'}
-                            </button>
-                            <button
-                              type="button"
-                              className="charge-unit-card__remove"
-                              aria-label={`Remove ${c.name} from ${u.unitName}`}
-                              onClick={() => handleRemoveCharge(unitIndex, chargeIndex)}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <form className="charge-unit-card__add-row" onSubmit={(e) => handleAddCharge(e, unitIndex)}>
-                      <input
-                        placeholder="Charge name (e.g. Water)"
-                        value={draft.name}
-                        onChange={(e) => updateChargeDraft(unitIndex, { ...draft, name: e.target.value })}
-                      />
-                      <input
-                        type="number"
-                        placeholder="Amount (KES)"
-                        value={draft.amount}
-                        onChange={(e) => updateChargeDraft(unitIndex, { ...draft, amount: e.target.value })}
-                      />
-                      <Button type="submit" variant="ghost" className="add-unit-row__btn">+ Add</Button>
-                    </form>
-
-                    <div className="charge-unit-card__total">
-                      <span>Total due per month</span>
-                      <span>KES {(u.rentAmount + chargesTotal).toLocaleString()}</span>
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div className="register-page__actions">
-                <Button type="button" variant="ghost" onClick={() => setStepIndex(4)}>Back</Button>
-                <Button type="button" variant="primary" loading={loading} onClick={handleFinishSetup}>Finish setup</Button>
-              </div>
             </>
           )}
 
-          {/* STEP 7: Setup Wizard Step 5 — Done */}
-          {stepIndex === 6 && (
+          {/* STEP 6: Setup Wizard Step 4 — Done */}
+          {stepIndex === 5 && (
             <div className="mpesa-pending">
               <div className="mpesa-pending__icon">🎉</div>
               <h2>Your dashboard is ready</h2>

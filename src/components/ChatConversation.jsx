@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
+import Skeleton from './Skeleton.jsx';
 import './ChatConversation.css';
 
 const POLL_MS = 4000;
@@ -146,7 +147,7 @@ export default function ChatConversation({ token, role, roleLevel = null, thread
       </div>
 
       <div className="chat-conversation__messages">
-        {loading && <p className="chat-conversation__hint">Loading conversation…</p>}
+        {loading && <Skeleton rows={4} />}
         {!loading && messages.length === 0 && <p className="chat-conversation__hint">No messages yet — say hello 👋</p>}
         {!loading && messages.map((m, i) => {
           const mine = m.sender_role === role;

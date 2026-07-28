@@ -8,6 +8,7 @@ import Countdown from '../components/Countdown.jsx';
 import PortalSidebar from '../components/PortalSidebar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
 import UnitInfoCard from '../components/UnitInfoCard.jsx';
+import Skeleton from '../components/Skeleton.jsx';
 import StatisticsPanel from '../components/StatisticsPanel.jsx';
 import { downloadCsv } from '../utils/downloadCsv.js';
 import { initPushSubscription } from '../utils/push.js';
@@ -231,7 +232,12 @@ export default function TenantPortal() {
   }, [token]);
 
   if (loading) {
-    return <div className="tenant-portal tenant-portal--loading"><p>Loading your portal…</p></div>;
+    return (
+      <div className="tenant-portal tenant-portal--loading">
+        <Skeleton variant="card" count={2} />
+        <Skeleton rows={4} />
+      </div>
+    );
   }
 
   if (error && !breakdown) {
