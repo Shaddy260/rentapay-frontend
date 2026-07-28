@@ -15,6 +15,85 @@ import './RegisterFlow.css';
 // the source of truth and recalculates server-side before charging.
 // NOTE: 50 (not the blueprint's stated 150) per direct instruction.
 const BASE_RATE = 50;
+
+/**
+ * DIRECT REQUEST: landlord should get an OTP by email to verify the
+ * email address during signup. Shown alongside the M-Pesa
+ * payment-pending step rather than blocking it - the two are
+ * independent (see 2026-07-landlord-email-verification.sql: email
+ * verification never gates account activation, payment still does
+ * that alone).
+ */
+function EmailOtpBlock({ landlordId, email }) {
+  const [code, setCode] = useState('');
+  const [status, setStatus] = useState('pending'); // 'pending' | 'verified'
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
+
+  if (!landlordId) return null;
+
+  async function submit(e) {
+    e.preventDefault();
+    setError('');
+    setBusy(true);
+    try {
+      await api.verifyLandlordEmailOTP({ landlordId, otp: code.trim() });
+      setStatus('verified');
+    } catch (err) {
+      setError(err.message || 'Invalid code.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resend() {
+    setError('');
+    setResendMessage('');
+    setBusy(true);
+    try {
+      await api.resendLandlordEmailOTP({ landlordId });
+      setResendMessage('A new code has been sent to your email.');
+    } catch (err) {
+      setError(err.message || 'Failed to resend code.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (status === 'verified') {
+    return (
+      <div className="register-page__section-divider">
+        <p className="register-page__intro"><strong>✓ Email verified.</strong></p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="register-page__section-divider u-text-left">
+      <h3>Verify your email</h3>
+      <p className="register-page__intro u-mt-1">
+        We sent a 6-digit code to <strong>{email}</strong>. This is separate from your M-Pesa payment above -
+        both can be done in either order.
+      </p>
+      <form onSubmit={submit} className="u-mt-4">
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Enter 6-digit code"
+          maxLength={6}
+          inputMode="numeric"
+        />
+        {error && <p className="api-error-banner" role="alert">{error}</p>}
+        {resendMessage && <p className="register-page__intro u-mt-1">{resendMessage}</p>}
+        <div className="u-mt-3" style={{ display: 'flex', gap: '10px' }}>
+          <Button type="submit" variant="secondary" loading={busy}>Verify email</Button>
+          <button type="button" className="ghost-link" onClick={resend} disabled={busy}>Resend code</button>
+        </div>
+      </form>
+    </div>
+  );
+}
 const PERIOD_DISCOUNTS = { 1: 0, 3: 0.05, 6: 0.10, 12: 0.15 };
 
 function previewCost(unitsCount, periodMonths) {
@@ -1139,6 +1218,8 @@ export default function RegisterFlow() {
                   Checking with M-Pesa - this can take up to a minute. Don't close this page.
                 </p>
               )}
+
+              <EmailOtpBlock landlordId={landlordId} email={form.email} />
 
               {!manualSubmitted ? (
                 <div className="register-page__section-divider">

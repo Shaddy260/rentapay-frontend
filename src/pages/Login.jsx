@@ -28,7 +28,7 @@ function describeError(err) {
       };
     case 'http':
       if (err.status === 401) {
-        return { title: 'Incorrect phone/email or password', detail: 'Double check both fields and try again.' };
+        return { title: 'Incorrect email or password', detail: 'Double check both fields and try again.' };
       }
       if (err.status === 403) {
         return { title: 'Account suspended', detail: err.message };
@@ -48,13 +48,22 @@ function describeError(err) {
   }
 }
 
-function isEmailLike(value) {
-  return typeof value === 'string' && value.includes('@');
-}
-
 export default function Login() {
   const navigate = useNavigate();
-  const [identifier, setIdentifier] = useState('');
+  const [identifier, setIdentifier] = useState(() => {
+    try {
+      return localStorage.getItem('rentapay_remembered_email') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [rememberMe, setRememberMe] = useState(() => {
+    try {
+      return !!localStorage.getItem('rentapay_remembered_email');
+    } catch {
+      return false;
+    }
+  });
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorInfo, setErrorInfo] = useState(null);
@@ -135,6 +144,13 @@ export default function Login() {
   }
 
   function handleLoginResponse(res, { fallbackIdentifier } = {}) {
+    try {
+      if (rememberMe && fallbackIdentifier) localStorage.setItem('rentapay_remembered_email', fallbackIdentifier);
+      else if (!rememberMe) localStorage.removeItem('rentapay_remembered_email');
+    } catch {
+      // localStorage unavailable (private browsing etc.) - remember-me is a convenience, not a hard requirement
+    }
+
     if (res.needsAccountPicker) {
       setAccountPickerOptions(res.options);
       setLoading(false);
@@ -200,8 +216,7 @@ export default function Login() {
 
   async function performLogin(pickedAccountType) {
     try {
-      const credentialField = isEmailLike(identifier) ? { email: identifier } : { phone: identifier };
-      const res = await api.login(pickedAccountType ? { accountType: pickedAccountType, ...credentialField, password } : { ...credentialField, password });
+      const res = await api.login(pickedAccountType ? { accountType: pickedAccountType, email: identifier, password } : { email: identifier, password });
       setPickerSource('password');
       handleLoginResponse(res, { fallbackIdentifier: identifier });
     } catch (err) {
@@ -268,9 +283,26 @@ export default function Login() {
         </div>
       </div>
 
+      <div className="login-page__mobile-banner">
+        <span className="login-page__mobile-banner-logo" aria-hidden="true">🏠</span>
+        <div>
+          <div className="login-page__mobile-banner-brand">RentaPay</div>
+          <div className="login-page__mobile-banner-tag">Rent &amp; property management, made simple</div>
+        </div>
+      </div>
+
       <div className="login-page__right">
         <div className="login-page__panel">
           <div className="login-page__brand login-page__brand--mobile">RentaPay</div>
+
+          <div className="login-page__signin-divider">
+            <span>Sign in to your account</span>
+          </div>
+
+          <div className="login-page__register-callout">
+            New here? <Link to="/register">Register as a landlord →</Link>
+          </div>
+
           <h1>Welcome back</h1>
           <p className="login-page__intro">Log in to manage your property, or view your account and pay rent.</p>
 
@@ -340,32 +372,49 @@ export default function Login() {
 
               <form onSubmit={handleSubmit}>
                 <div className="form-field">
-                  <label className="form-field__label" htmlFor="identifier">Phone number or email</label>
-                  <input
-                    id="identifier"
-                    required
-                    autoComplete="username"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="07XXXXXXXX or you@example.com"
-                  />
+                  <label className="form-field__label" htmlFor="identifier">Email address</label>
+                  <div className="login-page__input-icon-wrap">
+                    <span className="login-page__input-icon" aria-hidden="true">✉</span>
+                    <input
+                      id="identifier"
+                      type="email"
+                      required
+                      autoComplete="username"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="you@example.com"
+                      className="login-page__input-with-icon"
+                    />
+                  </div>
                 </div>
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="password">Password</label>
-                  <PasswordInput
-                    id="password"
-                    required
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+                  <div className="login-page__input-icon-wrap">
+                    <span className="login-page__input-icon" aria-hidden="true">🔒</span>
+                    <PasswordInput
+                      id="password"
+                      required
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="login-page__input-with-icon"
+                    />
+                  </div>
                 </div>
 
-                <p className="login-page__forgot-row">
+                <div className="login-page__remember-forgot-row">
+                  <label className="login-page__remember-me">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
+                    Remember me
+                  </label>
                   <Link to="/forgot-password" className="login-page__resend-link login-page__resend-link--inline">
                     Forgot password?
                   </Link>
-                </p>
+                </div>
 
                 <div className="login-page__submit-row">
                   {matchingBiometricEntries.length > 0 && (
@@ -398,10 +447,13 @@ export default function Login() {
           )}
 
           <div className="login-page__footer-links">
-            <p className="login-page__signup">
-              Don&apos;t have an account? <Link to="/register">Sign up as a landlord</Link>
-            </p>
-            <p className="login-page__signup">
+            <div className="login-page__signin-divider login-page__signin-divider--tight">
+              <span>Don&apos;t have an account?</span>
+            </div>
+            <Link to="/register" className="login-page__register-btn">
+              <span aria-hidden="true">👤</span> Register as a landlord
+            </Link>
+            <p className="login-page__signup u-mt-3">
               Looking for a vacant unit? <Link to="/find-a-house">Browse listings</Link>
             </p>
 
