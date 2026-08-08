@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Logged-in-only areas - nothing to index, and no reason to spend
+# crawl budget on pages that just redirect to a login wall anyway.
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /subscription
+Disallow: /messages
+
+Sitemap: https://rentapay.co.ke/sitemap.xml

@@ -1,0 +1,86 @@
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: var(--color-surface, #fff);
+    border-top: 1px solid var(--color-border, #e5e1d8);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+    transform: translateY(0);
+    transition: transform 0.22s ease;
+    will-change: transform;
+  }
+
+  /* Auto-hide while scrolling down so the bar never permanently
+     blocks content/buttons near the bottom edge of a page - slides
+     fully out of view rather than just fading, so it doesn't
+     intercept taps while transitioning. */
+  .bottom-nav--hidden {
+    transform: translateY(100%);
+  }
+
+  .bottom-nav__item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2px;
+    background: none;
+    border: none;
+    padding: 8px 2px 6px;
+    color: var(--color-text-muted, #8a8374);
+    font-size: 0.68rem;
+    cursor: pointer;
+  }
+
+  .bottom-nav__item.is-active {
+    color: var(--color-accent, #2b6777);
+  }
+
+  .bottom-nav__icon {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  /* FIX (direct request: "big fonts... hide features - show all
+     features on screen, don't hide a single UI"): this used to be
+     `white-space: nowrap` + `text-overflow: ellipsis`, so once a
+     phone's font size was large enough, a label like "Dashboard" or
+     "Messages" got silently cut down to "Dash…" or worse - the exact
+     "hidden feature" being described, and the person had no way to
+     even tell a label was being cut off. Letting the label wrap onto
+     a second line instead means the full word is always visible - the
+     bar is slightly taller when it wraps, but nothing is ever
+     truncated or invisible.
+   */
+  .bottom-nav__label {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: center;
+    line-height: 1.15;
+  }
+
+  /* Leave room at the bottom of the page so this bar never covers
+     the last bit of scrollable content on mobile. */
+  .dashboard-main,
+  .tenant-portal-main {
+    padding-bottom: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav {
+    transition: none;
+  }
+}

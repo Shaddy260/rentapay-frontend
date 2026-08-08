@@ -1,0 +1,124 @@
+.admin-reported-accounts__intro {
+  color: var(--color-ink-soft, #5C6663);
+  max-width: 640px;
+  margin-bottom: 16px;
+}
+
+.admin-reported-accounts__filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-reported-accounts__filter-btn {
+  border: 1px solid var(--color-border, #E4DFD8);
+  background: var(--color-surface, #fff);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: var(--text-sm, 0.9375rem);
+  cursor: pointer;
+}
+
+.admin-reported-accounts__filter-btn--active {
+  background: var(--color-ink, #22282A);
+  color: #fff;
+  border-color: var(--color-ink, #22282A);
+}
+
+.admin-reported-accounts__error {
+  color: #A33;
+  margin-bottom: 12px;
+}
+
+.admin-reported-accounts__empty {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-reported-accounts__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 720px;
+}
+
+.admin-reported-accounts__item {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--color-surface, #fff);
+}
+
+.admin-reported-accounts__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.admin-reported-accounts__type {
+  font-weight: 700;
+}
+
+.admin-reported-accounts__counts {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-reported-accounts__reason,
+.admin-reported-accounts__meta {
+  font-size: var(--text-sm, 0.9375rem);
+  margin: 4px 0;
+}
+
+.admin-reported-accounts__meta {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-reported-accounts__snapshot {
+  font-style: italic;
+  margin: 6px 0;
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-reported-accounts__photos {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.admin-reported-accounts__photos img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #E4DFD8);
+}
+
+.admin-reported-accounts__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-reported-accounts__actions input {
+  flex: 1;
+  min-width: 180px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+}
+
+.admin-reported-accounts__days-input {
+  flex: 0 0 70px !important;
+  min-width: 70px !important;
+}

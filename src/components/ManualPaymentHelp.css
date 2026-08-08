@@ -1,0 +1,18 @@
+.manual-payment-help {
+  margin-top: var(--space-3, 0.75rem);
+}
+
+.manual-payment-help__note {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted, #5c6b68);
+  margin: 0 0 var(--space-2, 0.5rem);
+}
+
+.manual-payment-help__toggle {
+  padding: 0;
+  font-size: var(--text-sm);
+}
+
+.manual-payment-help__channels {
+  margin-top: var(--space-2, 0.5rem);
+}
