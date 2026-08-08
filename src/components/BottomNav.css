@@ -1,15 +1,62 @@
+.bottom-nav-wrap {
+  display: none;
+}
+
 .bottom-nav {
   display: none;
 }
 
 @media (max-width: 720px) {
-  .bottom-nav {
-    display: flex;
+  .bottom-nav-wrap {
+    display: block;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 40;
+  }
+
+  /* Small pull-tab centered on the bar's top edge. Always visible and
+     tappable regardless of whether the bar underneath is currently
+     hidden - it's the one control that's never allowed to disappear,
+     since it's the only way to bring the bar back once collapsed. */
+  .bottom-nav__handle {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: 22px;
+    border: 1px solid var(--color-border, #e5e1d8);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-text-muted, #8a8374);
+    font-size: 0.7rem;
+    padding: 0;
+    z-index: 41;
+  }
+
+  /* When the bar is hidden (auto or manual), the handle drops down to
+     sit flush with the bottom of the viewport itself instead of
+     floating above an invisible bar, so it still reads as "tap here"
+     rather than a stray disconnected tab. */
+  .bottom-nav__handle--collapsed {
+    top: auto;
+    bottom: 0;
+    border: 1px solid var(--color-border, #e5e1d8);
+    border-radius: 10px 10px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .bottom-nav {
+    display: flex;
+    position: relative;
     background: var(--color-surface, #fff);
     border-top: 1px solid var(--color-border, #e5e1d8);
     padding-bottom: env(safe-area-inset-bottom, 0);

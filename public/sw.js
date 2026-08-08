@@ -45,7 +45,16 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title, {
       body: data.body,
       icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      // DIRECT FIX: Android's status-bar/lockscreen notification icon
+      // (as opposed to the larger icon shown in the shade) must be a
+      // white silhouette on a transparent background - Android masks
+      // it into a simple shape itself. icon-192.png is a full-color
+      // image with an opaque background and no transparency at all,
+      // so Android/Chrome couldn't derive a usable badge from it and
+      // silently fell back to Chrome's own logo there instead - which
+      // is why notifications showed the RentaPay icon in the
+      // expanded shade but a plain Chrome icon on the lockscreen.
+      badge: '/icon-badge-monochrome.png',
       data: { url: data.url || '/' },
       // FIX (direct request: "notifications... should not land in
       // silently unnoticed"): these two used to be left unset

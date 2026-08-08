@@ -84,7 +84,7 @@ function endTrackedRequest() {
   }
 }
 
-async function request(path, { method = 'GET', body, token, queueable, queueDescription } = {}) {
+async function request(path, { method = 'GET', body, token, queueable, queueDescription, keepalive } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
   const cacheKey = method === 'GET' ? cacheKeyFor(path, token) : null;
@@ -98,6 +98,12 @@ async function request(path, { method = 'GET', body, token, queueable, queueDesc
       headers,
       body: body ? JSON.stringify(body) : undefined,
       cache: 'no-store',
+      // Some fire-and-forget calls (e.g. markAssistantSeen) fire the
+      // instant something happens, right before the person is likely
+      // to navigate away or background the app. Without `keepalive`,
+      // the browser can cancel the request mid-flight when that
+      // happens, so the write silently never lands - see markAssistantSeen.
+      ...(keepalive ? { keepalive: true } : {}),
     });
   } catch (networkErr) {
     // OFFLINE FIX (direct request: "resilience outside Nairobi's core,
@@ -359,7 +365,15 @@ export const api = {
   // account ever seen it" flag, so it auto-launches once per account
   // regardless of device/browser, and never again after that.
   getAssistantStatus: (token) => request('/assistant/status', { token }),
-  markAssistantSeen: (token) => request('/assistant/seen', { method: 'POST', token }),
+  // keepalive: true - this fires the instant the walkthrough
+  // auto-opens (see VirtualAssistant.jsx/Dashboard.jsx), which is
+  // exactly when someone is most likely to immediately tap Skip or
+  // switch apps. Without keepalive, a plain fetch can get cancelled
+  // by that navigation before it reaches the server, so the "seen"
+  // flag never actually saves - and the walkthrough wrongly
+  // auto-opens again on their next login even though they already
+  // went through it once.
+  markAssistantSeen: (token) => request('/assistant/seen', { method: 'POST', token, keepalive: true }),
 
   getDashboard: (token, propertyId) => request(`/dashboard${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
   getAttentionFeed: (token) => request('/dashboard/attention', { token }),
