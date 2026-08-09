@@ -1,0 +1,102 @@
+.admin-ba-rules__intro {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: 0.9rem;
+  margin: 0 0 16px;
+  max-width: 640px;
+}
+
+.admin-ba-rules__scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-ba-rules__scope select {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-width: 240px;
+}
+
+.admin-ba-rules__note {
+  background: #fff9ee;
+  border: 1px solid #e0d4a9;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #7a5c0c;
+  margin-bottom: 14px;
+}
+
+.admin-ba-rules__error {
+  color: #A33;
+  margin: 8px 0;
+}
+
+.admin-ba-rules__meta {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: 0.85rem;
+  margin: 2px 0 12px;
+}
+
+.admin-ba-rules__card {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.admin-ba-rules__card h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.admin-ba-rules__form-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-rules__form-row label,
+.admin-ba-rules__tier-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-ba-rules__form-row input,
+.admin-ba-rules__tier-row input {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  width: 160px;
+}
+
+.admin-ba-rules__tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.admin-ba-rules__tier-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-rules__tier-row input {
+  width: 110px;
+}
+
+.admin-ba-rules__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+}

@@ -938,10 +938,12 @@ export const api = {
   submitPublicOnboarding: (linkToken, payload) => request(`/public/onboarding/${linkToken}/submit`, { method: 'POST', body: payload }),
 
   // Brand Ambassador self-onboarding (build spec Phase 2) - public,
-  // no login. The one generic "Become a Brand Ambassador" link.
-  requestBaEmailOtp: (email) => request('/brand-ambassadors/email/send-otp', { method: 'POST', body: { email } }),
+  // no login. The one generic "Become a Brand Ambassador" link, now a
+  // 24h-rotating token the applicant's page must carry through every step.
+  requestBaEmailOtp: (email, onboardingToken) => request('/brand-ambassadors/email/send-otp', { method: 'POST', body: { email, onboardingToken } }),
   confirmBaEmailOtp: (email, code) => request('/brand-ambassadors/email/verify-otp', { method: 'POST', body: { email, code } }),
   submitBaOnboarding: (payload) => request('/brand-ambassadors/apply', { method: 'POST', body: payload }),
+  validateBaOnboardingLink: (onboardingToken) => request(`/brand-ambassadors/onboarding-link/validate?token=${encodeURIComponent(onboardingToken || '')}`),
 
   // Phase 9 - public marketing landlord-lead capture form. No auth.
   submitLandlordLead: (payload) => request('/public/landlord-leads', { method: 'POST', body: payload }),
@@ -957,6 +959,10 @@ export const api = {
     return request(`/admin/landlord-leads${qs ? `?${qs}` : ''}`, { token });
   },
   markLandlordLeadContacted: (id, token) => request(`/admin/landlord-leads/${id}/mark-contacted`, { method: 'POST', token }),
+
+  // Admin - the rotating 24h "Become a Brand Ambassador" onboarding link.
+  getBaOnboardingLink: (token) => request('/brand-ambassadors/onboarding-link', { token }),
+  generateBaOnboardingLink: (token) => request('/brand-ambassadors/onboarding-link/generate', { method: 'POST', token }),
 
   // Admin - Brand Ambassador applications & roster.
   listPendingBaApplications: (page, token) => request(`/brand-ambassadors/applications${page ? `?page=${page}` : ''}`, { token }),
@@ -988,6 +994,19 @@ export const api = {
   // Phase 7 - "Share with admin": returns { summary, count }; posts the
   // same summary into the admin notifications inbox server-side.
   shareClaimsReport: ({ from, to } = {}, token) => request('/brand-ambassadors/claims/share', { method: 'POST', body: { from, to }, token }),
+
+  // Phase 10 - Admin: Payout Rules Engine & Commission Tiers (global +
+  // optional per-BA override for both the flat payout rule and the
+  // commission ladder). baId is optional on the GETs - when present
+  // the response also includes that BA's override (or null), so the
+  // UI can show "using global" vs "custom override" without a second
+  // round trip.
+  getBaPayoutRules: (baId, token) => request(`/brand-ambassadors/payout-rules${baId ? `?baId=${encodeURIComponent(baId)}` : ''}`, { token }),
+  updateGlobalBaPayoutRule: (payload, token) => request('/brand-ambassadors/payout-rules/global', { method: 'PATCH', body: payload, token }),
+  setBaPayoutOverride: (baId, payload, token) => request(`/brand-ambassadors/${baId}/payout-rule-override`, { method: 'PATCH', body: payload, token }),
+  getBaCommissionTiers: (baId, token) => request(`/brand-ambassadors/commission-tiers${baId ? `?baId=${encodeURIComponent(baId)}` : ''}`, { token }),
+  updateGlobalBaCommissionTiers: (tiers, token) => request('/brand-ambassadors/commission-tiers/global', { method: 'PATCH', body: { tiers }, token }),
+  setBaCommissionTierOverride: (baId, payload, token) => request(`/brand-ambassadors/${baId}/commission-tiers-override`, { method: 'PATCH', body: payload, token }),
 
   // Phase 11 - Admin: Payout Review, Reconciliation & Cross-BA
   // Security Report.

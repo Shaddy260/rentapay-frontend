@@ -3,7 +3,10 @@ import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import AdminBaPayoutRules from './AdminBaPayoutRules.jsx';
+import { buildWaMeLink } from '../utils/whatsapp.js';
 import './AdminBrandAmbassadors.css';
+import './TenantOnboardingPanel.css';
 
 /**
  * BUILD SPEC PHASE 2 - admin review queue for pending BA applications
@@ -13,7 +16,7 @@ import './AdminBrandAmbassadors.css';
  * from AdminDashboard.jsx's tab switch.
  */
 export default function AdminBrandAmbassadors({ token }) {
-  const [view, setView] = useState('applications'); // 'applications' | 'roster'
+  const [view, setView] = useState('applications'); // 'applications' | 'roster' | 'payout-rules'
   const [applications, setApplications] = useState(null);
   const [roster, setRoster] = useState(null);
   const [rosterStatus, setRosterStatus] = useState('');
@@ -21,6 +24,51 @@ export default function AdminBrandAmbassadors({ token }) {
   const [busyId, setBusyId] = useState(null);
   const [rejectReasons, setRejectReasons] = useState({});
   const [approvedInfo, setApprovedInfo] = useState(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  // The one generic "Become a Brand Ambassador" link, now rotating:
+  // admin generates it here and it's only good for 24h (or until the
+  // next regenerate, whichever comes first) - see
+  // brandAmbassador.controller.js's ba_onboarding_links table.
+  const [baLink, setBaLink] = useState(null); // { link, expiresAt, expired } | null while loading
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkError, setLinkError] = useState('');
+
+  const loadOnboardingLink = useCallback(() => {
+    api
+      .getBaOnboardingLink(token)
+      .then((res) => setBaLink(res))
+      .catch((err) => setLinkError(err instanceof ApiError ? err.message : 'Failed to load the onboarding link.'));
+  }, [token]);
+
+  useEffect(() => { loadOnboardingLink(); }, [loadOnboardingLink]);
+
+  async function generateOnboardingLink() {
+    setLinkBusy(true);
+    setLinkError('');
+    try {
+      const res = await api.generateBaOnboardingLink(token);
+      setBaLink({ link: res.link, expiresAt: res.expiresAt, expired: false });
+    } catch (err) {
+      setLinkError(err instanceof ApiError ? err.message : 'Failed to generate a new link.');
+    } finally {
+      setLinkBusy(false);
+    }
+  }
+
+  async function copyOnboardingLink() {
+    if (!baLink?.link) return;
+    try {
+      await navigator.clipboard.writeText(baLink.link);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // Clipboard API can fail (permissions, non-secure context) -
+      // the link is still shown and selectable in the input below,
+      // so this is a soft failure, not a blocker.
+      setLinkError('Could not copy automatically - select and copy the link below instead.');
+    }
+  }
   // PHASE 16 - suspend/reactivate are simple one-click toggles;
   // offboard is permanent, so it gets its own confirm dialog that
   // states plainly the referral link keeps working.
@@ -46,7 +94,7 @@ export default function AdminBrandAmbassadors({ token }) {
 
   useEffect(() => {
     if (view === 'applications') loadApplications();
-    else loadRoster();
+    else if (view === 'roster') loadRoster();
   }, [view, loadApplications, loadRoster]);
 
   async function approve(id) {
@@ -121,6 +169,50 @@ export default function AdminBrandAmbassadors({ token }) {
     <div className="admin-ba">
       <h2>Brand Ambassadors</h2>
 
+      {/* Onboard a new BA: share this one generic, reusable link with
+          whoever you want to become a Brand Ambassador. They open it,
+          fill in their own details, and their application lands in
+          "Pending Applications" below for you to approve or reject. */}
+      <div className="admin-ba__link-card">
+        <p className="admin-ba__link-card-title">Onboard a new Brand Ambassador</p>
+        <p className="admin-ba__meta">
+          Generate a link and send it to the person you want to onboard as a BA. They'll fill in their own details
+          and submit — you approve or reject it from Pending Applications below. The link expires 24 hours after
+          it's generated; after that (or once you generate a new one) the old one stops working and whoever has it
+          is told to request a fresh one.
+        </p>
+        {linkError && <p className="admin-ba__error">{linkError}</p>}
+        {!baLink ? (
+          <p className="admin-ba__meta">Loading…</p>
+        ) : !baLink.link || baLink.expired ? (
+          <div className="admin-ba__link-row">
+            <p className="admin-ba__meta">No live link right now — generate one to share.</p>
+            <Button variant="primary" loading={linkBusy} onClick={generateOnboardingLink}>Generate Link</Button>
+          </div>
+        ) : (
+          <>
+            <div className="admin-ba__link-row">
+              <input type="text" readOnly value={baLink.link} onFocus={(e) => e.target.select()} />
+              <Button variant="ghost" onClick={copyOnboardingLink}>{linkCopied ? 'Copied!' : 'Copy Link'}</Button>
+              <a
+                href={buildWaMeLink('', `Onboard as a RentaPay Brand Ambassador: ${baLink.link}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn--ghost"
+              >
+                Share via WhatsApp
+              </a>
+            </div>
+            <p className="admin-ba__meta">
+              Expires {new Date(baLink.expiresAt).toLocaleString()} ·{' '}
+              <button type="button" className="admin-ba__link-regenerate" disabled={linkBusy} onClick={generateOnboardingLink}>
+                {linkBusy ? 'Regenerating…' : 'Regenerate now'}
+              </button>
+            </p>
+          </>
+        )}
+      </div>
+
       <div className="admin-ba__filter">
         <button
           type="button"
@@ -135,6 +227,13 @@ export default function AdminBrandAmbassadors({ token }) {
           onClick={() => setView('roster')}
         >
           Full Roster
+        </button>
+        <button
+          type="button"
+          className={`admin-ba__filter-btn${view === 'payout-rules' ? ' admin-ba__filter-btn--active' : ''}`}
+          onClick={() => setView('payout-rules')}
+        >
+          Pricing &amp; Commission
         </button>
       </div>
 
@@ -160,33 +259,33 @@ export default function AdminBrandAmbassadors({ token }) {
         ) : !applications.length ? (
           <p className="admin-ba__empty">No pending applications right now.</p>
         ) : (
-          <ul className="admin-ba__list">
+          <div className="onboarding-requests__scroll">
             {applications.map((a) => (
-              <li key={a.id} className={`admin-ba__item${a.overdue ? ' admin-ba__item--overdue' : ''}`}>
-                <div className="admin-ba__row">
-                  <span className="admin-ba__name">{a.full_name}</span>
+              <div key={a.id} className={`onboarding-request-card${a.overdue ? ' admin-ba__item--overdue' : ''}`}>
+                <div className="onboarding-request-card__summary">
+                  <strong>{a.full_name}</strong>
                   {a.overdue && <span className="admin-ba__overdue-flag">Overdue for review</span>}
+                  <span>{a.phone}</span>
+                  <span>{a.email}</span>
+                  <span>Submitted {new Date(a.created_at).toLocaleString()}</span>
                 </div>
-                <p className="admin-ba__meta">
-                  {a.phone} · {a.email} · Submitted {new Date(a.created_at).toLocaleString()}
-                </p>
-                <div className="admin-ba__actions">
-                  <Button disabled={busyId === a.id} onClick={() => approve(a.id)}>
-                    Approve
-                  </Button>
+                <div className="onboarding-request-card__actions">
                   <input
                     type="text"
                     placeholder="Optional rejection reason"
                     value={rejectReasons[a.id] || ''}
                     onChange={(e) => setRejectReasons((prev) => ({ ...prev, [a.id]: e.target.value }))}
                   />
-                  <Button variant="danger" disabled={busyId === a.id} onClick={() => reject(a.id)}>
+                  <Button variant="ghost" disabled={busyId === a.id} onClick={() => reject(a.id)}>
                     Reject
                   </Button>
+                  <Button variant="primary" loading={busyId === a.id} onClick={() => approve(a.id)}>
+                    Approve
+                  </Button>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )
       )}
 
@@ -258,6 +357,8 @@ export default function AdminBrandAmbassadors({ token }) {
           )}
         </>
       )}
+
+      {view === 'payout-rules' && <AdminBaPayoutRules token={token} />}
 
       <ConfirmDialog
         open={!!pendingOffboard}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api, ApiError } from '../api/client.js';
 import Button from '../components/Button.jsx';
 import '../pages/TenantOnboarding.css';
@@ -7,20 +7,40 @@ import '../pages/TenantOnboarding.css';
 const EMPTY_FORM = { fullName: '', phone: '', email: '', termsAccepted: false };
 
 /**
- * BUILD SPEC PHASE 2 - the ONE generic, always-live public link admin
- * shares with anyone they want to become a Brand Ambassador
- * (/become-a-ba - no token in the URL, unlike tenant onboarding).
- * The applicant fills in their own name/phone/email, must confirm
- * email ownership with a one-time code before Submit is even
- * reachable, and the submission then sits in a pending-approval
- * queue - nothing here is auto-activated.
+ * The ONE generic "Become a Brand Ambassador" link
+ * (/become-a-ba?token=...) - still not per-person, but it now carries
+ * a token admin regenerates roughly every 24h from the admin portal.
+ * A link older than that (or superseded by a regenerate) is dead:
+ * this page checks the token on load and again shows the "expired,
+ * request a new one" message if it lapses mid-fill at submit time.
  */
 export default function BaOnboarding() {
+  const [searchParams] = useSearchParams();
+  const onboardingToken = searchParams.get('token') || '';
+
   const [form, setForm] = useState(EMPTY_FORM);
-  const [step, setStep] = useState('form'); // form | done
+  const [step, setStep] = useState('checking'); // checking | expired | form | done
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [doneMessage, setDoneMessage] = useState('');
+  const [expiredMessage, setExpiredMessage] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .validateBaOnboardingLink(onboardingToken)
+      .then(() => { if (!cancelled) setStep('form'); })
+      .catch((err) => {
+        if (cancelled) return;
+        setExpiredMessage(
+          err instanceof ApiError
+            ? err.message
+            : 'This onboarding link has expired. Please request a new one from RentaPay.'
+        );
+        setStep('expired');
+      });
+    return () => { cancelled = true; };
+  }, [onboardingToken]);
 
   // Same 'idle' | 'sending' | 'sent' | 'verifying' | 'verified' shape
   // as TenantOnboarding.jsx's email verification - resets to 'idle'
@@ -52,9 +72,14 @@ export default function BaOnboarding() {
     }
     setEmailOtpStatus('sending');
     try {
-      await api.requestBaEmailOtp(form.email);
+      await api.requestBaEmailOtp(form.email, onboardingToken);
       setEmailOtpStatus('sent');
     } catch (err) {
+      if (err instanceof ApiError && err.raw?.linkExpired) {
+        setExpiredMessage(err.message);
+        setStep('expired');
+        return;
+      }
       setEmailOtpError(err instanceof ApiError ? err.message : 'Failed to send verification code.');
       setEmailOtpStatus('idle');
     }
@@ -100,10 +125,16 @@ export default function BaOnboarding() {
         email: form.email,
         emailVerification: emailVerificationToken,
         termsAccepted: true,
+        onboardingToken,
       });
       setDoneMessage(res.message || 'Your application has been received and is pending review.');
       setStep('done');
     } catch (err) {
+      if (err instanceof ApiError && err.raw?.linkExpired) {
+        setExpiredMessage(err.message);
+        setStep('expired');
+        return;
+      }
       setSubmitError(err instanceof ApiError ? err.message : 'Failed to submit. Please try again.');
     } finally {
       setSubmitting(false);
@@ -114,6 +145,18 @@ export default function BaOnboarding() {
     <div className="tenant-onboarding-page">
       <div className="tenant-onboarding-card">
         <h1>Become a RentaPay Brand Ambassador</h1>
+
+        {step === 'checking' && <p className="tenant-onboarding-instruction">Checking your link…</p>}
+
+        {step === 'expired' && (
+          <div className="tenant-onboarding-done">
+            <div className="tenant-onboarding-done__icon" aria-hidden="true">⏰</div>
+            <p>{expiredMessage}</p>
+            <p className="tenant-onboarding-field-hint">
+              Ask the RentaPay admin who invited you for a fresh link — the current one only stays valid for 24 hours.
+            </p>
+          </div>
+        )}
 
         {step === 'form' && (
           <form onSubmit={handleSubmit} className="tenant-onboarding-form">

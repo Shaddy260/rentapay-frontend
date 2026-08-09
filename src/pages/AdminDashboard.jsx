@@ -587,37 +587,65 @@ export default function AdminDashboard() {
         activeKey={activeTab}
         brandName="RentaPay Admin"
         items={[
-          { key: 'overview', label: 'Overview', icon: '📊', onClick: () => setActiveTab('overview') },
-          { key: 'statistics', label: 'Financial Statistics', icon: '📈', onClick: () => setActiveTab('statistics') },
-          { key: 'revenue-dashboard', label: 'Revenue Dashboard', icon: '💰', onClick: () => setActiveTab('revenue-dashboard') },
-          { key: 'landlords', label: 'Landlords', icon: '🏢', onClick: () => setActiveTab('landlords') },
-          { key: 'incomplete-signups', label: 'Incomplete Signups', icon: '🚧', onClick: () => setActiveTab('incomplete-signups') },
-          { key: 'onboarded-landlords', label: "Today's Onboarded Landlords", icon: '📋', onClick: () => setActiveTab('onboarded-landlords') },
-          { key: 'landlord-leads', label: 'Landlord Leads', icon: '📥', onClick: () => setActiveTab('landlord-leads') },
-          { key: 'help', label: 'Help Requests', icon: '❓', badge: sidebarCounts.help, onClick: () => setActiveTab('help') },
-          { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
-          { key: 'sql', label: 'SQL', icon: '🗄️', onClick: () => setActiveTab('sql') },
-          { key: 'manual-subscription-payments', label: 'Landlord Manual Payments', icon: '💳', badge: sidebarCounts.landlordPayments, onClick: () => setActiveTab('manual-subscription-payments') },
-          { key: 'messages', label: 'Messages', icon: '💬', badge: sidebarCounts.messages, onClick: () => navigate('/messages') },
-          { key: 'broadcast', label: 'Broadcast', icon: '📢', onClick: () => setShowBroadcastModal(true) },
-          { key: 'rating-flags', label: 'Rating Flags', icon: '🚩', onClick: () => setActiveTab('rating-flags') },
-          { key: 'reported-accounts', label: 'Reported Accounts', icon: '⛔', onClick: () => setActiveTab('reported-accounts') },
-          { key: 'brand-ambassadors', label: 'Brand Ambassadors', icon: '🤝', onClick: () => setActiveTab('brand-ambassadors') },
-          { key: 'ba-payout-review', label: 'BA Payout Review', icon: '💵', onClick: () => setActiveTab('ba-payout-review') },
-          { key: 'ba-reconciliation', label: 'BA Reconciliation', icon: '🔍', onClick: () => setActiveTab('ba-reconciliation') },
-          { key: 'ba-security-report', label: 'BA Security Report', icon: '🛡️', onClick: () => setActiveTab('ba-security-report') },
-          { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
-          { key: 'faq', label: 'FAQs', icon: '📚', onClick: () => setActiveTab('faq') },
-          { key: 'support-analytics', label: 'Support Analytics', icon: '🎧', onClick: () => setActiveTab('support-analytics') },
+          {
+            group: 'Overview',
+            items: [
+              { key: 'overview', label: 'Overview', icon: '📊', onClick: () => setActiveTab('overview') },
+              { key: 'statistics', label: 'Financial Statistics', icon: '📈', onClick: () => setActiveTab('statistics') },
+              { key: 'revenue-dashboard', label: 'Revenue Dashboard', icon: '💰', onClick: () => setActiveTab('revenue-dashboard') },
+            ],
+          },
+          {
+            group: 'Landlords',
+            items: [
+              { key: 'landlords', label: 'Landlords', icon: '🏢', onClick: () => setActiveTab('landlords') },
+              { key: 'incomplete-signups', label: 'Incomplete Signups', icon: '🚧', onClick: () => setActiveTab('incomplete-signups') },
+              { key: 'onboarded-landlords', label: "Today's Onboarded Landlords", icon: '📋', onClick: () => setActiveTab('onboarded-landlords') },
+              { key: 'landlord-leads', label: 'Landlord Leads', icon: '📥', onClick: () => setActiveTab('landlord-leads') },
+              { key: 'manual-subscription-payments', label: 'Landlord Manual Payments', icon: '💳', badge: sidebarCounts.landlordPayments, onClick: () => setActiveTab('manual-subscription-payments') },
+            ],
+          },
+          {
+            group: 'Brand Ambassadors',
+            items: [
+              { key: 'brand-ambassadors', label: 'Brand Ambassadors', icon: '🤝', onClick: () => setActiveTab('brand-ambassadors') },
+              { key: 'ba-payout-review', label: 'BA Payout Review', icon: '💵', onClick: () => setActiveTab('ba-payout-review') },
+              { key: 'ba-reconciliation', label: 'BA Reconciliation', icon: '🔍', onClick: () => setActiveTab('ba-reconciliation') },
+              { key: 'ba-security-report', label: 'BA Security Report', icon: '🛡️', onClick: () => setActiveTab('ba-security-report') },
+            ],
+          },
+          {
+            group: 'Support',
+            items: [
+              { key: 'help', label: 'Help Requests', icon: '❓', badge: sidebarCounts.help, onClick: () => setActiveTab('help') },
+              { key: 'messages', label: 'Messages', icon: '💬', badge: sidebarCounts.messages, onClick: () => navigate('/messages') },
+              { key: 'broadcast', label: 'Broadcast', icon: '📢', onClick: () => setShowBroadcastModal(true) },
+              { key: 'rating-flags', label: 'Rating Flags', icon: '🚩', onClick: () => setActiveTab('rating-flags') },
+              { key: 'reported-accounts', label: 'Reported Accounts', icon: '⛔', onClick: () => setActiveTab('reported-accounts') },
+              { key: 'faq', label: 'FAQs', icon: '📚', onClick: () => setActiveTab('faq') },
+              { key: 'support-analytics', label: 'Support Analytics', icon: '🎧', onClick: () => setActiveTab('support-analytics') },
+            ],
+          },
+          {
+            group: 'System',
+            items: [
+              { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
+              { key: 'sql', label: 'SQL', icon: '🗄️', onClick: () => setActiveTab('sql') },
+              { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
+            ],
+          },
           ...(canOfferInstall
             ? [{
-                key: 'install-app',
-                label: 'Download the App',
-                icon: '📲',
-                onClick: () => {
-                  if (installOnIOS) setShowIOSInstallSteps(true);
-                  else promptInstall();
-                },
+                group: 'Account',
+                items: [{
+                  key: 'install-app',
+                  label: 'Download the App',
+                  icon: '📲',
+                  onClick: () => {
+                    if (installOnIOS) setShowIOSInstallSteps(true);
+                    else promptInstall();
+                  },
+                }],
               }]
             : []),
         ]}
