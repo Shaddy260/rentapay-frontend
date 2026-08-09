@@ -1,0 +1,141 @@
+.platform-reviews {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.platform-reviews h2 {
+  margin-bottom: 16px;
+}
+
+.platform-reviews__summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: var(--text-md, 15px);
+  color: var(--color-ink-soft, #555);
+}
+
+.platform-reviews__stars .star,
+.platform-reviews__item-stars .star,
+.platform-reviews__form-stars .star {
+  color: #d8d8d8;
+  font-size: 20px;
+}
+
+.star--filled {
+  color: #C9A227;
+}
+
+.star--input {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 26px;
+  padding: 2px;
+}
+
+.platform-reviews__thanks {
+  background: var(--color-surface-alt, #f7f7f7);
+  border-radius: var(--radius-md, 12px);
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.platform-reviews__external-links {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.platform-reviews__form {
+  text-align: left;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: var(--radius-md, 12px);
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.platform-reviews__form-stars {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.platform-reviews__name-input,
+.platform-reviews__comment-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--color-border, #e2e2e2);
+  font-family: inherit;
+}
+
+.platform-reviews__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.platform-reviews__list {
+  list-style: none;
+  padding: 0 4px 0 0;
+  margin: 24px 0 0;
+  text-align: left;
+  /* Direct request: reviews keep accumulating as people submit them,
+     so the landing page was growing taller forever. Cap the list to a
+     fixed height box that scrolls internally instead - the page
+     itself stays a fixed length no matter how many reviews exist. */
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border, #eee);
+  border-radius: var(--radius-md, 12px);
+}
+
+.platform-reviews__list .platform-reviews__item {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.platform-reviews__item:first-child {
+  border-top: none;
+}
+
+.platform-reviews__item {
+  border-top: 1px solid var(--color-border, #eee);
+  padding: 14px 0;
+}
+
+.platform-reviews__item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.platform-reviews__item-name {
+  font-weight: 600;
+}
+
+.platform-reviews__item-badge {
+  font-size: var(--text-xs, 11px);
+  background: var(--color-primary-soft, #FFF6E5);
+  color: var(--color-primary-dark, #8A5A00);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.platform-reviews__item-stars {
+  margin-left: auto;
+}
+
+.platform-reviews__item-comment {
+  margin: 6px 0 0;
+  color: var(--color-ink-soft, #555);
+}

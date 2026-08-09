@@ -1,0 +1,79 @@
+.onboarding-checklist {
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  background: var(--color-surface-raised, #FFFFFF);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.onboarding-checklist__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.onboarding-checklist__header h2 {
+  margin: 0;
+  font-size: 1.1em;
+}
+
+.onboarding-checklist__dismiss {
+  background: none;
+  border: none;
+  font-size: 1em;
+  color: var(--color-ink-soft, #8A8578);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.onboarding-checklist__progress-track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--color-hairline, #DCD5C8);
+  margin: 10px 0 4px;
+  overflow: hidden;
+}
+
+.onboarding-checklist__progress-fill {
+  height: 100%;
+  background: var(--color-primary, #245C4A);
+  transition: width 0.3s ease;
+}
+
+.onboarding-checklist__progress-label {
+  margin: 0 0 12px;
+  font-size: 0.8em;
+  color: var(--color-ink-soft, #8A8578);
+}
+
+.onboarding-checklist__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onboarding-checklist__step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.onboarding-checklist__step.is-done .onboarding-checklist__step-label {
+  color: var(--color-ink-soft, #8A8578);
+  text-decoration: line-through;
+}
+
+.onboarding-checklist__step-icon {
+  width: 20px;
+  text-align: center;
+  color: var(--color-primary, #245C4A);
+  flex-shrink: 0;
+}
+
+.onboarding-checklist__step-label {
+  flex: 1;
+}

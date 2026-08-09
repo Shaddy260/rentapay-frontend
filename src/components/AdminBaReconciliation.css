@@ -1,0 +1,75 @@
+.admin-ba-reconcile__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 520px;
+  margin-bottom: 24px;
+}
+
+.admin-ba-reconcile__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--text-sm, 0.9375rem);
+  font-weight: 600;
+}
+
+.admin-ba-reconcile__form select,
+.admin-ba-reconcile__form input,
+.admin-ba-reconcile__form textarea {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: var(--text-sm, 0.9375rem);
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.admin-ba-reconcile__textarea-label {
+  width: 100%;
+}
+
+.admin-ba-reconcile__error {
+  color: #A33;
+  margin: 0;
+}
+
+.admin-ba-reconcile__results {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-ba-reconcile__summary {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-weight: 600;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-reconcile__bucket h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.admin-ba-reconcile__bucket ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.admin-ba-reconcile__bucket--flagged {
+  border-left: 3px solid #e0a94a;
+  padding-left: 12px;
+}
+
+.admin-ba-reconcile__hint {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.admin-ba-reconcile__empty {
+  color: var(--color-ink-soft, #5C6663);
+  margin: 6px 0 0;
+}

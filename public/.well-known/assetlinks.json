@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ke.co.rentapay.twa",
+      "sha256_cert_fingerprints": [
+        "0D:6E:3B:04:51:0A:5D:57:9E:10:A2:5B:C0:5E:56:C8:B4:DC:4C:FF:BD:14:E0:AA:FA:65:1A:47:21:1D:34:75"
+      ]
+    }
+  }
+]

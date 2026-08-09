@@ -1,0 +1,52 @@
+.rate-reminder-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 20, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1400;
+  padding: 16px;
+}
+
+.rate-reminder-popup {
+  background: var(--color-surface, #fff);
+  border-radius: var(--radius-md, 12px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  padding: 20px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+}
+
+.rate-reminder-popup__text {
+  font-size: var(--text-md, 15px);
+  color: var(--color-ink, #1a1a1a);
+  margin: 0 0 16px;
+}
+
+.rate-reminder-popup__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rate-reminder-popup__rate-btn {
+  background: var(--color-primary, #C9A227);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rate-reminder-popup__later-btn,
+.rate-reminder-popup__skip-btn {
+  background: transparent;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: var(--radius-sm, 8px);
+  padding: 8px 14px;
+  color: var(--color-ink-soft, #555);
+  cursor: pointer;
+}

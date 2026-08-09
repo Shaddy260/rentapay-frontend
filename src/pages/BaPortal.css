@@ -1,0 +1,485 @@
+.ba-portal {
+  min-height: 100vh;
+  background: var(--color-bg, #f5f6f8);
+}
+
+.ba-portal-main {
+  padding: 24px 20px 80px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.ba-portal-main--loading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 24px;
+}
+
+.ba-portal-banner {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.ba-portal-banner--error {
+  background: #fdecec;
+  color: #a12626;
+}
+
+.ba-portal-welcome h1 {
+  margin: 0 0 4px;
+  font-size: 1.4rem;
+}
+
+.ba-portal-welcome p {
+  margin: 0 0 20px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-referral-card {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.ba-referral-card__label {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.ba-referral-card__link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.ba-referral-card__link {
+  flex: 1 1 260px;
+  background: var(--color-bg, #f5f6f8);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.ba-referral-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ba-referral-card__btn {
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-surface, #fff);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ba-referral-card__btn--whatsapp {
+  background: #25d366;
+  color: #fff;
+  border-color: #25d366;
+}
+
+.ba-referral-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ba-referral-card__hint {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-portal-stub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ba-portal-stub-card {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.ba-portal-stub-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.ba-portal-stub-card p {
+  margin: 0;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.88rem;
+}
+
+.ba-portal-placeholder {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 24px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-portal-placeholder h2 {
+  margin: 0 0 8px;
+  color: var(--color-text, #111827);
+}
+
+.ba-claim-panel {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.ba-claim-panel__intro {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.88rem;
+  margin: 0 0 18px;
+}
+
+.ba-claim-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.ba-claim-form__row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-claim-form__row input {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--color-text, #111827);
+}
+
+.ba-claim-result {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+}
+
+.ba-claim-result--matched {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.ba-claim-result--unmatched {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.ba-claim-result--conflict {
+  background: #fdecec;
+  color: #a12626;
+}
+
+.ba-claim-panel__list-heading {
+  margin: 24px 0 10px;
+  font-size: 1rem;
+}
+
+.ba-claim-panel__empty {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.88rem;
+}
+
+.ba-claim-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ba-claim-list__row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.86rem;
+  align-items: center;
+}
+
+.ba-claim-list__status {
+  text-transform: capitalize;
+  font-weight: 600;
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+}
+
+.ba-claim-list__status--qualified,
+.ba-claim-list__status--paid {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+/* Phase 5 - dashboard/stats cards + trend/tier blocks */
+
+.ba-stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.ba-stats-cards--dashboard {
+  margin-top: 4px;
+}
+
+.ba-stats-card {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+
+.ba-stats-card__value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+}
+
+.ba-stats-card__label {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-trend-card,
+.ba-tier-card {
+  margin-top: 16px;
+}
+
+.ba-trend-card h3,
+.ba-tier-card h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.ba-tier-card__current {
+  margin: 0 0 10px;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.9rem;
+}
+
+.ba-tier-card__progress-track {
+  background: var(--color-bg, #f5f6f8);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.ba-tier-card__progress-fill {
+  background: var(--color-accent, #2563eb);
+  height: 100%;
+  border-radius: 999px;
+}
+
+.ba-tier-card__progress-label {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-stats-panel {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.ba-stats-chart-block {
+  margin-top: 18px;
+}
+
+.ba-stats-chart-block h3 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.ba-claim-panel__list-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.ba-claim-panel__list-header .ba-claim-panel__list-heading {
+  margin: 0;
+}
+
+.ba-claim-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.ba-claim-filter label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-claim-filter input[type='date'] {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.82rem;
+}
+
+.ba-claim-list__row {
+  grid-template-columns: 1.1fr 1fr 1fr 0.8fr 0.9fr 1fr;
+}
+
+.ba-claim-list__row--head {
+  background: transparent;
+  border: none;
+  padding: 0 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-claim-list__date {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* Phase 6 - Settings & Profile */
+
+.ba-settings-panel {
+  max-width: 640px;
+}
+
+.ba-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 380px;
+}
+
+.ba-settings-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-settings-form input {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--color-text, #111827);
+}
+
+.ba-settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* Phase 17 - Earnings statement panel */
+.ba-earnings-panel__period-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 20px;
+}
+
+.ba-earnings-panel__period-bar input[type='month'],
+.ba-earnings-panel__period-bar input[type='date'] {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.88rem;
+}
+
+.ba-earnings-panel__error {
+  color: var(--color-danger, #b91c1c);
+  font-size: 0.88rem;
+  margin-bottom: 12px;
+}
+
+.ba-earnings-panel__actions {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0 20px;
+}
+
+.ba-earnings-panel__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.ba-earnings-panel__table th,
+.ba-earnings-panel__table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.ba-earnings-panel__table th {
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* Phase 18 - Leaderboard panel */
+.ba-leaderboard-panel__hint {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.85rem;
+  margin: 6px 0 16px;
+}
+
+.ba-leaderboard-panel__row--me {
+  background: var(--color-brand-tint, #eef7f0);
+  font-weight: 600;
+}
+
+.ba-leaderboard-panel__my-rank {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}

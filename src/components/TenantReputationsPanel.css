@@ -1,0 +1,32 @@
+.tenant-reputations-panel__intro {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+  margin: 0 0 14px;
+}
+
+.tenant-reputations-panel__stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 1rem;
+}
+
+.tenant-reputations-panel__stars .star {
+  color: var(--color-border, #D8D2C8);
+}
+
+.tenant-reputations-panel__stars .star--filled {
+  color: #E0A526;
+}
+
+.tenant-reputations-panel__value {
+  margin-left: 6px;
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.tenant-reputations-panel__no-rating {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+  font-style: italic;
+}

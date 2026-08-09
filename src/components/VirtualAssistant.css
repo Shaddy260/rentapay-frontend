@@ -1,0 +1,130 @@
+/* Floating "Assistant" button - thumb-reachable, bottom-right, on
+   every screen. Deliberately separate from .help-button (HelpButton.jsx)
+   both visually and functionally: this opens the guided walkthrough,
+   never contact/support info. */
+.virtual-assistant__fab {
+  position: fixed;
+  right: 16px;
+  bottom: 84px; /* sits above BottomNav on mobile without overlapping it */
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #1f2937;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.virtual-assistant__fab:hover {
+  background: #111827;
+}
+
+.virtual-assistant__fab-icon {
+  font-size: 15px;
+}
+
+@media (min-width: 900px) {
+  .virtual-assistant__fab {
+    bottom: 24px; /* no BottomNav to clear on desktop */
+  }
+}
+
+.virtual-assistant__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.virtual-assistant__spotlight {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 4px #facc15, 0 0 0 9999px rgba(15, 23, 42, 0.55);
+  transition: top 0.15s ease, left 0.15s ease, width 0.15s ease, height 0.15s ease;
+  pointer-events: none;
+}
+
+/* Spec 5.3: a larger panel, centered on screen - not a small popover
+   anchored near whatever sidebar item is being spotlighted. */
+.virtual-assistant__card {
+  position: fixed;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+}
+
+.virtual-assistant__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.virtual-assistant__step-count {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.virtual-assistant__close {
+  border: none;
+  background: none;
+  font-size: 22px;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.virtual-assistant__card h4 {
+  margin: 4px 0 10px;
+  font-size: 19px;
+}
+
+.virtual-assistant__card p {
+  margin: 0 0 20px;
+  font-size: 15px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.virtual-assistant__card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.virtual-assistant__skip {
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+.virtual-assistant__next {
+  border: none;
+  background: #1f2937;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.virtual-assistant__next:hover {
+  background: #111827;
+}

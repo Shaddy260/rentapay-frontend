@@ -1,0 +1,67 @@
+.unit-info-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  cursor: pointer;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+
+.unit-info-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.unit-info-card__icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.unit-info-card__text {
+  flex: 1;
+}
+
+.unit-info-card__text h3 {
+  margin: 0 0 2px;
+  font-size: var(--text-base);
+  color: var(--color-ink);
+}
+
+.unit-info-card__text p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.unit-info-card__chevron {
+  font-size: 1.4rem;
+  color: var(--color-ink-soft);
+}
+
+.unit-info-modal__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.unit-info-modal__label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}
+
+.unit-info-modal__subhead {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-3);
+}

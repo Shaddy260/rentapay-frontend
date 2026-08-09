@@ -1,0 +1,231 @@
+.tenant-onboarding-page {
+  min-height: 100vh;
+  background: var(--bg-secondary, #f4f6f8);
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.tenant-onboarding-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+}
+
+.tenant-onboarding-card h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+.tenant-onboarding-instruction {
+  font-weight: 600;
+  margin-bottom: 0.9rem;
+}
+
+.tenant-onboarding-search {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  margin-bottom: 0.9rem;
+  font-size: 0.95rem;
+}
+
+.tenant-onboarding-empty {
+  color: #6b7280;
+}
+
+.tenant-onboarding-unit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.6rem;
+}
+
+.tenant-onboarding-unit-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.9rem 0.5rem;
+  background: #fafbfc;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.tenant-onboarding-unit-btn:hover {
+  border-color: #2563eb;
+  background: #eef4ff;
+}
+
+.tenant-onboarding-unit-btn span {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.tenant-onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.tenant-onboarding-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.tenant-onboarding-form input {
+  padding: 0.6rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.tenant-onboarding-field-hint {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.tenant-onboarding-email-verify {
+  margin-top: -0.4rem;
+}
+
+.tenant-onboarding-email-verify__btn {
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #2563eb;
+  background: #eef4ff;
+  color: #2563eb;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tenant-onboarding-email-verify__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.tenant-onboarding-email-verify__code-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tenant-onboarding-email-verify__code-row input {
+  width: 110px;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+}
+
+.tenant-onboarding-email-verify__resend {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tenant-onboarding-email-verify__done {
+  color: #15803d;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.tenant-onboarding-back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+  margin-bottom: 0.2rem;
+}
+
+.tenant-onboarding-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.88rem;
+}
+
+.tenant-onboarding-warning {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  margin: -0.2rem 0 0;
+}
+
+.tenant-onboarding-review-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  font-size: 0.92rem;
+  margin: 0 0 1rem;
+}
+
+.tenant-onboarding-review-list dt {
+  color: #6b7280;
+}
+
+.tenant-onboarding-review-list dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.tenant-onboarding-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.tenant-onboarding-done {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.tenant-onboarding-done__icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* BA onboarding (Phase 2) - terms checkbox, reuses this stylesheet
+   rather than a duplicate one for a single, visually consistent form. */
+.tenant-onboarding-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-weight: 400;
+  margin: 0.5rem 0 1rem;
+}
+
+.tenant-onboarding-checkbox input[type='checkbox'] {
+  margin-top: 0.2rem;
+  width: auto;
+}
+
+.tenant-onboarding-checkbox a {
+  color: var(--accent, #0f3d3e);
+  text-decoration: underline;
+}
