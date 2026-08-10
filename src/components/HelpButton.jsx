@@ -2,18 +2,24 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import ChatWidget from './ChatWidget.jsx';
 import { useToast } from './Toast.jsx';
+import { useHelpContacts, DEFAULT_HELP_CONTACTS } from '../utils/platformSettings.js';
 import './HelpButton.css';
 
-// Real contact details supplied directly - shown to BOTH landlord and
-// tenant dashboards per blueprint section 15.
-export const HELP_EMAIL = 'support@rentapay.co.ke';
-export const HELP_WHATSAPP = '+254710888917';
+// FIX (Admin Settings - editable Help contact details): these used to
+// be hardcoded here. Numbers change, and WhatsApp Business numbers can
+// get suspended, so they now live in the platformSettings store (backed
+// by /settings/public/help-contacts, editable from Admin > Settings)
+// with these as the offline/first-paint fallback. Kept exported under
+// their old names so any other code importing them still gets a sane
+// default; live components should prefer the useHelpContacts() hook.
+export const HELP_EMAIL = DEFAULT_HELP_CONTACTS.helpEmail;
+export const HELP_WHATSAPP = DEFAULT_HELP_CONTACTS.helpWhatsapp;
 // Item 5 (direct request: manual-payment help was only ever showing a
 // WhatsApp number for "Call" too - tapping it dialed the WhatsApp
 // number instead of a real phone line). This is a separate, dedicated
 // call-in number, kept apart from HELP_WHATSAPP so the two can change
 // independently of each other in future.
-export const HELP_CALL = '254710888917';
+export const HELP_CALL = DEFAULT_HELP_CONTACTS.helpCall;
 
 /**
  * Help button + modal, used identically on both the landlord dashboard
@@ -27,6 +33,7 @@ export const HELP_CALL = '254710888917';
 export default function HelpButton({ role, token, renderAs, landlordContact, onOpen }) {
   const [open, setOpen] = useState(false);
   const toast = useToast();
+  const { helpWhatsapp, helpCall, helpEmail } = useHelpContacts();
   // FIX (direct request: "tap Help in the profile dropdown... just
   // closes the dropdown and does not show the help details"): the
   // overlay below sits at position:fixed/inset:0, directly on top of
@@ -57,20 +64,32 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
   async function handleCallTap(e) {
     e.preventDefault();
     try {
-      await navigator.clipboard.writeText(HELP_CALL);
-      toast.success(`Copied ${HELP_CALL} to clipboard.`);
+      await navigator.clipboard.writeText(helpCall);
+      toast.success(`Copied ${helpCall} to clipboard.`);
     } catch {
       // Clipboard access can fail (permissions, non-HTTPS context, etc.) -
       // still proceed to open the dialer either way, that's the part
       // that actually matters.
     }
-    window.location.href = `tel:${HELP_CALL}`;
+    window.location.href = `tel:${helpCall}`;
   }
 
   // admin_tenant for tenants, admin_landlord for landlords - the
   // ChatWidget opens straight into this thread (no thread-list step)
   // since there's only ever one "chat with an agent" conversation per
   // account.
+  //
+  // FIX (item 8, BA Portal Help): the live "chat with an agent" thread
+  // system (chat.controller.js) only understands admin_landlord/
+  // admin_tenant/landlord_tenant threads - there's no admin_brand_
+  // ambassador thread type on the backend yet. Defaulting an
+  // unsupported role to admin_tenant would silently drop a BA's
+  // support message into a stranger's tenant-support inbox (or error
+  // out), so live chat is gated to the roles the backend actually
+  // supports; everyone else (currently: brand_ambassador) still gets
+  // the WhatsApp/Call/Email channels above, just not the chat CTA.
+  const CHAT_SUPPORTED_ROLES = ['landlord', 'manager', 'tenant'];
+  const chatSupported = CHAT_SUPPORTED_ROLES.includes(role);
   const agentThread = { threadType: role === 'landlord' || role === 'manager' ? 'admin_landlord' : 'admin_tenant', name: 'Chat with an agent' };
 
   return (
@@ -118,24 +137,26 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
             )}
 
             <div className="help-channels">
-              <a href={`https://wa.me/${HELP_WHATSAPP.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="help-channel help-channel--whatsapp">
-                WhatsApp: {HELP_WHATSAPP}
+              <a href={`https://wa.me/${helpWhatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="help-channel help-channel--whatsapp">
+                WhatsApp: {helpWhatsapp}
               </a>
-              <a href={`tel:${HELP_CALL}`} onClick={handleCallTap} className="help-channel">
-                Call: {HELP_CALL}
+              <a href={`tel:${helpCall}`} onClick={handleCallTap} className="help-channel">
+                Call: {helpCall}
               </a>
-              <a href={`mailto:${HELP_EMAIL}`} className="help-channel">
-                Email: {HELP_EMAIL}
+              <a href={`mailto:${helpEmail}`} className="help-channel">
+                Email: {helpEmail}
               </a>
             </div>
 
             <p className="help-modal-or">
-              {token
+              {token && chatSupported
                 ? "Or chat directly with an agent — your message lands in our team's inbox instantly and replies come straight back here:"
-                : 'Log in to chat directly with an agent, or reach us through WhatsApp or email above.'}
+                : token
+                  ? 'You can reach us directly through WhatsApp, phone, or email above.'
+                  : 'Log in to chat directly with an agent, or reach us through WhatsApp or email above.'}
             </p>
 
-            {token && (
+            {token && chatSupported && (
               <div className="help-chat-cta">
                 <ChatWidget role={role} label="Chat with an agent" directThread={agentThread} onNavigate={close} />
               </div>

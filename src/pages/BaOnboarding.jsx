@@ -4,7 +4,7 @@ import { api, ApiError } from '../api/client.js';
 import Button from '../components/Button.jsx';
 import '../pages/TenantOnboarding.css';
 
-const EMPTY_FORM = { fullName: '', phone: '', email: '', termsAccepted: false };
+const EMPTY_FORM = { fullName: '', phone: '', email: '', nationalId: '', termsAccepted: false };
 
 /**
  * The ONE generic "Become a Brand Ambassador" link
@@ -104,7 +104,8 @@ export default function BaOnboarding() {
   }
 
   const emailIsVerified = emailOtpStatus === 'verified' && verifiedEmail === form.email && !!emailVerificationToken;
-  const canSubmit = emailIsVerified && form.termsAccepted && form.fullName && form.phone && form.email && !submitting;
+  const canSubmit =
+    emailIsVerified && form.termsAccepted && form.fullName && form.phone && form.email && form.nationalId && !submitting;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -123,6 +124,7 @@ export default function BaOnboarding() {
         fullName: form.fullName,
         phone: form.phone,
         email: form.email,
+        nationalId: form.nationalId,
         emailVerification: emailVerificationToken,
         termsAccepted: true,
         onboardingToken,
@@ -184,6 +186,16 @@ export default function BaOnboarding() {
               Email address
               <input required type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
               <span className="tenant-onboarding-field-hint">Enter an active email address — this will be used to reach you.</span>
+            </label>
+            <label>
+              National ID number
+              <input
+                required
+                value={form.nationalId}
+                onChange={(e) => update('nationalId', e.target.value)}
+                placeholder="e.g. 12345678"
+              />
+              <span className="tenant-onboarding-field-hint">Required for identity verification and payouts.</span>
             </label>
 
             <div className="tenant-onboarding-email-verify">

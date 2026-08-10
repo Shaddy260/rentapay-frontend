@@ -249,20 +249,28 @@ export default function RegisterFlow() {
   // <name>") - never just echo the raw code back. A missing/invalid
   // code simply shows nothing here; it never blocks signup (the
   // backend applies the same "fail silently" rule when it tags ba_id).
-  const [referralCode] = useState(() => {
-    if (typeof window === 'undefined') return null;
-    return new URLSearchParams(window.location.search).get('ref') || null;
+  //
+  // FEATURE (manual referral code entry): a landlord who was told a
+  // BA's code verbally, or who reached this page without the referral
+  // link at all, can type the code in themselves - so this is a real
+  // editable field, not a read-only echo of the URL. If the link
+  // carried a ?ref=, that value pre-fills the field but stays
+  // editable (in case the person wants to correct/replace it).
+  const [referralCode, setReferralCode] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('ref') || '';
   });
   const [referredByName, setReferredByName] = useState(null);
 
   useEffect(() => {
-    if (!referralCode) return;
+    const code = referralCode.trim();
+    if (!code) { setReferredByName(null); return; }
+    let cancelled = false;
     api
-      .resolveBaReferralCode(referralCode)
-      .then((res) => {
-        if (res.matched) setReferredByName(res.fullName);
-      })
-      .catch(() => {});
+      .resolveBaReferralCode(code)
+      .then((res) => { if (!cancelled) setReferredByName(res.matched ? res.fullName : null); })
+      .catch(() => { if (!cancelled) setReferredByName(null); });
+    return () => { cancelled = true; };
   }, [referralCode]);
 
   // --- Step 1: registration details ---
@@ -497,7 +505,7 @@ export default function RegisterFlow() {
         gender: form.gender || undefined,
         unitsCount: Number(form.unitsCount),
         periodMonths: Number(form.periodMonths),
-        refCode: referralCode || undefined,
+        refCode: referralCode.trim() || undefined,
       });
       setLandlordId(res.landlordId);
       setAmountDue(res.amountDue);
@@ -1210,6 +1218,16 @@ export default function RegisterFlow() {
                   <div className="form-field form-field--full">
                     <label className="form-field__label" htmlFor="fullName">Full name</label>
                     <input id="fullName" required value={form.fullName} onChange={(e) => updateForm('fullName', e.target.value)} placeholder="Jane Wanjiru" />
+                  </div>
+                  <div className="form-field form-field--full">
+                    <label className="form-field__label" htmlFor="referralCode">Referral code (optional)</label>
+                    <input
+                      id="referralCode"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                      placeholder="e.g. BA-0042"
+                    />
+                    <p className="form-field__hint">Were you referred by a RentaPay Brand Ambassador? Enter their code here.</p>
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="phone">Phone number</label>

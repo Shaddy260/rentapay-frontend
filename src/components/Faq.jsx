@@ -95,6 +95,50 @@ const FAQ_ITEMS = [
       },
     ],
   },
+  // FIX (item 8, BA Portal Help): the BA Portal had no FAQ content at
+  // all - every other portal does. These questions are the ones
+  // specific to being a Brand Ambassador (referrals, qualification,
+  // payout) rather than duplicating the general "how RentaPay works"
+  // section above, which BAs also see since it's tagged for every
+  // audience.
+  {
+    section: 'How RentaPay works',
+    audiences: ['brand_ambassador'],
+    items: [
+      {
+        q: 'What is RentaPay?',
+        a: 'RentaPay is a property management and operations platform built for the Kenyan market. As a Brand Ambassador, your role is to bring landlords onto the platform and earn a payout for each one who qualifies.',
+      },
+    ],
+  },
+  {
+    section: 'Referrals & attribution',
+    audiences: ['brand_ambassador'],
+    items: [
+      {
+        q: 'How does a landlord get attributed to me?',
+        a: 'Two ways: they sign up using your referral link (it takes them straight to the signup form with your code already attached), or they type your referral code into the "Referral code (optional)" field on the signup page themselves. Either way, their account is tagged to you automatically the moment they register - no manual step needed on your end.',
+      },
+      {
+        q: 'What if I onboarded a landlord in the field without the link or code?',
+        a: 'Use "Log landlord" under My Onboarded Landlords to log them manually by phone and/or email. If they later show up in our system under those details, the record is matched and attributed to you.',
+      },
+    ],
+  },
+  {
+    section: 'Qualification & payout',
+    audiences: ['brand_ambassador'],
+    items: [
+      {
+        q: 'When does a referred landlord "qualify" and how am I paid?',
+        a: "A referral qualifies once the landlord meets the base activity requirement (minimum consecutive months active and minimum units). Your payout for that referral is a combination of the landlord's unit-volume bracket and your current commission tier - both are shown on your Earnings page with a breakdown of exactly which bracket/tier applied to each payout.",
+      },
+      {
+        q: 'Where can I see why I was paid a specific amount?',
+        a: 'Open Earnings in the sidebar - every payout shows the tier/bracket that applied, not just a final number.',
+      },
+    ],
+  },
 ];
 
 export default function Faq({ audience = 'tenant' }) {

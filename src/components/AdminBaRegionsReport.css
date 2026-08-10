@@ -1,0 +1,190 @@
+.ba-regions-report__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ba-regions-report__hint {
+  color: #666;
+  font-size: 0.88rem;
+  max-width: 640px;
+  margin: 4px 0 0;
+}
+
+.ba-regions-report__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.ba-regions-report__error {
+  color: #b42318;
+  font-size: 0.9rem;
+}
+
+.ba-regions-report__meta {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0 0 16px;
+}
+
+.ba-regions-report__totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ba-regions-report__total-card {
+  flex: 1 1 140px;
+  background: #f7f7f8;
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.ba-regions-report__total-card--qualify {
+  background: #eafaf0;
+}
+
+.ba-regions-report__total-card--not-qualify {
+  background: #fdecea;
+}
+
+.ba-regions-report__total-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.ba-regions-report__total-label {
+  display: block;
+  font-size: 0.78rem;
+  color: #555;
+  margin-top: 2px;
+}
+
+.ba-regions-report__region {
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.ba-regions-report__region-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fafafa;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+}
+
+.ba-regions-report__region-title {
+  font-weight: 700;
+  flex: 1 1 auto;
+}
+
+.ba-regions-report__pill {
+  font-size: 0.78rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #ececef;
+  color: #333;
+}
+
+.ba-regions-report__pill--qualify {
+  background: #d9f7e4;
+  color: #12693a;
+}
+
+.ba-regions-report__pill--not-qualify {
+  background: #fbe2df;
+  color: #93281f;
+}
+
+.ba-regions-report__region-body {
+  padding: 8px 14px 14px;
+}
+
+.ba-regions-report__ba-block {
+  margin-top: 12px;
+}
+
+.ba-regions-report__ba-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.ba-regions-report__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.ba-regions-report__table th,
+.ba-regions-report__table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.ba-regions-report__row--qualify {
+  background: #eafaf0;
+  color: #12693a;
+}
+
+.ba-regions-report__row--not-qualify {
+  background: #fdecea;
+  color: #93281f;
+}
+
+.ba-regions-report__status-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.ba-regions-report__row--qualify .ba-regions-report__status-badge {
+  background: #12693a;
+  color: #fff;
+}
+
+.ba-regions-report__row--not-qualify .ba-regions-report__status-badge {
+  background: #93281f;
+  color: #fff;
+}
+
+/* Printable view (used for "Save/share as PDF") - forces the browser
+   to keep row background colors that print stylesheets normally strip
+   out, since the whole point of this report is the color coding. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .ba-regions-report__print-area,
+  .ba-regions-report__print-area * {
+    visibility: visible;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .ba-regions-report__print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .ba-regions-report__no-print {
+    display: none !important;
+  }
+}

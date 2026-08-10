@@ -1,0 +1,79 @@
+.admin-settings__subnav {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.admin-settings__subnav-btn {
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.admin-settings__subnav-btn--active {
+  background: #1f2937;
+  color: #fff;
+  border-color: #1f2937;
+}
+
+.admin-settings__panel {
+  max-width: 560px;
+}
+
+.admin-settings__field {
+  margin-bottom: 14px;
+}
+
+.admin-settings__field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.admin-settings__field input,
+.admin-settings__field textarea {
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+
+.admin-settings__hint {
+  color: #777;
+  font-size: 0.8rem;
+  margin: 2px 0 0;
+}
+
+.admin-settings__error {
+  color: #b42318;
+  font-size: 0.88rem;
+  margin: 4px 0 10px;
+}
+
+.admin-settings__success {
+  color: #12693a;
+  font-size: 0.88rem;
+  margin: 4px 0 10px;
+}
+
+.admin-settings__preview {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f7f7f8;
+  font-size: 0.85rem;
+}
+
+.admin-settings__preview strong {
+  display: block;
+  margin-bottom: 4px;
+}

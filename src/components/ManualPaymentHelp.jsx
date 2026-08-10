@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HELP_WHATSAPP, HELP_EMAIL, HELP_CALL } from './HelpButton.jsx';
+import { useHelpContacts } from '../utils/platformSettings.js';
 import { useToast } from './Toast.jsx';
 import './ManualPaymentHelp.css';
 
@@ -17,6 +17,7 @@ import './ManualPaymentHelp.css';
 export default function ManualPaymentHelp({ variant = 'admin', landlordContact }) {
   const [revealed, setRevealed] = useState(false);
   const toast = useToast();
+  const { helpWhatsapp: HELP_WHATSAPP, helpEmail: HELP_EMAIL, helpCall: HELP_CALL } = useHelpContacts();
   const whatsappHref = `https://wa.me/${HELP_WHATSAPP.replace(/[^0-9]/g, '')}`;
 
   // Item 5 (direct request: "Call" used to just be a tel: link on the

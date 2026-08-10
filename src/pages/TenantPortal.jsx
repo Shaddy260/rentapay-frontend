@@ -436,7 +436,7 @@ export default function TenantPortal() {
         <div className="portal-topbar__left">
           <button type="button" className="portal-topbar__hamburger" aria-label="Menu" onClick={() => setSidebarOpen(true)}>☰</button>
           <div className="portal-topbar__brand-block">
-            <div className="portal-topbar__brand"><span>🏠</span> RentaPay</div>
+            <div className="portal-topbar__brand"><img className="portal-topbar__brand-logo" src="/logo.png" alt="RentaPay" /> RentaPay</div>
             <div className="portal-topbar__role-label">Tenant</div>
           </div>
         </div>

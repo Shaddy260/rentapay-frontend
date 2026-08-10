@@ -6,6 +6,14 @@ import OfflineBanner from './components/OfflineBanner.jsx';
 import UpdateChecker from './components/UpdateChecker.jsx';
 import EngagementToast from './components/EngagementToast.jsx';
 import VacancyAlertOptIn from './components/VacancyAlertOptIn.jsx';
+import { loadPlatformContacts } from './utils/platformSettings.js';
+
+// Kick off the Help-contact-details fetch once, as early as possible,
+// so the store is warm (or already resolved) by the time any Help
+// modal/FAQ/BA-portal component mounts and calls useHelpContacts().
+// Safe to fire before the router/providers below - it's a plain
+// fetch, not a hook.
+loadPlatformContacts();
 
 // DIRECT REQUEST: "random browser popups... to receive browser
 // notifications when a unit goes vacant around them, or just when a

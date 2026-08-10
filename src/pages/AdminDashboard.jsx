@@ -20,6 +20,8 @@ import AdminReportedAccounts from '../components/AdminReportedAccounts.jsx';
 import AdminBrandAmbassadors from '../components/AdminBrandAmbassadors.jsx';
 import AdminBaPayoutReview from '../components/AdminBaPayoutReview.jsx';
 import AdminBaQualificationDryRun from '../components/AdminBaQualificationDryRun.jsx';
+import AdminBaRegionsReport from '../components/AdminBaRegionsReport.jsx';
+import AdminSettingsPanel from '../components/AdminSettingsPanel.jsx';
 import AdminBaReconciliation from '../components/AdminBaReconciliation.jsx';
 import AdminBaSecurityReport from '../components/AdminBaSecurityReport.jsx';
 import AdminOnboardedLandlords from '../components/AdminOnboardedLandlords.jsx';
@@ -610,6 +612,7 @@ export default function AdminDashboard() {
             items: [
               { key: 'brand-ambassadors', label: 'Brand Ambassadors', icon: '🤝', onClick: () => setActiveTab('brand-ambassadors') },
               { key: 'ba-payout-review', label: 'BA Payout Review', icon: '💵', onClick: () => setActiveTab('ba-payout-review') },
+              { key: 'ba-regions-report', label: 'BA Regions & Payout Report', icon: '🗺️', onClick: () => setActiveTab('ba-regions-report') },
               { key: 'ba-reconciliation', label: 'BA Reconciliation', icon: '🔍', onClick: () => setActiveTab('ba-reconciliation') },
               { key: 'ba-security-report', label: 'BA Security Report', icon: '🛡️', onClick: () => setActiveTab('ba-security-report') },
             ],
@@ -629,6 +632,7 @@ export default function AdminDashboard() {
           {
             group: 'System',
             items: [
+              { key: 'settings', label: 'Settings', icon: '⚙️', onClick: () => setActiveTab('settings') },
               { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
               { key: 'sql', label: 'SQL', icon: '🗄️', onClick: () => setActiveTab('sql') },
               { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
@@ -803,6 +807,8 @@ export default function AdminDashboard() {
             <AdminBaPayoutReview token={token} />
           </>
         )}
+        {activeTab === 'ba-regions-report' && <AdminBaRegionsReport token={token} />}
+        {activeTab === 'settings' && <AdminSettingsPanel token={token} />}
         {activeTab === 'ba-reconciliation' && (
           <AdminBaReconciliation token={token} prefill={baReconcilePrefill} onPrefillConsumed={() => setBaReconcilePrefill(null)} />
         )}

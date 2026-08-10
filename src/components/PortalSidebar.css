@@ -262,6 +262,13 @@
   gap: 6px;
 }
 
+.portal-topbar__brand-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .portal-topbar__role-label {
   color: var(--color-text-muted, #777);
   font-size: 0.7rem;

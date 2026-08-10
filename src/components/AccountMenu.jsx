@@ -24,7 +24,7 @@ import './AccountMenu.css';
  * dropdown ("Update profile picture" / "Remove photo") - one avatar
  * control per header, not two.
  */
-export default function AccountMenu({ name, photoUrl, role, phone, roleLevel, token, onPhotoChange }) {
+export default function AccountMenu({ name, photoUrl, role, phone, roleLevel, token, onPhotoChange, onEditProfile }) {
   const resolvedPhone = phone || sessionStorage.getItem('rentapay_phone') || '';
   const resolvedRoleLevel = roleLevel || sessionStorage.getItem('rentapay_role_level') || null;
   const [open, setOpen] = useState(false);
@@ -129,6 +129,20 @@ export default function AccountMenu({ name, photoUrl, role, phone, roleLevel, to
             {photoError && <p className="account-menu__photo-error">{photoError}</p>}
             <div className="account-menu__divider" />
           </>
+        )}
+        {onEditProfile && (
+          // FIX (item 3, BA Portal): the account menu previously had
+          // no profile entry point at all for the 'brand_ambassador'
+          // role - tapping the avatar (which shows a "?" fallback
+          // whenever there's no photo) opened this dropdown but it
+          // led nowhere related to a profile. Any caller that wants
+          // this trigger to actually double as a profile-setup entry
+          // point passes onEditProfile; other portals that already
+          // have their own dedicated profile/settings pages don't
+          // pass it and this item simply doesn't render.
+          <button type="button" className="account-menu__item" role="menuitem" onClick={() => { setOpen(false); onEditProfile(); }}>
+            Edit profile
+          </button>
         )}
         <button type="button" className="account-menu__item" role="menuitem" onClick={() => { setOpen(false); navigate('/change-password'); }}>
           Change password

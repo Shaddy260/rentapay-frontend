@@ -6,8 +6,10 @@ import Skeleton from '../components/Skeleton.jsx';
 import Button from '../components/Button.jsx';
 import MiniBarChart from '../components/MiniBarChart.jsx';
 import MiniLineChart from '../components/MiniLineChart.jsx';
+import HelpButton from '../components/HelpButton.jsx';
+import Faq from '../components/Faq.jsx';
 import { openWhatsAppReminder } from '../utils/whatsapp.js';
-import { HELP_WHATSAPP } from '../components/HelpButton.jsx';
+import { useHelpContacts } from '../utils/platformSettings.js';
 import { initPushSubscription } from '../utils/push.js';
 import { api, ApiError } from '../api/client.js';
 import ProfilePhotoUpload from '../components/ProfilePhotoUpload.jsx';
@@ -47,7 +49,8 @@ function todayIsoDate() {
  * the app's existing list-component conventions.
  */
 function ClaimLandlordPanel({ token }) {
-  const [form, setForm] = useState({ fullName: '', phone: '', location: '' });
+  const { helpWhatsapp } = useHelpContacts();
+  const [form, setForm] = useState({ fullName: '', phone: '', email: '', location: '' });
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null); // { type: 'matched'|'unmatched'|'conflict', ...data }
   const [claims, setClaims] = useState([]);
@@ -99,7 +102,7 @@ function ClaimLandlordPanel({ token }) {
       if (dateFrom) params.from = `${dateFrom}T00:00:00.000Z`;
       if (dateTo) params.to = `${dateTo}T23:59:59.999Z`;
       const res = await api.shareClaimsReport(params, token);
-      openWhatsAppReminder(HELP_WHATSAPP, res.summary);
+      openWhatsAppReminder(helpWhatsapp, res.summary);
       setShareNotice({ type: 'ok', message: `Sent to admin's inbox — ${res.count} landlord${res.count === 1 ? '' : 's'}. Finish sending it on WhatsApp too.` });
     } catch (err) {
       setShareNotice({ type: 'error', message: err instanceof ApiError ? err.message : 'Failed to share your report. Please try again.' });
@@ -120,7 +123,7 @@ function ClaimLandlordPanel({ token }) {
       const res = await api.submitLandlordClaim(form, token);
       if (res.matched) {
         setResult({ type: 'matched', landlord: res.landlord });
-        setForm({ fullName: '', phone: '', location: '' });
+        setForm({ fullName: '', phone: '', email: '', location: '' });
         loadClaims();
       } else {
         setResult({ type: 'unmatched', message: res.message });
@@ -154,10 +157,17 @@ function ClaimLandlordPanel({ token }) {
             <input required value={form.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
           </label>
           <label>
+            Email (optional)
+            <input type="email" value={form.email} onChange={(e) => updateField('email', e.target.value)} placeholder="jane@example.com" />
+          </label>
+          <label>
             Location
             <input value={form.location} onChange={(e) => updateField('location', e.target.value)} placeholder="Kileleshwa, Nairobi" />
           </label>
         </div>
+        <p className="ba-claim-panel__intro" style={{ marginTop: '-0.5rem' }}>
+          Phone is required for matching. Add their email too if you have it — either one can find their account.
+        </p>
         <Button type="submit" disabled={busy}>{busy ? 'Checking…' : 'Log landlord'}</Button>
       </form>
 
@@ -211,10 +221,12 @@ function ClaimLandlordPanel({ token }) {
       ) : claims.length === 0 ? (
         <p className="ba-claim-panel__empty">No claims logged in this range.</p>
       ) : (
+        <div className="ba-claim-list-scroll">
         <div className="ba-claim-list">
           <div className="ba-claim-list__row ba-claim-list__row--head">
             <div>Name</div>
             <div>Phone</div>
+            <div>Email</div>
             <div>Location</div>
             <div>Match</div>
             <div>Qualification</div>
@@ -224,12 +236,14 @@ function ClaimLandlordPanel({ token }) {
             <div key={c.id} className="ba-claim-list__row">
               <div className="ba-claim-list__name">{c.submitted_name}</div>
               <div className="ba-claim-list__phone">{c.submitted_phone}</div>
+              <div className="ba-claim-list__phone">{c.submitted_email || '—'}</div>
               <div className="ba-claim-list__location">{c.submitted_location || '—'}</div>
               <div className={`ba-claim-list__status ba-claim-list__status--${c.match_status === 'matched' ? 'qualified' : 'pending'}`}>{c.match_status}</div>
               <div className={`ba-claim-list__status ba-claim-list__status--${c.qualification_status}`}>{c.qualification_status}</div>
               <div className="ba-claim-list__date">{new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
             </div>
           ))}
+        </div>
         </div>
       )}
     </section>
@@ -426,6 +440,7 @@ function BaEarningsPanel({ token }) {
             </Button>
           </div>
 
+          <div className="ba-table-scroll">
           <table className="ba-earnings-panel__table">
             <thead>
               <tr>
@@ -453,6 +468,7 @@ function BaEarningsPanel({ token }) {
               ))}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </section>
@@ -522,6 +538,7 @@ function BaLeaderboardPanel({ token }) {
         <Skeleton rows={4} />
       ) : (
         <>
+          <div className="ba-table-scroll">
           <table className="ba-earnings-panel__table">
             <thead>
               <tr>
@@ -547,6 +564,7 @@ function BaLeaderboardPanel({ token }) {
               ))}
             </tbody>
           </table>
+          </div>
 
           {data?.myRank && !myRowInTopN && (
             <div className="ba-leaderboard-panel__my-rank">
@@ -672,7 +690,13 @@ function BaSettingsPanel({ profile, token, onProfileChange }) {
     setNotice('');
     setError('');
     try {
-      const res = await api.updateBaProfile(form, token);
+      // FIX (item 5): phone/email are read-only in this form now (see
+      // the inputs below) - only fullName can ever change here, so
+      // that's all we send. Sending phone/email unchanged was
+      // harmless before (the backend no-ops on unchanged values), but
+      // narrowing the payload to what the form can actually edit
+      // keeps this endpoint's contract honest.
+      const res = await api.updateBaProfile({ fullName: form.fullName }, token);
       onProfileChange?.((p) => ({ ...p, ...res }));
       setNotice('Profile updated.');
     } catch (err) {
@@ -729,12 +753,20 @@ function BaSettingsPanel({ profile, token, onProfileChange }) {
           </label>
           <label>
             Phone
-            <input required value={form.phone} onChange={(e) => updateField('phone', e.target.value)} />
+            {/* FIX (item 5): phone/email used to be plain editable
+                inputs, letting a BA silently swap either one with no
+                verification at all. They're now pre-filled read-only
+                fields - changing either has to go through Support
+                instead of a bare text box. */}
+            <input value={form.phone} disabled readOnly className="ba-settings-form__readonly" />
           </label>
           <label>
             Email
-            <input required type="email" value={form.email} onChange={(e) => updateField('email', e.target.value)} />
+            <input type="email" value={form.email} disabled readOnly className="ba-settings-form__readonly" />
           </label>
+          <p className="settings-card__hint">
+            To change your phone number or email, contact Support below - we verify identity before updating either one.
+          </p>
           <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</Button>
         </form>
       </section>
@@ -792,6 +824,7 @@ export default function BaPortal() {
       return;
     }
     setLoading(true);
+    setError('');
     api
       .getMyBaProfile(token)
       .then((res) => setProfile(res))
@@ -877,6 +910,11 @@ export default function BaPortal() {
             items: [
               { key: 'leaderboard', label: 'Leaderboard', icon: '🏆', onClick: () => setActiveTab('leaderboard') },
               { key: 'settings', label: 'Settings', icon: '⚙️', onClick: () => setActiveTab('settings') },
+              // FIX (item 8): FAQ + contact-support entry point,
+              // consistent with what the Landlord/Tenant portals
+              // offer - previously there was no Help entry anywhere
+              // in this sidebar at all.
+              { key: 'help', label: 'Help', icon: '❓', onClick: () => setActiveTab('help') },
             ],
           },
         ]}
@@ -886,24 +924,48 @@ export default function BaPortal() {
         <div className="portal-topbar__left">
           <button type="button" className="portal-topbar__hamburger" aria-label="Menu" onClick={() => setSidebarOpen(true)}>☰</button>
           <div className="portal-topbar__brand-block">
-            <div className="portal-topbar__brand"><span>🏠</span> RentaPay</div>
+            <div className="portal-topbar__brand"><img className="portal-topbar__brand-logo" src="/logo.png" alt="RentaPay" /> RentaPay</div>
             <div className="portal-topbar__role-label">Brand Ambassador{profile?.ba_code ? ` · ${profile.ba_code}` : ''}</div>
           </div>
         </div>
         <div className="portal-topbar__right">
           {profile && (
-            <AccountMenu
-              name={profile.full_name}
-              role="brand_ambassador"
-              phone={profile.phone}
-              token={token}
-            />
+            <>
+              <AccountMenu
+                name={profile.full_name}
+                photoUrl={profile.photo_url}
+                role="brand_ambassador"
+                phone={profile.phone}
+                token={token}
+                onPhotoChange={(photoUrl) => setProfile((p) => ({ ...p, photo_url: photoUrl }))}
+                onEditProfile={() => { setActiveTab('settings'); setSidebarOpen(false); }}
+              />
+              {/* FIX (item 8): every other portal (Dashboard.jsx,
+                  TenantPortal.jsx) has a Help button in the topbar -
+                  the BA Portal had none at all, with no FAQ/contact-
+                  support entry point anywhere in it. Same shared
+                  HelpButton component/modal (WhatsApp, call, email,
+                  live chat-with-an-agent) used everywhere else. */}
+              <HelpButton role="brand_ambassador" token={token} renderAs="quick-action-btn help-button" />
+            </>
           )}
         </div>
       </header>
 
       <main className="ba-portal-main">
-        {error && <div className="ba-portal-banner ba-portal-banner--error">{error}</div>}
+        {error && (
+          // FIX (item 3): this used to be a dead-end banner - the
+          // profile fetch had failed, so `profile` stays null forever
+          // and every tab below (which all key off `profile` or
+          // assume a loaded portal shell) just silently renders
+          // nothing useful, with no way to recover short of a full
+          // page refresh. A Retry button re-runs the same load() used
+          // on mount/first load.
+          <div className="ba-portal-banner ba-portal-banner--error">
+            <span>{error}</span>
+            <button type="button" className="ba-portal-banner__retry" onClick={load}>Retry</button>
+          </div>
+        )}
 
         {activeTab === 'dashboard' && (
           <>
@@ -946,6 +1008,17 @@ export default function BaPortal() {
         {activeTab === 'leaderboard' && <BaLeaderboardPanel token={token} />}
 
         {activeTab === 'settings' && <BaSettingsPanel profile={profile} token={token} onProfileChange={(fn) => setProfile((p) => fn(p))} />}
+
+        {activeTab === 'help' && (
+          <div className="ba-help-panel">
+            <Faq audience="brand_ambassador" />
+            <section className="settings-card u-mt-6">
+              <h2>Still need help?</h2>
+              <p className="settings-card__hint">Chat with an agent, or reach us directly:</p>
+              <HelpButton role="brand_ambassador" token={token} renderAs="ghost-link" />
+            </section>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -267,6 +267,7 @@ export default function AdminBrandAmbassadors({ token }) {
                   {a.overdue && <span className="admin-ba__overdue-flag">Overdue for review</span>}
                   <span>{a.phone}</span>
                   <span>{a.email}</span>
+                  <span>ID: {a.national_id || '—'}</span>
                   <span>Submitted {new Date(a.created_at).toLocaleString()}</span>
                 </div>
                 <div className="onboarding-request-card__actions">

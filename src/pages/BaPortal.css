@@ -1,12 +1,26 @@
 .ba-portal {
   min-height: 100vh;
   background: var(--color-bg, #f5f6f8);
+  /* FIX (item 9): the portal shell itself must never be the thing
+     that lets a wide inner element (a fixed-width table, a wide
+     grid row) push the page wider than the viewport - this is the
+     outermost safety net, on top of the specific scroll wrappers
+     added below for the individual wide elements. */
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .ba-portal-main {
   padding: 24px 20px 80px;
   max-width: 880px;
   margin: 0 auto;
+  /* FIX (item 9): belt-and-braces alongside .ba-portal's overflow-x -
+     without this, a child wider than the viewport (see
+     .ba-claim-list-scroll / .ba-table-scroll below) could still force
+     ba-portal-main itself to grow past 100% width on some mobile
+     browsers before the scroll wrapper's own overflow rule kicks in. */
+  max-width: min(880px, 100%);
+  box-sizing: border-box;
 }
 
 .ba-portal-main--loading {
@@ -26,6 +40,27 @@
 .ba-portal-banner--error {
   background: #fdecec;
   color: #a12626;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ba-portal-banner__retry {
+  flex-shrink: 0;
+  border: 1px solid #a12626;
+  background: transparent;
+  color: #a12626;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ba-portal-banner__retry:hover {
+  background: #a12626;
+  color: #fff;
 }
 
 .ba-portal-welcome h1 {
@@ -211,6 +246,38 @@
   gap: 8px;
 }
 
+/* FIX (item 9): the claim list row is a fixed multi-column grid (7
+   columns once phone/email/location/match/qualification/submitted are
+   all shown) that simply cannot compress to a narrow phone width
+   without truncating into illegibility. Rather than let the grid
+   shrink columns to nothing (or worse, spill past the screen edge),
+   this wrapper gives the row its natural width and scrolls
+   horizontally within the card - the row itself never exceeds the
+   viewport, only this inner strip does, and only when needed. */
+.ba-claim-list-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ba-claim-list-scroll .ba-claim-list {
+  min-width: 640px;
+}
+
+/* FIX (item 9): same fixed-width-table problem as the claim list
+   above - a 4-5 column data table can't meaningfully reflow on a
+   narrow screen, so it scrolls horizontally within its own card
+   instead of pushing the page wider than the viewport. */
+.ba-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ba-table-scroll .ba-earnings-panel__table {
+  min-width: 480px;
+}
+
 .ba-claim-list__row {
   display: grid;
   grid-template-columns: 1.2fr 1fr 0.8fr;
@@ -359,7 +426,7 @@
 }
 
 .ba-claim-list__row {
-  grid-template-columns: 1.1fr 1fr 1fr 0.8fr 0.9fr 1fr;
+  grid-template-columns: 1.1fr 1fr 1.1fr 1fr 0.8fr 0.9fr 1fr;
 }
 
 .ba-claim-list__row--head {
@@ -406,6 +473,12 @@
   font-size: 0.9rem;
   font-weight: 400;
   color: var(--color-text, #111827);
+}
+
+.ba-settings-form__readonly {
+  background: var(--color-bg-muted, #f3f4f6);
+  color: var(--color-text-muted, #6b7280);
+  cursor: not-allowed;
 }
 
 .ba-settings-toggle {

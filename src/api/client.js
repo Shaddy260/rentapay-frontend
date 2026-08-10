@@ -306,6 +306,16 @@ export const api = {
   adminLogin: (payload) => request('/auth/admin/login', { method: 'POST', body: payload }),
   adminVerifyOtp: (payload) => request('/auth/admin/verify-otp', { method: 'POST', body: payload }),
   changeAdminPassword: (payload, token) => request('/auth/admin/change-password', { method: 'POST', body: payload, token }),
+
+  // Admin Settings - platform-editable Help contact details (WhatsApp/
+  // Call/Email), and anything else that belongs on a "Settings" tab
+  // rather than being hardcoded in the frontend. getPublicHelpContacts
+  // is unauthenticated - Login.jsx, the tenant/landlord/BA "Help"
+  // modals, and the public landing page all need it before/without a
+  // token.
+  getPublicHelpContacts: () => request('/settings/public/help-contacts'),
+  getAdminSettings: (token) => request('/admin/settings', { token }),
+  updateHelpContactSettings: (payload, token) => request('/admin/settings/help-contacts', { method: 'PATCH', body: payload, token }),
   completeSetupWizard: (payload, token) => request('/auth/landlord/complete-setup-wizard', { method: 'POST', body: payload, token }),
   updatePropertyDetails: (payload, token) => request('/auth/landlord/property', { method: 'PATCH', body: payload, token }),
   getMyLandlordProfile: (token) => request('/auth/landlord/me', { token }),
@@ -1031,6 +1041,20 @@ export const api = {
   // Phase 19 - Qualification Job Dry-Run Mode.
   runQualificationDryRun: (token) => request('/brand-ambassadors/qualification/dry-run', { method: 'POST', token }),
   downloadQualificationDryRunCsv: (token) => downloadBaFile('/brand-ambassadors/qualification/dry-run.csv', {}, token, 'ba-qualification-dry-run.csv'),
+
+  // Phase 20 - BA Regions & Payout Qualification Report. A point-in-time
+  // snapshot admin generates on demand (typically right after running a
+  // payout) grouping every BA's onboarded landlords by region/county,
+  // split into "qualifies for payment" / "doesn't qualify" so it can be
+  // downloaded and shared with the team. Landlord phone numbers are
+  // masked server-side (middle 3 digits starred) in the response itself,
+  // not just in the UI, since this leaves the app as a shareable file.
+  listBaPayoutQualificationReports: (token) => request('/brand-ambassadors/payout-qualification-reports', { token }),
+  generateBaPayoutQualificationReport: ({ periodType, periodKey } = {}, token) =>
+    request('/brand-ambassadors/payout-qualification-reports/generate', { method: 'POST', body: { periodType, periodKey }, token }),
+  getBaPayoutQualificationReport: (reportId, token) => request(`/brand-ambassadors/payout-qualification-reports/${reportId}`, { token }),
+  downloadBaPayoutQualificationReportCsv: (reportId, token) =>
+    downloadBaFile(`/brand-ambassadors/payout-qualification-reports/${reportId}.csv`, {}, token, `ba-payout-qualification-report-${reportId}.csv`),
 
   // Phase 17 - Downloadable Earnings Statement (Per BA, Per Period).
   // period is either { periodType: 'month', periodKey: 'YYYY-MM' } or
