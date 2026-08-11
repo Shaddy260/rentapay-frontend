@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Avatar from './Avatar.jsx';
 import ThemeToggleItem from './ThemeToggle.jsx';
 import BiometricSettingsPanel from './BiometricSettingsPanel.jsx';
-import InstallAppMenuItem from './InstallAppMenuItem.jsx';
+import DownloadApkMenuItem from './DownloadApkMenuItem.jsx';
 import { api, ApiError } from '../api/client.js';
 import './AccountMenu.css';
 
@@ -166,7 +166,9 @@ export default function AccountMenu({ name, photoUrl, role, phone, roleLevel, to
           Fingerprint / device login
         </button>
         <ThemeToggleItem className="account-menu__item" onToggle={() => setOpen(false)} />
-        <InstallAppMenuItem className="account-menu__item" onClick={() => setOpen(false)} />
+        <DownloadApkMenuItem as="button" className="account-menu__item" onClick={() => setOpen(false)}>
+          ⬇️ Download the App
+        </DownloadApkMenuItem>
         <div className="account-menu__divider" />
         <button type="button" className="account-menu__item account-menu__item--danger" role="menuitem" onClick={handleLogout}>
           Log out

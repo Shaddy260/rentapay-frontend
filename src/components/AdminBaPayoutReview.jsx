@@ -175,6 +175,15 @@ export default function AdminBaPayoutReview({ token }) {
       {review && review.bas.length === 0 && <p className="admin-ba-payout__empty">No qualified claims for this period.</p>}
 
       {review && review.bas.length > 0 && (
+        <>
+        {review.runTotals && (
+          <div className="admin-ba-payout__run-summary">
+            <div><strong>{review.runTotals.qualifying}</strong> qualifying</div>
+            <div><strong>{review.runTotals.notQualifying}</strong> not qualifying</div>
+            <div><strong>{review.runTotals.landlordsOnboarded}</strong> landlords total</div>
+            <div className="admin-ba-payout__run-summary-total">Grand total owed: {money(review.runTotals.amountOwed)}</div>
+          </div>
+        )}
         <ul className="admin-ba-payout__list">
           {review.bas.map((row) => {
             const isExpanded = expandedBaId === row.ba.id;
@@ -198,6 +207,12 @@ export default function AdminBaPayoutReview({ token }) {
                     <div className="admin-ba-payout__grand-total">Total: {money(row.grandTotal)}</div>
                     {row.periodMarkedStatus && <span className={`admin-ba-payout__mark admin-ba-payout__mark--${row.periodMarkedStatus}`}>{row.periodMarkedStatus === 'paid' ? 'Paid' : 'Not Paid'}</span>}
                   </div>
+                </div>
+                <div className="admin-ba-payout__ratio-bar">
+                  <span>Commission rate: <strong>{row.commissionRatePercent}%</strong></span>
+                  <span className="admin-ba-payout__ratio-qualifies">Qualifies: {row.qualifyingLandlords}</span>
+                  <span className="admin-ba-payout__ratio-not-qualifies">Not qualifying: {row.notQualifyingLandlords}</span>
+                  <span>Onboarded: {row.totalLandlordsOnboarded}</span>
                 </div>
 
                 {isExpanded && (
@@ -241,6 +256,7 @@ export default function AdminBaPayoutReview({ token }) {
             );
           })}
         </ul>
+        </>
       )}
     </section>
   );

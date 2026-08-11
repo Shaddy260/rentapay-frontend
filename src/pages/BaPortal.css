@@ -177,6 +177,23 @@
   padding: 22px;
 }
 
+/* Item 5: the manual "log a landlord" form is now a fallback, tucked
+   behind a toggle rather than the primary view - separated visually
+   from OnboardedLandlordsPanel above it with a top margin. */
+.ba-claim-panel--fallback {
+  margin-top: 20px;
+}
+
+.ba-claim-panel__fallback-toggle {
+  background: none;
+  border: none;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
 .ba-claim-panel__intro {
   color: var(--color-text-muted, #6b7280);
   font-size: 0.88rem;
@@ -238,6 +255,53 @@
 .ba-claim-panel__empty {
   color: var(--color-text-muted, #6b7280);
   font-size: 0.88rem;
+}
+
+/* Item 8 - onboarded landlords as cards instead of a bare list/table. */
+.ba-onboarded-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.ba-onboarded-card {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--color-surface, #fff);
+  min-width: 0;
+}
+
+.ba-onboarded-card__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ba-onboarded-card__name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ba-onboarded-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 3px 0;
+  border-top: 1px solid var(--color-border, #f0f1f3);
+}
+
+.ba-onboarded-card__row:first-of-type {
+  border-top: none;
+}
+
+.ba-onboarded-card__label {
+  color: var(--color-text-muted, #6b7280);
+  font-weight: 600;
 }
 
 .ba-claim-list {
@@ -373,6 +437,24 @@
   color: var(--color-text-muted, #6b7280);
 }
 
+.ba-tier-card__earnings-row {
+  display: flex;
+  gap: 24px;
+  margin-top: 4px;
+}
+
+.ba-tier-card__earnings-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+}
+
+.ba-tier-card__earnings-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #6b7280);
+  margin-top: 2px;
+}
+
 .ba-stats-panel {
   background: var(--color-surface-raised, #fff);
   border: 1px solid var(--color-border, #e5e7eb);
@@ -396,6 +478,8 @@
   align-items: center;
   gap: 10px;
   margin-top: 24px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .ba-claim-panel__list-header .ba-claim-panel__list-heading {
@@ -407,6 +491,8 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .ba-claim-filter label {
@@ -416,6 +502,15 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text-muted, #6b7280);
+  /* FIX (item 7): "date out of the box" - date inputs have a
+     browser-imposed intrinsic content width (notably wide on iOS
+     Safari) that flex-wrap alone does not shrink; without an
+     explicit basis + min-width:0 here, that intrinsic width pushed
+     the input past the card edge on narrow screens instead of
+     wrapping/shrinking with the rest of the filter row. */
+  flex: 1 1 130px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .ba-claim-filter input[type='date'] {
@@ -423,6 +518,22 @@
   border-radius: 8px;
   padding: 6px 8px;
   font-size: 0.82rem;
+  /* FIX (item 7): force the input itself to respect its container's
+     width instead of the browser's native date-picker intrinsic
+     width, on every screen size. */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 420px) {
+  /* FIX (item 7): on very narrow phones, let each date field take
+     the full row instead of two squeezed side-by-side fields, which
+     is what was actually clipping past the card edge in the report. */
+  .ba-claim-filter label {
+    flex-basis: 100%;
+  }
 }
 
 .ba-claim-list__row {
@@ -534,6 +645,14 @@
 .ba-earnings-panel__table th {
   font-weight: 600;
   color: var(--color-text-muted, #6b7280);
+}
+
+/* Item 10 - small "why was I paid this" line under base/commission
+   cells: which unit bracket / commission tier applied. */
+.ba-earnings-panel__why {
+  font-size: 0.74rem;
+  color: var(--color-text-muted, #6b7280);
+  margin-top: 2px;
 }
 
 /* Phase 18 - Leaderboard panel */

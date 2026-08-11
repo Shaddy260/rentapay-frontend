@@ -34,6 +34,21 @@
   opacity: 0.6;
 }
 
+.form-field input:disabled {
+  background: var(--color-surface, #f4f4f4);
+  color: var(--color-ink-soft);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.form-field__input--error {
+  border-color: var(--color-error) !important;
+}
+
+.form-field__input--error:focus {
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.12) !important;
+}
+
 .form-field__hint {
   font-size: var(--text-xs);
   color: var(--color-ink-soft);

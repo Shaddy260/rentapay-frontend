@@ -14,10 +14,6 @@ import './AdminBaQualificationDryRun.css';
  * BA Payout Review since this app doesn't have a separate Payout
  * Rules screen yet.
  */
-function money(n) {
-  return `KES ${Number(n || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 export default function AdminBaQualificationDryRun({ token }) {
   const [running, setRunning] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -78,15 +74,11 @@ export default function AdminBaQualificationDryRun({ token }) {
           <div className="admin-ba-dry-run__summary">
             <div>
               <span className="admin-ba-dry-run__summary-value">{result.checked}</span>
-              <span className="admin-ba-dry-run__summary-label">Pending claims checked</span>
+              <span className="admin-ba-dry-run__summary-label">Pending landlords checked</span>
             </div>
             <div>
               <span className="admin-ba-dry-run__summary-value">{result.qualified}</span>
               <span className="admin-ba-dry-run__summary-label">Would qualify</span>
-            </div>
-            <div>
-              <span className="admin-ba-dry-run__summary-value">{result.tiersCrossed}</span>
-              <span className="admin-ba-dry-run__summary-label">Tiers that would be crossed</span>
             </div>
             <div>
               <span className="admin-ba-dry-run__summary-value">{result.skippedInactiveBa}</span>
@@ -99,24 +91,20 @@ export default function AdminBaQualificationDryRun({ token }) {
               <tr>
                 <th>BA</th>
                 <th>Landlord</th>
-                <th>Would-be base payout</th>
-                <th>Would-be commission</th>
-                <th>Would-be tier change</th>
+                <th>Units set up</th>
               </tr>
             </thead>
             <tbody>
               {(result.report || []).length === 0 && (
                 <tr>
-                  <td colSpan={5}>Nothing would qualify right now.</td>
+                  <td colSpan={3}>Nothing would qualify right now.</td>
                 </tr>
               )}
               {(result.report || []).map((r) => (
-                <tr key={r.claimId}>
+                <tr key={r.landlordId}>
                   <td>{r.baName} {r.baCode ? `(${r.baCode})` : ''}</td>
-                  <td>{r.landlordSnapshotName}</td>
-                  <td>{money(r.wouldBePayoutAmount)}</td>
-                  <td>{money(r.wouldBeCommissionBonusAmount)}</td>
-                  <td>{r.wouldBeTierChange ? `${r.wouldBeTierChange.fromPercent}% → ${r.wouldBeTierChange.toPercent}%` : '—'}</td>
+                  <td>{r.landlordName}</td>
+                  <td>{r.wouldBeQualifiedUnitCount}</td>
                 </tr>
               ))}
             </tbody>

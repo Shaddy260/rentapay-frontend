@@ -165,3 +165,41 @@
   padding: 0;
   font-size: var(--text-sm, 0.9375rem);
 }
+
+/* Item 10 - Payout Run: overall run summary + per-BA qualify/not-
+   qualify/commission-rate strip. */
+.admin-ba-payout__run-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: var(--color-surface-alt, #f5f6f8);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-payout__run-summary-total {
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.admin-ba-payout__ratio-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 6px 14px 10px;
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-ba-payout__ratio-qualifies {
+  color: var(--color-success, #1a7f37);
+  font-weight: 600;
+}
+
+.admin-ba-payout__ratio-not-qualifies {
+  color: var(--color-warning, #b45309);
+  font-weight: 600;
+}

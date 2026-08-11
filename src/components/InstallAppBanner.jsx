@@ -1,51 +1,34 @@
 import React, { useState } from 'react';
-import { useInstallPrompt } from '../utils/useInstallPrompt.js';
+import { isStandalone } from '../utils/useInstallPrompt.js';
 import './InstallAppBanner.css';
 
-const MANUAL_STEPS = {
-  'android-manual': {
-    title: 'Install on Android',
-    steps: [
-      'Tap the ⋮ menu in the top right of your browser',
-      'Tap "Install app" (or "Add to Home screen")',
-      'Confirm by tapping "Install"',
-    ],
-  },
-  'firefox-manual': {
-    title: 'Install RentaPay',
-    steps: [
-      'Look for an install icon at the right of the address bar (or the ⋮ menu)',
-      'Choose "Install" - on desktop Firefox this may not be offered; Chrome or Edge give the smoothest install',
-      'Alternatively, bookmark this page for quick access',
-    ],
-  },
-  'desktop-manual': {
-    title: 'Install RentaPay',
-    steps: [
-      'Look for the install icon (a small monitor with a down arrow) at the right of your address bar',
-      'Or open your browser\'s ⋮ menu and choose "Install RentaPay…"',
-      'Confirm by clicking "Install"',
-    ],
-  },
-};
+// FIX (direct request: "there is no option to download the app in
+// the browser anymore... and it should be a TWA, not a PWA"):
+// This used to drive the browser's native `beforeinstallprompt` PWA
+// flow (via useInstallPrompt/promptInstall) - "install" just did an
+// Add-to-Home-Screen of the web page. RentaPay now ships a real
+// signed Android app (a Trusted Web Activity build - see
+// DownloadApkMenuItem.jsx and public/downloads/README.txt), so the
+// banner's job is simpler and more direct: hand the person the
+// actual APK to download and install, exactly the same file/flow as
+// the "Download the App" item in AccountMenu.
+//
+// iOS is the one exception: Apple doesn't support installing a TWA/
+// APK at all, so on iPhone/iPad this still falls back to the "Add to
+// Home Screen" Safari steps - that's the only real option there, not
+// a downgrade back to the old PWA-install behavior.
+const APK_PATH = '/downloads/app-release-signed.apk';
 
-// Direct request: "it should be written somewhere in app and on login
-// page to download the app" / "there is no download button... it
-// should be... visible everytime." Now login-page-only - every portal
-// gets the equivalent "Download the App" entry inside its
-// account/side menu instead (see AccountMenu.jsx / PortalSidebar items
-// in Dashboard/TenantPortal/AdminDashboard), both driven
-// by the same shared useInstallPrompt hook. Only hides once the app
-// is already installed - otherwise it's always here and always
-// clickable, falling back to manual instructions for the browser
-// actually in use when there's no live native prompt.
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
 const DISMISS_KEY = 'rentapay_install_banner_dismissed_at';
 const DISMISS_SNOOZE_DAYS = 14;
 
 export default function InstallAppBanner() {
-  const { canOffer, isIOS, promptInstall } = useInstallPrompt();
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
-  const [manualSteps, setManualSteps] = useState(null);
+  const [showApkGuide, setShowApkGuide] = useState(false);
   const [dismissed, setDismissed] = useState(() => {
     try {
       const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) || 0);
@@ -55,22 +38,24 @@ export default function InstallAppBanner() {
     }
   });
 
-  if (!canOffer || dismissed) return null;
+  // Only ever hides once the app is already installed as a standalone
+  // app, or once the person dismissed it recently - never because a
+  // one-time native prompt event was missed (there's no such event to
+  // miss anymore; this is a plain file download).
+  if (isStandalone() || dismissed) return null;
 
   function dismiss() {
     setDismissed(true);
     try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* non-fatal */ }
   }
 
-  async function handleTap() {
-    if (isIOS) {
+  function handleTap() {
+    if (isIOS()) {
       setShowIOSInstructions(true);
       return;
     }
-    const result = await promptInstall();
-    if (result === 'android-manual' || result === 'firefox-manual' || result === 'desktop-manual') {
-      setManualSteps(MANUAL_STEPS[result]);
-    }
+    window.location.href = APK_PATH;
+    setShowApkGuide(true);
   }
 
   return (
@@ -82,7 +67,7 @@ export default function InstallAppBanner() {
           <span>Faster access and instant payment alerts, right on your home screen.</span>
         </div>
         <button type="button" className="install-app-banner__cta" onClick={handleTap}>
-          Install
+          {isIOS() ? 'Install' : 'Download'}
         </button>
         <button type="button" className="install-app-banner__dismiss" aria-label="Dismiss" onClick={dismiss}>
           ✕
@@ -108,15 +93,17 @@ export default function InstallAppBanner() {
           </button>
         </div>
       )}
-      {manualSteps && (
+      {showApkGuide && (
         <div className="install-app-banner__ios-steps">
-          <p>{manualSteps.title}:</p>
+          <p>Almost there:</p>
           <ol>
-            {manualSteps.steps.map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
+            <li>Your download will finish in a few seconds</li>
+            <li>Open it from your notification shade, or from your phone's Downloads</li>
+            <li>
+              Tap <strong>Install</strong> when prompted (you may need to allow installs from this browser first)
+            </li>
           </ol>
-          <button type="button" className="install-app-banner__cta install-app-banner__cta--ghost" onClick={() => setManualSteps(null)}>
+          <button type="button" className="install-app-banner__cta install-app-banner__cta--ghost" onClick={() => setShowApkGuide(false)}>
             Got it
           </button>
         </div>

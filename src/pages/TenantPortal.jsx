@@ -638,6 +638,7 @@ export default function TenantPortal() {
                   <p>You've given notice to vacate on <strong>{profile.notice_date}</strong>.</p>
                   <Button
                     variant="ghost"
+                    loading={busy}
                     onClick={async () => {
                       setBusy(true);
                       try {

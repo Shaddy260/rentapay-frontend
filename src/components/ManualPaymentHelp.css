@@ -16,3 +16,14 @@
 .manual-payment-help__channels {
   margin-top: var(--space-2, 0.5rem);
 }
+
+.manual-payment-help__note--urgent {
+  color: var(--color-warning, #B8860B);
+  font-weight: 600;
+}
+
+.help-channel--urgent {
+  border-color: var(--color-warning, #B8860B);
+  color: var(--color-warning, #B8860B);
+  font-weight: 600;
+}

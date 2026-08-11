@@ -1,0 +1,83 @@
+.admin-help-contacts {
+  max-width: 640px;
+  margin: 8px 0 24px;
+}
+
+.admin-help-contacts__intro {
+  color: var(--color-text-muted, #6b6455);
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+.admin-help-contacts__email {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  border-radius: 10px;
+  background: var(--color-surface, #fff);
+  margin-bottom: 20px;
+}
+
+.admin-help-contacts__email label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.admin-help-contacts__list {
+  margin-bottom: 20px;
+  padding: 14px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  border-radius: 10px;
+  background: var(--color-surface, #fff);
+}
+
+.admin-help-contacts__list h3 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.admin-help-contacts__empty {
+  color: var(--color-text-muted, #6b6455);
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+
+.admin-help-contacts__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--color-border, #e5e1d8);
+}
+
+.admin-help-contacts__row:last-of-type {
+  border-bottom: none;
+}
+
+.admin-help-contacts__row-label {
+  flex: 0 0 160px;
+}
+
+.admin-help-contacts__row-value {
+  flex: 1 1 160px;
+}
+
+.admin-help-contacts__row-active {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.admin-help-contacts__row input[type='text'],
+.admin-help-contacts__row input[type='email'] {
+  padding: 6px 8px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  border-radius: 6px;
+}

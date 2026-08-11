@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import HeroPhotoBackground from '../components/HeroPhotoBackground.jsx';
 import PlatformReviews from '../components/PlatformReviews.jsx';
 import InstallAppBanner from '../components/InstallAppBanner.jsx';
+import DownloadAppSection from '../components/DownloadAppSection.jsx';
 import './Landing.css';
 
 /**
@@ -120,6 +121,14 @@ export default function Landing() {
         <p>It takes a few minutes to set up your first property.</p>
         <Link to="/register" className="landing__btn landing__btn--primary">Get started</Link>
       </section>
+
+      {/* FEATURE (direct request: "Download RentaPay App" button on the
+          landing page, serving a real APK). Separate, additional path
+          from InstallAppBanner above - that one triggers the browser's
+          native PWA install prompt; this one is a plain static-file
+          download of the signed TWA-wrapped APK for people who want the
+          app directly, since there's no Play Store listing yet. */}
+      <DownloadAppSection />
 
       <PlatformReviews />
 

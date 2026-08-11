@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import PaymentDetailsCard from '../components/PaymentDetailsCard.jsx';
@@ -17,6 +17,20 @@ export default function SubscriptionManage() {
   const token = sessionStorage.getItem('rentapay_token');
 
   const [status, setStatus] = useState(null);
+  // BUG FIX (ESLint react-hooks/exhaustive-deps): the polling effect
+  // further down reads status?.scopedToPropertyId inside a
+  // setInterval callback, but status isn't (and shouldn't be) in that
+  // effect's dependency array - adding it would tear down and
+  // recreate the interval AND the 2-minute safety-net timeout every
+  // time status is refetched for any reason, which happens
+  // frequently and would keep resetting the timeout, defeating the
+  // "stop polling after 2 minutes no matter what" guarantee. A ref
+  // gives the interval callback the CURRENT value on every tick
+  // without needing to restart the effect when it changes.
+  const scopedPropertyIdRef = useRef(null);
+  useEffect(() => {
+    scopedPropertyIdRef.current = status?.scopedToPropertyId || null;
+  }, [status?.scopedToPropertyId]);
   const [periodMonths, setPeriodMonths] = useState(1);
   const [unitsCount, setUnitsCount] = useState(5);
   const [error, setError] = useState('');
@@ -196,7 +210,7 @@ export default function SubscriptionManage() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await api.getSubscriptionStatus(token, status?.scopedToPropertyId || undefined);
+        const res = await api.getSubscriptionStatus(token, scopedPropertyIdRef.current || undefined);
         const renewalLandedAlready =
           preRenewalSnapshot &&
           (res.subscription_status === 'active' &&
@@ -369,7 +383,7 @@ export default function SubscriptionManage() {
             <div><span>Amount</span><span>KES {Number(myManualPayment.amount_paid).toLocaleString()}</span></div>
             <div><span>Submitted</span><span>{new Date(myManualPayment.submitted_at).toLocaleString('en-GB')}</span></div>
           </div>
-          <ManualPaymentHelp variant="admin" />
+          <ManualPaymentHelp variant="admin" submittedAt={myManualPayment.submitted_at} />
         </div>
       )}
       {myManualPayment?.status === 'rejected' && (

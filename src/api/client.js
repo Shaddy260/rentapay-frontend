@@ -305,17 +305,16 @@ export const api = {
   resetPassword: (payload) => request('/auth/forgot-password/reset', { method: 'POST', body: payload }),
   adminLogin: (payload) => request('/auth/admin/login', { method: 'POST', body: payload }),
   adminVerifyOtp: (payload) => request('/auth/admin/verify-otp', { method: 'POST', body: payload }),
+  adminForgotPassword: () => request('/auth/admin/forgot-password', { method: 'POST' }),
+  adminResetPassword: (payload) => request('/auth/admin/reset-password', { method: 'POST', body: payload }),
   changeAdminPassword: (payload, token) => request('/auth/admin/change-password', { method: 'POST', body: payload, token }),
-
-  // Admin Settings - platform-editable Help contact details (WhatsApp/
-  // Call/Email), and anything else that belongs on a "Settings" tab
-  // rather than being hardcoded in the frontend. getPublicHelpContacts
-  // is unauthenticated - Login.jsx, the tenant/landlord/BA "Help"
-  // modals, and the public landing page all need it before/without a
-  // token.
-  getPublicHelpContacts: () => request('/settings/public/help-contacts'),
+  getHelpContacts: () => request('/settings/public/help-contacts'),
   getAdminSettings: (token) => request('/admin/settings', { token }),
-  updateHelpContactSettings: (payload, token) => request('/admin/settings/help-contacts', { method: 'PATCH', body: payload, token }),
+  updateHelpEmail: (payload, token) => request('/admin/settings/help-contacts', { method: 'PATCH', body: payload, token }),
+  listHelpContactNumbers: (token) => request('/admin/settings/help-contacts/numbers', { token }),
+  createHelpContactNumber: (payload, token) => request('/admin/settings/help-contacts/numbers', { method: 'POST', body: payload, token }),
+  updateHelpContactNumber: (id, payload, token) => request(`/admin/settings/help-contacts/numbers/${id}`, { method: 'PATCH', body: payload, token }),
+  deleteHelpContactNumber: (id, token) => request(`/admin/settings/help-contacts/numbers/${id}`, { method: 'DELETE', token }),
   completeSetupWizard: (payload, token) => request('/auth/landlord/complete-setup-wizard', { method: 'POST', body: payload, token }),
   updatePropertyDetails: (payload, token) => request('/auth/landlord/property', { method: 'PATCH', body: payload, token }),
   getMyLandlordProfile: (token) => request('/auth/landlord/me', { token }),
@@ -988,35 +987,41 @@ export const api = {
   updateBaLeaderboardOptIn: (optIn, token) => request('/brand-ambassadors/me/leaderboard-opt-in', { method: 'PATCH', body: { optIn }, token }),
   // Phase 4 - public referral-code resolution (landlord signup form "Referred by <name>").
   resolveBaReferralCode: (code) => request(`/brand-ambassadors/referral/${encodeURIComponent(code)}`),
-  // Phase 4 - BA logs/edits/lists their own landlord claims.
-  submitLandlordClaim: (payload, token) => request('/brand-ambassadors/claims', { method: 'POST', body: payload, token }),
-  listMyClaims: ({ from, to } = {}, token) => {
+  // SECTION A/B - manual claim logging removed entirely. "My
+  // Onboarded Landlords" is the ONE single live list, sourced directly
+  // from landlords.ba_id.
+  listMyOnboardedLandlords: ({ from, to } = {}, token) => {
     const params = new URLSearchParams();
     if (from) params.set('from', from);
     if (to) params.set('to', to);
     const qs = params.toString();
-    return request(`/brand-ambassadors/claims/mine${qs ? `?${qs}` : ''}`, { token });
+    return request(`/brand-ambassadors/landlords/mine${qs ? `?${qs}` : ''}`, { token });
   },
-  editMyClaim: (claimId, payload, token) => request(`/brand-ambassadors/claims/${claimId}`, { method: 'PATCH', body: payload, token }),
   getBaStats: (token) => request('/brand-ambassadors/stats/mine', { token }),
   // Phase 18 - Optional BA Leaderboard. period is 'month' | 'quarter' | 'all'.
   getBaLeaderboard: (period, token) => request(`/brand-ambassadors/leaderboard?period=${encodeURIComponent(period)}`, { token }),
   // Phase 7 - "Share with admin": returns { summary, count }; posts the
   // same summary into the admin notifications inbox server-side.
-  shareClaimsReport: ({ from, to } = {}, token) => request('/brand-ambassadors/claims/share', { method: 'POST', body: { from, to }, token }),
+  shareClaimsReport: ({ from, to } = {}, token) => request('/brand-ambassadors/landlords/mine/share', { method: 'POST', body: { from, to }, token }),
 
-  // Phase 10 - Admin: Payout Rules Engine & Commission Tiers (global +
-  // optional per-BA override for both the flat payout rule and the
-  // commission ladder). baId is optional on the GETs - when present
-  // the response also includes that BA's override (or null), so the
-  // UI can show "using global" vs "custom override" without a second
-  // round trip.
+  // SECTION E - Admin: recurring percentage commission rate (global +
+  // optional per-BA override), each an append-only history. baId is
+  // optional on the GET - when present the response also includes
+  // that BA's override history (or null), so the UI can show "using
+  // global" vs "custom override" without a second round trip. Setting
+  // a rate always inserts a new history row (effectiveFrom optional,
+  // defaults to now server-side) rather than overwriting the current
+  // one - the old fixed-price / commission-tiers / unit-pricing-tiers
+  // endpoints are gone (hard cutover).
   getBaPayoutRules: (baId, token) => request(`/brand-ambassadors/payout-rules${baId ? `?baId=${encodeURIComponent(baId)}` : ''}`, { token }),
   updateGlobalBaPayoutRule: (payload, token) => request('/brand-ambassadors/payout-rules/global', { method: 'PATCH', body: payload, token }),
   setBaPayoutOverride: (baId, payload, token) => request(`/brand-ambassadors/${baId}/payout-rule-override`, { method: 'PATCH', body: payload, token }),
-  getBaCommissionTiers: (baId, token) => request(`/brand-ambassadors/commission-tiers${baId ? `?baId=${encodeURIComponent(baId)}` : ''}`, { token }),
-  updateGlobalBaCommissionTiers: (tiers, token) => request('/brand-ambassadors/commission-tiers/global', { method: 'PATCH', body: { tiers }, token }),
-  setBaCommissionTierOverride: (baId, payload, token) => request(`/brand-ambassadors/${baId}/commission-tiers-override`, { method: 'PATCH', body: payload, token }),
+  getBaPayoutRuleHistory: (baId, token) => request(`/brand-ambassadors/payout-rules/history${baId ? `?baId=${encodeURIComponent(baId)}` : ''}`, { token }),
+
+  // SECTION E - the logged-in BA's own recurring commission earnings
+  // (one row per completed landlord subscription payment). Optional
+  // ?cycle=YYYY-MM to filter to one billing cycle.
+  getMyCommissionEarnings: (cycle, token) => request(`/brand-ambassadors/earnings/mine${cycle ? `?cycle=${encodeURIComponent(cycle)}` : ''}`, { token }),
 
   // Phase 11 - Admin: Payout Review, Reconciliation & Cross-BA
   // Security Report.
@@ -1038,23 +1043,22 @@ export const api = {
   reconcileBaList: (payload, token) => request('/brand-ambassadors/reconcile', { method: 'POST', body: payload, token }),
   getBaSecurityReport: (token) => request('/brand-ambassadors/security-report', { token }),
 
+  // ITEM 12 - BA Payout Qualification Report: generate/list/view, plus
+  // CSV and the new colored PDF exports (combined + per-BA).
+  generateBaPayoutQualificationReport: (payload, token) =>
+    request('/brand-ambassadors/payout-qualification-reports/generate', { method: 'POST', body: payload || {}, token }),
+  listBaPayoutQualificationReports: (token) => request('/brand-ambassadors/payout-qualification-reports', { token }),
+  getBaPayoutQualificationReport: (reportId, token) => request(`/brand-ambassadors/payout-qualification-reports/${reportId}`, { token }),
+  downloadBaPayoutQualificationReportCsv: (reportId, periodKey, token) =>
+    downloadBaFile(`/brand-ambassadors/payout-qualification-reports/${reportId}.csv`, {}, token, `ba-payout-qualification-report-${periodKey}.csv`),
+  downloadBaPayoutQualificationReportPdf: (reportId, periodKey, token) =>
+    downloadBaFile(`/brand-ambassadors/payout-qualification-reports/${reportId}/pdf`, {}, token, `ba-payout-qualification-report-${periodKey}.pdf`),
+  downloadBaPayoutQualificationReportBaPdf: (reportId, baId, periodKey, token) =>
+    downloadBaFile(`/brand-ambassadors/payout-qualification-reports/${reportId}/ba/${baId}/pdf`, {}, token, `ba-payout-qualification-${baId}-${periodKey}.pdf`),
+
   // Phase 19 - Qualification Job Dry-Run Mode.
   runQualificationDryRun: (token) => request('/brand-ambassadors/qualification/dry-run', { method: 'POST', token }),
   downloadQualificationDryRunCsv: (token) => downloadBaFile('/brand-ambassadors/qualification/dry-run.csv', {}, token, 'ba-qualification-dry-run.csv'),
-
-  // Phase 20 - BA Regions & Payout Qualification Report. A point-in-time
-  // snapshot admin generates on demand (typically right after running a
-  // payout) grouping every BA's onboarded landlords by region/county,
-  // split into "qualifies for payment" / "doesn't qualify" so it can be
-  // downloaded and shared with the team. Landlord phone numbers are
-  // masked server-side (middle 3 digits starred) in the response itself,
-  // not just in the UI, since this leaves the app as a shareable file.
-  listBaPayoutQualificationReports: (token) => request('/brand-ambassadors/payout-qualification-reports', { token }),
-  generateBaPayoutQualificationReport: ({ periodType, periodKey } = {}, token) =>
-    request('/brand-ambassadors/payout-qualification-reports/generate', { method: 'POST', body: { periodType, periodKey }, token }),
-  getBaPayoutQualificationReport: (reportId, token) => request(`/brand-ambassadors/payout-qualification-reports/${reportId}`, { token }),
-  downloadBaPayoutQualificationReportCsv: (reportId, token) =>
-    downloadBaFile(`/brand-ambassadors/payout-qualification-reports/${reportId}.csv`, {}, token, `ba-payout-qualification-report-${reportId}.csv`),
 
   // Phase 17 - Downloadable Earnings Statement (Per BA, Per Period).
   // period is either { periodType: 'month', periodKey: 'YYYY-MM' } or

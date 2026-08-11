@@ -6,8 +6,13 @@ import './PropertyRulesCard.css';
 // sees them here, visible upon opening the portal. Entirely optional -
 // if the landlord hasn't set anything (rulesText is empty/null) this
 // renders nothing at all, so no one sees an empty "Rules" box.
+//
+// Item 4 (direct request): starts COLLAPSED every time the tenant
+// portal loads, rather than open by default - the tenant taps to
+// expand it if they want to read it, instead of it taking up screen
+// space unprompted. Previously defaulted to expanded=true.
 export default function PropertyRulesCard({ rulesText }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   if (!rulesText) return null;
 

@@ -1,25 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import ChatWidget from './ChatWidget.jsx';
 import { useToast } from './Toast.jsx';
-import { useHelpContacts, DEFAULT_HELP_CONTACTS } from '../utils/platformSettings.js';
+import { api } from '../api/client.js';
 import './HelpButton.css';
 
-// FIX (Admin Settings - editable Help contact details): these used to
-// be hardcoded here. Numbers change, and WhatsApp Business numbers can
-// get suspended, so they now live in the platformSettings store (backed
-// by /settings/public/help-contacts, editable from Admin > Settings)
-// with these as the offline/first-paint fallback. Kept exported under
-// their old names so any other code importing them still gets a sane
-// default; live components should prefer the useHelpContacts() hook.
-export const HELP_EMAIL = DEFAULT_HELP_CONTACTS.helpEmail;
-export const HELP_WHATSAPP = DEFAULT_HELP_CONTACTS.helpWhatsapp;
+// Real contact details supplied directly - shown to BOTH landlord and
+// tenant dashboards per blueprint section 15. These now also serve as
+// the FALLBACK defaults if the admin-configured values (see
+// useHelpContacts below) haven't loaded yet or fail to load - so
+// nothing regresses if the settings endpoint is ever briefly down.
+export const HELP_EMAIL = 'support@rentapay.co.ke';
+export const HELP_WHATSAPP = '+254710888917';
 // Item 5 (direct request: manual-payment help was only ever showing a
 // WhatsApp number for "Call" too - tapping it dialed the WhatsApp
 // number instead of a real phone line). This is a separate, dedicated
 // call-in number, kept apart from HELP_WHATSAPP so the two can change
 // independently of each other in future.
-export const HELP_CALL = DEFAULT_HELP_CONTACTS.helpCall;
+export const HELP_CALL = '254710888917';
+
+// Direct request: admin should be able to edit these Help & Contact
+// numbers from Settings, and every Help surface across the app
+// should reflect that immediately - not just the hardcoded constants
+// above. This hook fetches the live, admin-editable values once (the
+// public GET /api/settings/public/help-contacts endpoint needs no
+// auth, since Help is visible even on the logged-out login screen)
+// and falls back to the constants above if the fetch hasn't resolved
+// yet or fails.
+// Item 3: admin can configure MULTIPLE call/WhatsApp numbers now, not
+// just one of each - `helpNumbers` carries the full active list
+// (each: { id, label, type: 'call'|'whatsapp', value }) so a caller
+// can show "try this number, or this one" instead of a single line.
+// `helpWhatsapp`/`helpCall` stay in the returned object too (first
+// active entry of each type) purely for back-compat with call sites
+// that only ever showed one number - new UI should prefer
+// `helpNumbers`.
+export function useHelpContacts() {
+  const [contacts, setContacts] = useState({
+    helpWhatsapp: HELP_WHATSAPP,
+    helpCall: HELP_CALL,
+    helpEmail: HELP_EMAIL,
+    helpNumbers: [
+      { id: null, label: 'Primary', type: 'whatsapp', value: HELP_WHATSAPP },
+      { id: null, label: 'Primary', type: 'call', value: HELP_CALL },
+    ],
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getHelpContacts()
+      .then((data) => {
+        if (!cancelled && data) {
+          setContacts({
+            helpWhatsapp: data.helpWhatsapp || HELP_WHATSAPP,
+            helpCall: data.helpCall || HELP_CALL,
+            helpEmail: data.helpEmail || HELP_EMAIL,
+            helpNumbers: Array.isArray(data.helpNumbers) && data.helpNumbers.length
+              ? data.helpNumbers
+              : [
+                  { id: null, label: 'Primary', type: 'whatsapp', value: data.helpWhatsapp || HELP_WHATSAPP },
+                  { id: null, label: 'Primary', type: 'call', value: data.helpCall || HELP_CALL },
+                ],
+          });
+        }
+      })
+      .catch(() => {
+        // Non-fatal - the hardcoded defaults set above already cover
+        // this case, so there's nothing further to do here.
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  return contacts;
+}
 
 /**
  * Help button + modal, used identically on both the landlord dashboard
@@ -33,7 +86,9 @@ export const HELP_CALL = DEFAULT_HELP_CONTACTS.helpCall;
 export default function HelpButton({ role, token, renderAs, landlordContact, onOpen }) {
   const [open, setOpen] = useState(false);
   const toast = useToast();
-  const { helpWhatsapp, helpCall, helpEmail } = useHelpContacts();
+  const { helpCall, helpEmail, helpNumbers } = useHelpContacts();
+  const whatsappNumbers = helpNumbers.filter((n) => n.type === 'whatsapp');
+  const callNumbers = helpNumbers.filter((n) => n.type === 'call');
   // FIX (direct request: "tap Help in the profile dropdown... just
   // closes the dropdown and does not show the help details"): the
   // overlay below sits at position:fixed/inset:0, directly on top of
@@ -61,17 +116,18 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
   // them in one place. Same copy-then-dial pattern already used for
   // the manual-payment "Call" link in ManualPaymentHelp.jsx, kept
   // consistent rather than reinvented.
-  async function handleCallTap(e) {
+  async function handleCallTap(e, number) {
     e.preventDefault();
+    const dialNumber = number || helpCall;
     try {
-      await navigator.clipboard.writeText(helpCall);
-      toast.success(`Copied ${helpCall} to clipboard.`);
+      await navigator.clipboard.writeText(dialNumber);
+      toast.success(`Copied ${dialNumber} to clipboard.`);
     } catch {
       // Clipboard access can fail (permissions, non-HTTPS context, etc.) -
       // still proceed to open the dialer either way, that's the part
       // that actually matters.
     }
-    window.location.href = `tel:${helpCall}`;
+    window.location.href = `tel:${dialNumber}`;
   }
 
   // admin_tenant for tenants, admin_landlord for landlords - the
@@ -137,12 +193,27 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
             )}
 
             <div className="help-channels">
-              <a href={`https://wa.me/${helpWhatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="help-channel help-channel--whatsapp">
-                WhatsApp: {helpWhatsapp}
-              </a>
-              <a href={`tel:${helpCall}`} onClick={handleCallTap} className="help-channel">
-                Call: {helpCall}
-              </a>
+              {whatsappNumbers.map((n) => (
+                <a
+                  key={n.id || n.value}
+                  href={`https://wa.me/${n.value.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="help-channel help-channel--whatsapp"
+                >
+                  WhatsApp{n.label ? ` (${n.label})` : ''}: {n.value}
+                </a>
+              ))}
+              {callNumbers.map((n) => (
+                <a
+                  key={n.id || n.value}
+                  href={`tel:${n.value}`}
+                  onClick={(e) => handleCallTap(e, n.value)}
+                  className="help-channel"
+                >
+                  Call{n.label ? ` (${n.label})` : ''}: {n.value}
+                </a>
+              ))}
               <a href={`mailto:${helpEmail}`} className="help-channel">
                 Email: {helpEmail}
               </a>

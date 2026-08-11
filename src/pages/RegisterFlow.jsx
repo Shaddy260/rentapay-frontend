@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StepRail from '../components/StepRail.jsx';
 import Button from '../components/Button.jsx';
@@ -244,34 +244,59 @@ export default function RegisterFlow() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // PHASE 4 (BA referral-link signup): read ?ref=BA-XXXX from the URL
+  // PHASE 4 (BA referral-link signup): read ?ref=<code> from the URL
   // once on mount and resolve it to a display name ("Referred by
-  // <name>") - never just echo the raw code back. A missing/invalid
-  // code simply shows nothing here; it never blocks signup (the
-  // backend applies the same "fail silently" rule when it tags ba_id).
+  // <name>") - never just echo the raw code back.
   //
-  // FEATURE (manual referral code entry): a landlord who was told a
-  // BA's code verbally, or who reached this page without the referral
-  // link at all, can type the code in themselves - so this is a real
-  // editable field, not a read-only echo of the URL. If the link
-  // carried a ?ref=, that value pre-fills the field but stays
-  // editable (in case the person wants to correct/replace it).
+  // SECTION D (consolidated instructions) - full rewrite of this
+  // field's behavior:
+  //   - Link-based (?ref= present on arrival): the field is a
+  //     read-only CONFIRMATION, not an input. Auto-populated,
+  //     disabled, not clearable, no override path - the link used is
+  //     authoritative for the whole session, even if resolution fails
+  //     (see registerLandlord's own "fail silently" tagging - the
+  //     signup itself is never blocked by a stale/expired link code).
+  //   - Manual entry (no ?ref= on arrival): a real, editable, OPTIONAL
+  //     field. Typing a code that doesn't resolve blocks submission
+  //     with an explicit error - typing nothing is always fine.
+  // These are two different UX contracts, not one field with a
+  // pre-fill - hence the separate `referralFromLink` flag rather than
+  // just checking "does the URL still have ?ref".
+  const referralFromLink = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return !!new URLSearchParams(window.location.search).get('ref');
+  }, []);
   const [referralCode, setReferralCode] = useState(() => {
     if (typeof window === 'undefined') return '';
     return new URLSearchParams(window.location.search).get('ref') || '';
   });
   const [referredByName, setReferredByName] = useState(null);
+  // Only meaningful for the manual-entry path - link-based codes never
+  // surface this to the person, per the "fail silently" rule above.
+  const [referralNotFound, setReferralNotFound] = useState(false);
 
   useEffect(() => {
     const code = referralCode.trim();
-    if (!code) { setReferredByName(null); return; }
+    if (!code) { setReferredByName(null); setReferralNotFound(false); return; }
     let cancelled = false;
     api
       .resolveBaReferralCode(code)
-      .then((res) => { if (!cancelled) setReferredByName(res.matched ? res.fullName : null); })
-      .catch(() => { if (!cancelled) setReferredByName(null); });
+      .then((res) => {
+        if (cancelled) return;
+        if (res.matched) {
+          setReferredByName(res.fullName);
+          setReferralNotFound(false);
+        } else {
+          setReferredByName(null);
+          // Link-based codes stay silent even on a miss (expired/typo'd
+          // link) - only the manual-entry path shows the error, since
+          // only that path lets the person actually fix it.
+          setReferralNotFound(!referralFromLink && res.reason === 'not_found');
+        }
+      })
+      .catch(() => { if (!cancelled) { setReferredByName(null); setReferralNotFound(false); } });
     return () => { cancelled = true; };
-  }, [referralCode]);
+  }, [referralCode, referralFromLink]);
 
   // --- Step 1: registration details ---
   const [form, setForm] = useState({
@@ -494,6 +519,14 @@ export default function RegisterFlow() {
       setError('Please enter your subscription period in months.');
       return;
     }
+    // SECTION D: a manually-typed code that doesn't resolve must block
+    // submission of that field's value, not silently drop it - only
+    // applies to manual entry; a link-based code is authoritative
+    // regardless of resolution state (see the effect above).
+    if (!referralFromLink && referralCode.trim() && referralNotFound) {
+      setError('No such referral code exists — please check with your BA or leave this field blank.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.registerLandlord({
@@ -671,6 +704,7 @@ export default function RegisterFlow() {
   const [manualSubmitting, setManualSubmitting] = useState(false);
   const [manualError, setManualError] = useState('');
   const [manualSubmitted, setManualSubmitted] = useState(false);
+  const [manualSubmittedAt, setManualSubmittedAt] = useState(null);
   const [manualPolling, setManualPolling] = useState(false);
   const [manualPollError, setManualPollError] = useState('');
 
@@ -687,6 +721,7 @@ export default function RegisterFlow() {
         mpesaPayerPhone: manualForm.mpesaPayerPhone,
       });
       setManualSubmitted(true);
+      setManualSubmittedAt(new Date().toISOString());
       pollManualPaymentStatus();
     } catch (err) {
       setManualError(Array.isArray(err.details) ? err.details.join(' ') : (err.details || err.message));
@@ -1224,10 +1259,24 @@ export default function RegisterFlow() {
                     <input
                       id="referralCode"
                       value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                      placeholder="e.g. BA-0042"
+                      onChange={(e) => !referralFromLink && setReferralCode(e.target.value.toUpperCase())}
+                      placeholder="e.g. JASRAH-4KLT7"
+                      disabled={referralFromLink}
+                      readOnly={referralFromLink}
+                      aria-invalid={referralNotFound || undefined}
+                      className={referralNotFound ? 'form-field__input--error' : undefined}
                     />
-                    <p className="form-field__hint">Were you referred by a RentaPay Brand Ambassador? Enter their code here.</p>
+                    {referralFromLink ? (
+                      <p className="form-field__hint">
+                        Applied from your referral link{referredByName ? ` — referred by ${referredByName}` : ''}. This can&apos;t be changed.
+                      </p>
+                    ) : referralNotFound ? (
+                      <p className="form-field__error">
+                        No such referral code exists — please check with your BA or leave this field blank.
+                      </p>
+                    ) : (
+                      <p className="form-field__hint">Were you referred by a RentaPay Brand Ambassador? Enter their code here.</p>
+                    )}
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="phone">Phone number</label>
@@ -1398,7 +1447,7 @@ export default function RegisterFlow() {
                     {manualPolling ? 'Waiting for your payment to be verified - this page will move on automatically once it is.' : 'Submitted. Waiting for verification.'}
                   </p>
                   {manualPollError && <div className="api-error-banner" role="alert">{manualPollError}</div>}
-                  <ManualPaymentHelp variant="admin" />
+                  <ManualPaymentHelp variant="admin" submittedAt={manualSubmittedAt} />
                 </div>
               )}
             </div>

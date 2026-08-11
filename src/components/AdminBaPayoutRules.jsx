@@ -5,50 +5,42 @@ import Skeleton from './Skeleton.jsx';
 import './AdminBaPayoutRules.css';
 
 /**
- * BUILD SPEC PHASE 10 - Payout Rules Engine, Qualification & Commission
- * Tiers. Backend (payoutRules.controller.js) already had full CRUD for
- * this - global payout rule, global commission ladder, and an optional
- * per-BA override of each - but no admin UI existed to drive it. This
- * is that UI, rendered as the "Pricing & Commission" view inside
- * AdminBrandAmbassadors.jsx.
+ * Consolidated Change Instructions - Section E (percentage commission,
+ * hard cutover). Replaces the old fixed-price / commission-tiers /
+ * unit-pricing-tiers panel entirely.
  *
- * Two independent things, each with a global default and an optional
- * per-BA override:
- *  - Payout rule: flat KES amount owed per qualifying landlord, plus
- *    the conditions that make a landlord "qualify" (consecutive months
- *    paid, minimum units).
- *  - Commission tiers: once a BA crosses a configured count of
- *    qualified landlords, a % bonus kicks in on top of the flat
- *    payout for that BA's qualifying landlords going forward.
+ * A BA earns a percentage of the landlord's actual subscription fee,
+ * recurring on every payment cycle for as long as the landlord stays
+ * subscribed. One global rate applies to every BA by default; an
+ * optional per-BA override fully replaces it for that one BA.
+ *
+ * Setting a rate never overwrites the current one - it inserts a new
+ * history row with its own effective date, so past rates (and which
+ * payments they applied to) are never lost. Every save asks WHEN the
+ * new rate takes effect: immediately, or from a chosen future date.
  */
 export default function AdminBaPayoutRules({ token }) {
   const [roster, setRoster] = useState(null);
   const [rosterError, setRosterError] = useState('');
-  const [selectedBaId, setSelectedBaId] = useState(''); // '' = editing the global defaults
+  const [selectedBaId, setSelectedBaId] = useState(''); // '' = editing the global default
 
-  const [rules, setRules] = useState(null); // { global, override }
-  const [tiers, setTiers] = useState(null); // { global, override }
+  const [rules, setRules] = useState(null); // { global: {current, upcoming, history}, override: {...} | null }
   const [loadError, setLoadError] = useState('');
 
-  const [ruleForm, setRuleForm] = useState({ amount: '', requiredConsecutiveMonths: '', minUnits: '' });
-  const [tierRows, setTierRows] = useState([]); // [{ targetQualifiedLandlords, commissionPercent }]
+  const [percentage, setPercentage] = useState('');
+  const [effectiveMode, setEffectiveMode] = useState('now'); // 'now' | 'future'
+  const [effectiveDate, setEffectiveDate] = useState(() => new Date().toISOString().slice(0, 10));
 
-  const [ruleSaving, setRuleSaving] = useState(false);
-  const [ruleError, setRuleError] = useState('');
-  const [ruleSaved, setRuleSaved] = useState(false);
-
-  const [tiersSaving, setTiersSaving] = useState(false);
-  const [tiersError, setTiersError] = useState('');
-  const [tiersSaved, setTiersSaved] = useState(false);
-
-  const [clearingRule, setClearingRule] = useState(false);
-  const [clearingTiers, setClearingTiers] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saved, setSaved] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const isOverride = !!selectedBaId;
 
   // Full active/suspended roster, for the "apply a custom override to
-  // one BA" picker - inactive/rejected BAs can't earn new payouts so
-  // there's nothing useful to override for them.
+  // one BA" picker - inactive/rejected BAs can't earn new commission
+  // so there's nothing useful to override for them.
   useEffect(() => {
     api
       .listBrandAmbassadors('', token)
@@ -58,137 +50,87 @@ export default function AdminBaPayoutRules({ token }) {
 
   const loadAll = useCallback(() => {
     setRules(null);
-    setTiers(null);
     setLoadError('');
-    Promise.all([api.getBaPayoutRules(selectedBaId || undefined, token), api.getBaCommissionTiers(selectedBaId || undefined, token)])
-      .then(([rulesRes, tiersRes]) => {
-        setRules(rulesRes);
-        setTiers(tiersRes);
-      })
-      .catch((err) => setLoadError(err instanceof ApiError ? err.message : 'Failed to load payout rules.'));
+    api
+      .getBaPayoutRules(selectedBaId || undefined, token)
+      .then((res) => setRules(res))
+      .catch((err) => setLoadError(err instanceof ApiError ? err.message : 'Failed to load the commission rate.'));
   }, [selectedBaId, token]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
-  // Populate the editable forms whenever loaded data changes: an
-  // override view edits the override if one exists, otherwise starts
-  // blank (falls back to global at read time until admin sets one);
-  // the global view always edits the global row.
+  // Reset the entry form whenever the editing scope changes - always
+  // starts blank (this is always ADDING a new rate/history row, never
+  // editing an existing one in place).
   useEffect(() => {
-    if (!rules) return;
-    const source = isOverride ? rules.override : rules.global;
-    setRuleForm({
-      amount: source?.amount ?? '',
-      requiredConsecutiveMonths: source?.required_consecutive_months ?? '',
-      minUnits: source?.min_units ?? '',
-    });
-  }, [rules, isOverride]);
+    setPercentage('');
+    setEffectiveMode('now');
+    setEffectiveDate(new Date().toISOString().slice(0, 10));
+    setSaveError('');
+    setSaved(false);
+  }, [selectedBaId]);
 
-  useEffect(() => {
-    if (!tiers) return;
-    const source = isOverride ? tiers.override : tiers.global;
-    const rows = (source || []).map((t) => ({
-      targetQualifiedLandlords: t.target_qualified_landlords,
-      commissionPercent: t.commission_percent,
-    }));
-    setTierRows(rows.length ? rows : [{ targetQualifiedLandlords: '', commissionPercent: '' }]);
-  }, [tiers, isOverride]);
-
-  async function saveRule() {
-    setRuleSaving(true);
-    setRuleError('');
-    setRuleSaved(false);
+  async function saveRate() {
+    setSaving(true);
+    setSaveError('');
+    setSaved(false);
     try {
+      const pct = Number(percentage);
+      if (percentage === '' || Number.isNaN(pct) || pct < 0 || pct > 100) {
+        setSaveError('Enter a commission percentage between 0 and 100.');
+        setSaving(false);
+        return;
+      }
       const payload = {
-        amount: ruleForm.amount,
-        requiredConsecutiveMonths: ruleForm.requiredConsecutiveMonths,
-        minUnits: ruleForm.minUnits,
+        percentage: pct,
+        effectiveFrom: effectiveMode === 'future' ? new Date(effectiveDate).toISOString() : undefined,
       };
       if (isOverride) await api.setBaPayoutOverride(selectedBaId, payload, token);
       else await api.updateGlobalBaPayoutRule(payload, token);
-      setRuleSaved(true);
-      setTimeout(() => setRuleSaved(false), 2000);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      setPercentage('');
+      setEffectiveMode('now');
       loadAll();
     } catch (err) {
-      setRuleError(err instanceof ApiError ? err.message : 'Failed to save the payout rule.');
+      setSaveError(err instanceof ApiError ? err.message : 'Failed to save the commission rate.');
     } finally {
-      setRuleSaving(false);
+      setSaving(false);
     }
   }
 
-  async function clearRuleOverride() {
-    setClearingRule(true);
-    setRuleError('');
+  async function clearOverride() {
+    setClearing(true);
+    setSaveError('');
     try {
       await api.setBaPayoutOverride(selectedBaId, { clear: true }, token);
       loadAll();
     } catch (err) {
-      setRuleError(err instanceof ApiError ? err.message : 'Failed to clear the override.');
+      setSaveError(err instanceof ApiError ? err.message : 'Failed to clear the override.');
     } finally {
-      setClearingRule(false);
+      setClearing(false);
     }
   }
 
-  function updateTierRow(index, field, value) {
-    setTierRows((prev) => prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
-  }
-
-  function addTierRow() {
-    setTierRows((prev) => [...prev, { targetQualifiedLandlords: '', commissionPercent: '' }]);
-  }
-
-  function removeTierRow(index) {
-    setTierRows((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  async function saveTiers() {
-    setTiersSaving(true);
-    setTiersError('');
-    setTiersSaved(false);
-    try {
-      const cleanRows = tierRows.filter((r) => r.targetQualifiedLandlords !== '' && r.commissionPercent !== '');
-      if (!cleanRows.length) {
-        setTiersError('At least one tier is required.');
-        setTiersSaving(false);
-        return;
-      }
-      if (isOverride) await api.setBaCommissionTierOverride(selectedBaId, { tiers: cleanRows }, token);
-      else await api.updateGlobalBaCommissionTiers(cleanRows, token);
-      setTiersSaved(true);
-      setTimeout(() => setTiersSaved(false), 2000);
-      loadAll();
-    } catch (err) {
-      setTiersError(err instanceof ApiError ? err.message : 'Failed to save commission tiers.');
-    } finally {
-      setTiersSaving(false);
-    }
-  }
-
-  async function clearTiersOverride() {
-    setClearingTiers(true);
-    setTiersError('');
-    try {
-      await api.setBaCommissionTierOverride(selectedBaId, { clear: true }, token);
-      loadAll();
-    } catch (err) {
-      setTiersError(err instanceof ApiError ? err.message : 'Failed to clear the override.');
-    } finally {
-      setClearingTiers(false);
-    }
-  }
+  const scopeData = isOverride ? rules?.override : rules?.global;
+  const current = scopeData?.current || null;
+  const upcoming = scopeData?.upcoming || [];
+  const history = scopeData?.history || [];
 
   return (
     <div className="admin-ba-rules">
       <p className="admin-ba-rules__intro">
-        Set what RentaPay pays a Brand Ambassador per qualifying landlord, what makes a landlord "qualify," and the
-        commission tiers that boost payouts once a BA hits certain milestones. These apply to every BA by default —
-        pick a specific BA below to give them a custom override instead.
+        BAs earn a percentage of what each qualifying landlord actually pays RentaPay, recurring on every payment
+        cycle for as long as that landlord stays subscribed — not a one-off amount. This rate applies to every BA by
+        default; pick a specific BA below to give them a custom override instead. Setting a new rate never
+        overwrites the current one — it's recorded as of a chosen effective date, so past rates (and exactly which
+        payments they applied to) are always preserved.
       </p>
 
       <div className="admin-ba-rules__scope">
         <label htmlFor="ba-rules-scope">Editing:</label>
         <select id="ba-rules-scope" value={selectedBaId} onChange={(e) => setSelectedBaId(e.target.value)}>
-          <option value="">Global defaults (all BAs)</option>
+          <option value="">Global default (all BAs)</option>
           {(roster || []).map((b) => (
             <option key={b.id} value={b.id}>
               {b.full_name} ({b.ba_code || 'no code yet'})
@@ -199,58 +141,83 @@ export default function AdminBaPayoutRules({ token }) {
       {rosterError && <p className="admin-ba-rules__error">{rosterError}</p>}
       {loadError && <p className="admin-ba-rules__error">{loadError}</p>}
 
-      {!rules || !tiers ? (
+      {!rules ? (
         <Skeleton rows={4} />
       ) : (
         <>
-          {isOverride && !rules.override && (
+          {isOverride && !current && (
             <p className="admin-ba-rules__note">
-              This BA has no custom payout rule yet — currently using the global default. Fill in and save below to
-              set one just for them.
+              This BA has no custom rate yet — currently using the global default. Set one below to give them a
+              custom rate.
             </p>
           )}
 
           <section className="admin-ba-rules__card">
-            <h3>Per-Landlord Payout {isOverride ? '(override)' : '(global default)'}</h3>
+            <h3>Commission rate {isOverride ? '(override)' : '(global default)'}</h3>
+
+            <div className="admin-ba-rules__current-rate">
+              {current ? (
+                <>
+                  <span className="admin-ba-rules__current-rate-value">{Number(current.percentage)}%</span>
+                  <span className="admin-ba-rules__current-rate-label">
+                    current rate, effective since {new Date(current.effective_from).toLocaleDateString('en-GB')}
+                  </span>
+                </>
+              ) : (
+                <span className="admin-ba-rules__current-rate-label">No rate set yet.</span>
+              )}
+            </div>
+
+            {upcoming.length > 0 && (
+              <div className="admin-ba-rules__upcoming">
+                {upcoming.map((row) => (
+                  <p key={row.id} className="admin-ba-rules__upcoming-row">
+                    Scheduled: <strong>{Number(row.percentage)}%</strong> from {new Date(row.effective_from).toLocaleDateString('en-GB')}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            <p className="admin-ba-rules__meta">
+              Setting a new rate immediately notifies {isOverride ? 'this BA' : 'every affected BA'} — in-app and
+              push — with the old rate, new rate, and effective date.
+            </p>
+
             <div className="admin-ba-rules__form-row">
               <label>
-                Amount (KES)
+                New commission percent
                 <input
                   type="number"
                   min="0"
-                  step="0.01"
-                  value={ruleForm.amount}
-                  onChange={(e) => setRuleForm((f) => ({ ...f, amount: e.target.value }))}
+                  max="100"
+                  step="0.1"
+                  value={percentage}
+                  onChange={(e) => setPercentage(e.target.value)}
+                  placeholder={current ? String(Number(current.percentage)) : 'e.g. 5'}
                 />
+                %
               </label>
               <label>
-                Consecutive months paid required
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={ruleForm.requiredConsecutiveMonths}
-                  onChange={(e) => setRuleForm((f) => ({ ...f, requiredConsecutiveMonths: e.target.value }))}
-                />
+                Takes effect
+                <select value={effectiveMode} onChange={(e) => setEffectiveMode(e.target.value)}>
+                  <option value="now">Immediately</option>
+                  <option value="future">From a specific date</option>
+                </select>
               </label>
-              <label>
-                Minimum units on the property
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={ruleForm.minUnits}
-                  onChange={(e) => setRuleForm((f) => ({ ...f, minUnits: e.target.value }))}
-                />
-              </label>
+              {effectiveMode === 'future' && (
+                <label>
+                  Effective date
+                  <input type="date" value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} />
+                </label>
+              )}
             </div>
-            {ruleError && <p className="admin-ba-rules__error">{ruleError}</p>}
+            {saveError && <p className="admin-ba-rules__error">{saveError}</p>}
             <div className="admin-ba-rules__actions">
-              <Button onClick={saveRule} loading={ruleSaving}>
-                {ruleSaved ? 'Saved!' : isOverride ? 'Save Override' : 'Save Global Default'}
+              <Button onClick={saveRate} loading={saving}>
+                {saved ? 'Saved!' : isOverride ? 'Set Override Rate' : 'Set Global Rate'}
               </Button>
-              {isOverride && rules.override && (
-                <Button variant="ghost" onClick={clearRuleOverride} loading={clearingRule}>
+              {isOverride && current && (
+                <Button variant="ghost" onClick={clearOverride} loading={clearing}>
                   Revert to Global Default
                 </Button>
               )}
@@ -258,55 +225,27 @@ export default function AdminBaPayoutRules({ token }) {
           </section>
 
           <section className="admin-ba-rules__card">
-            <h3>Commission Tiers {isOverride ? '(override)' : '(global default)'}</h3>
-            <p className="admin-ba-rules__meta">
-              Once a BA's cumulative qualified-landlord count reaches a target below, that commission percent applies
-              on top of the flat payout for their qualifying landlords going forward.
-            </p>
-            <div className="admin-ba-rules__tiers">
-              {tierRows.map((row, i) => (
-                <div className="admin-ba-rules__tier-row" key={i}>
-                  <label>
-                    At
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={row.targetQualifiedLandlords}
-                      onChange={(e) => updateTierRow(i, 'targetQualifiedLandlords', e.target.value)}
-                    />
-                    qualified landlords
-                  </label>
-                  <label>
-                    commission
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={row.commissionPercent}
-                      onChange={(e) => updateTierRow(i, 'commissionPercent', e.target.value)}
-                    />
-                    %
-                  </label>
-                  <Button variant="ghost" onClick={() => removeTierRow(i)} disabled={tierRows.length === 1}>
-                    Remove
-                  </Button>
-                </div>
-              ))}
-            </div>
-            <Button variant="ghost" onClick={addTierRow}>+ Add Tier</Button>
-            {tiersError && <p className="admin-ba-rules__error">{tiersError}</p>}
-            <div className="admin-ba-rules__actions">
-              <Button onClick={saveTiers} loading={tiersSaving}>
-                {tiersSaved ? 'Saved!' : isOverride ? 'Save Override' : 'Save Global Default'}
-              </Button>
-              {isOverride && tiers.override && (
-                <Button variant="ghost" onClick={clearTiersOverride} loading={clearingTiers}>
-                  Revert to Global Default
-                </Button>
-              )}
-            </div>
+            <h3>Rate history {isOverride ? '(override)' : '(global default)'}</h3>
+            {history.length === 0 ? (
+              <p className="admin-ba-rules__meta">No rate has ever been set for this scope.</p>
+            ) : (
+              <table className="admin-ba-rules__history-table">
+                <thead>
+                  <tr>
+                    <th>Rate</th>
+                    <th>Effective from</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((row) => (
+                    <tr key={row.id} className={current && row.id === current.id ? 'admin-ba-rules__history-row--current' : ''}>
+                      <td>{Number(row.percentage)}%</td>
+                      <td>{new Date(row.effective_from).toLocaleString('en-GB')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </section>
         </>
       )}

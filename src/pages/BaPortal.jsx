@@ -9,7 +9,7 @@ import MiniLineChart from '../components/MiniLineChart.jsx';
 import HelpButton from '../components/HelpButton.jsx';
 import Faq from '../components/Faq.jsx';
 import { openWhatsAppReminder } from '../utils/whatsapp.js';
-import { useHelpContacts } from '../utils/platformSettings.js';
+import { HELP_WHATSAPP } from '../components/HelpButton.jsx';
 import { initPushSubscription } from '../utils/push.js';
 import { api, ApiError } from '../api/client.js';
 import ProfilePhotoUpload from '../components/ProfilePhotoUpload.jsx';
@@ -31,50 +31,34 @@ import './BaPortal.css';
  * item 5) - the rest are placeholders built out in Phases 5, 6 and 18.
  */
 /**
- * Phase 4, item 6 - "My Onboarded Landlords" claim-logging form + list.
- * Never discards what the BA typed on an unmatched/conflict response -
- * the form stays populated so they can correct and resubmit in place.
+ * Item 5 (direct request): the PRIMARY "My Onboarded Landlords" view -
+ * live, sourced directly from landlords.ba_id (set the instant a
+ * landlord signs up via this BA's referral link/code, or is
+ * successfully matched through the manual fallback below - either
+ * way lands here automatically, no BA action required). Same
+ * date-filter UX as the manual claims list below, for consistency.
  */
-function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
-}
+function OnboardedLandlordsPanel({ token }) {
+  const [landlords, setLandlords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
-/**
- * Phase 5, item 2 - "My Onboarded Landlords" is date-filterable
- * (default to today, with pickers for any past day or range), and
- * shows the fuller column set the spec calls for (name, phone,
- * location, match status, qualification status, date submitted) -
- * reusing this same list/row styling (ba-claim-list) rather than
- * building new table styling from scratch, per the spec's pointer to
- * the app's existing list-component conventions.
- */
-function ClaimLandlordPanel({ token }) {
-  const { helpWhatsapp } = useHelpContacts();
-  const [form, setForm] = useState({ fullName: '', phone: '', email: '', location: '' });
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState(null); // { type: 'matched'|'unmatched'|'conflict', ...data }
-  const [claims, setClaims] = useState([]);
-  const [loadingClaims, setLoadingClaims] = useState(true);
-  const [dateFrom, setDateFrom] = useState(todayIsoDate());
-  const [dateTo, setDateTo] = useState(todayIsoDate());
-  const [sharing, setSharing] = useState(false);
-  const [shareNotice, setShareNotice] = useState(null); // { type: 'ok'|'error', message }
-
-  const loadClaims = useCallback(() => {
-    setLoadingClaims(true);
+  const load = useCallback(() => {
+    setLoading(true);
     const params = {};
     if (dateFrom) params.from = `${dateFrom}T00:00:00.000Z`;
     if (dateTo) params.to = `${dateTo}T23:59:59.999Z`;
     api
-      .listMyClaims(params, token)
-      .then((res) => setClaims(res.claims || []))
+      .listMyOnboardedLandlords(params, token)
+      .then((res) => setLandlords(res.landlords || []))
       .catch(() => {})
-      .finally(() => setLoadingClaims(false));
+      .finally(() => setLoading(false));
   }, [token, dateFrom, dateTo]);
 
   useEffect(() => {
-    loadClaims();
-  }, [loadClaims]);
+    load();
+  }, [load]);
 
   function handleShowToday() {
     setDateFrom(todayIsoDate());
@@ -86,107 +70,15 @@ function ClaimLandlordPanel({ token }) {
     setDateTo('');
   }
 
-  /**
-   * Phase 7 - "Share with admin" for the currently selected date/
-   * range. Both delivery methods fire together from one tap, not a
-   * choice between them: the backend posts the summary straight into
-   * the admin notifications inbox, and its response hands back that
-   * exact same text so a WhatsApp deep link (wa.me, via
-   * src/utils/whatsapp.js) opens pre-filled with it too.
-   */
-  async function handleShareWithAdmin() {
-    setSharing(true);
-    setShareNotice(null);
-    try {
-      const params = {};
-      if (dateFrom) params.from = `${dateFrom}T00:00:00.000Z`;
-      if (dateTo) params.to = `${dateTo}T23:59:59.999Z`;
-      const res = await api.shareClaimsReport(params, token);
-      openWhatsAppReminder(helpWhatsapp, res.summary);
-      setShareNotice({ type: 'ok', message: `Sent to admin's inbox — ${res.count} landlord${res.count === 1 ? '' : 's'}. Finish sending it on WhatsApp too.` });
-    } catch (err) {
-      setShareNotice({ type: 'error', message: err instanceof ApiError ? err.message : 'Failed to share your report. Please try again.' });
-    } finally {
-      setSharing(false);
-    }
-  }
-
-  function updateField(field, value) {
-    setForm((f) => ({ ...f, [field]: value }));
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setBusy(true);
-    setResult(null);
-    try {
-      const res = await api.submitLandlordClaim(form, token);
-      if (res.matched) {
-        setResult({ type: 'matched', landlord: res.landlord });
-        setForm({ fullName: '', phone: '', email: '', location: '' });
-        loadClaims();
-      } else {
-        setResult({ type: 'unmatched', message: res.message });
-      }
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setResult({ type: 'conflict', message: err.message || 'This landlord is already linked to another ambassador.' });
-      } else {
-        setResult({ type: 'unmatched', message: err instanceof ApiError ? err.message : 'Something went wrong. Please try again.' });
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <section className="ba-claim-panel">
       <h2>My Onboarded Landlords</h2>
       <p className="ba-claim-panel__intro">
-        Log a landlord you've onboarded in the field. We'll match them against their real RentaPay account.
+        Every landlord who signed up using your referral link or code is listed here automatically, the moment
+        they complete registration — no need to log them yourself.
       </p>
 
-      <form className="ba-claim-form" onSubmit={handleSubmit}>
-        <div className="ba-claim-form__row">
-          <label>
-            Full name
-            <input required value={form.fullName} onChange={(e) => updateField('fullName', e.target.value)} placeholder="Jane Wanjiru" />
-          </label>
-          <label>
-            Phone
-            <input required value={form.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
-          </label>
-          <label>
-            Email (optional)
-            <input type="email" value={form.email} onChange={(e) => updateField('email', e.target.value)} placeholder="jane@example.com" />
-          </label>
-          <label>
-            Location
-            <input value={form.location} onChange={(e) => updateField('location', e.target.value)} placeholder="Kileleshwa, Nairobi" />
-          </label>
-        </div>
-        <p className="ba-claim-panel__intro" style={{ marginTop: '-0.5rem' }}>
-          Phone is required for matching. Add their email too if you have it — either one can find their account.
-        </p>
-        <Button type="submit" disabled={busy}>{busy ? 'Checking…' : 'Log landlord'}</Button>
-      </form>
-
-      {result?.type === 'matched' && (
-        <div className="ba-claim-result ba-claim-result--matched">
-          ✅ Matched: <strong>{result.landlord.fullName}</strong> — {result.landlord.unitsCount} unit{result.landlord.unitsCount === 1 ? '' : 's'}
-          {result.landlord.location || result.landlord.county ? ` — ${[result.landlord.location, result.landlord.county].filter(Boolean).join(', ')}` : ''}
-          {' — '}subscription {result.landlord.subscriptionStatus}
-        </div>
-      )}
-      {result?.type === 'unmatched' && (
-        <div className="ba-claim-result ba-claim-result--unmatched">⚠️ {result.message}</div>
-      )}
-      {result?.type === 'conflict' && (
-        <div className="ba-claim-result ba-claim-result--conflict">🚫 {result.message}</div>
-      )}
-
       <div className="ba-claim-panel__list-header">
-        <h3 className="ba-claim-panel__list-heading">Your logged claims</h3>
         <div className="ba-claim-filter">
           <label>
             From
@@ -198,57 +90,68 @@ function ClaimLandlordPanel({ token }) {
           </label>
           <button type="button" className="ba-referral-card__btn" onClick={handleShowToday}>Today</button>
           <button type="button" className="ba-referral-card__btn" onClick={handleShowAll}>All time</button>
-          <button
-            type="button"
-            className="ba-referral-card__btn ba-referral-card__btn--whatsapp"
-            onClick={handleShareWithAdmin}
-            disabled={sharing || claims.length === 0}
-            title="Sends this list to admin's inbox and opens WhatsApp with the same summary"
-          >
-            {sharing ? 'Sharing…' : 'Share with admin'}
-          </button>
         </div>
       </div>
 
-      {shareNotice && (
-        <div className={`ba-claim-result ${shareNotice.type === 'ok' ? 'ba-claim-result--matched' : 'ba-claim-result--conflict'}`}>
-          {shareNotice.type === 'ok' ? '✅ ' : '🚫 '}{shareNotice.message}
-        </div>
-      )}
-
-      {loadingClaims ? (
+      {loading ? (
         <Skeleton rows={3} />
-      ) : claims.length === 0 ? (
-        <p className="ba-claim-panel__empty">No claims logged in this range.</p>
+      ) : landlords.length === 0 ? (
+        <p className="ba-claim-panel__empty">No landlords onboarded in this range yet.</p>
       ) : (
-        <div className="ba-claim-list-scroll">
-        <div className="ba-claim-list">
-          <div className="ba-claim-list__row ba-claim-list__row--head">
-            <div>Name</div>
-            <div>Phone</div>
-            <div>Email</div>
-            <div>Location</div>
-            <div>Match</div>
-            <div>Qualification</div>
-            <div>Submitted</div>
-          </div>
-          {claims.map((c) => (
-            <div key={c.id} className="ba-claim-list__row">
-              <div className="ba-claim-list__name">{c.submitted_name}</div>
-              <div className="ba-claim-list__phone">{c.submitted_phone}</div>
-              <div className="ba-claim-list__phone">{c.submitted_email || '—'}</div>
-              <div className="ba-claim-list__location">{c.submitted_location || '—'}</div>
-              <div className={`ba-claim-list__status ba-claim-list__status--${c.match_status === 'matched' ? 'qualified' : 'pending'}`}>{c.match_status}</div>
-              <div className={`ba-claim-list__status ba-claim-list__status--${c.qualification_status}`}>{c.qualification_status}</div>
-              <div className="ba-claim-list__date">{new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+        <div className="ba-onboarded-cards">
+          {landlords.map((l) => (
+            <div key={l.id} className="ba-onboarded-card">
+              <div className="ba-onboarded-card__top">
+                <div className="ba-onboarded-card__name">{l.fullName}</div>
+                <div className={`ba-claim-list__status ba-claim-list__status--${l.qualificationStatus}`}>
+                  {l.qualificationStatus === 'qualified' || l.qualificationStatus === 'paid' ? 'Qualifies for payout' : l.qualificationStatus}
+                </div>
+              </div>
+              <div className="ba-onboarded-card__row">
+                <span className="ba-onboarded-card__label">Phone</span>
+                <span>{l.phone}</span>
+              </div>
+              {l.location && (
+                <div className="ba-onboarded-card__row">
+                  <span className="ba-onboarded-card__label">Location</span>
+                  <span>{l.location}</span>
+                </div>
+              )}
+              <div className="ba-onboarded-card__row">
+                <span className="ba-onboarded-card__label">Status</span>
+                <span className="ba-claim-list__status ba-claim-list__status--qualified">{l.subscriptionStatus}</span>
+              </div>
+              <div className="ba-onboarded-card__row">
+                <span className="ba-onboarded-card__label">Onboarded</span>
+                <span className="ba-claim-list__date">
+                  {new Date(l.onboardedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </span>
+              </div>
             </div>
           ))}
-        </div>
         </div>
       )}
     </section>
   );
 }
+
+/**
+ * Phase 4, item 6 - "My Onboarded Landlords" claim-logging form + list.
+ * Never discards what the BA typed on an unmatched/conflict response -
+ * the form stays populated so they can correct and resubmit in place.
+ *
+ * Item 5 (direct request): the referral link/code already attaches a
+ * landlord to this BA automatically at signup - see
+ * OnboardedLandlordsPanel above, which is now the primary view. This
+ * form is a FALLBACK/exception path only, for a landlord the BA
+ * onboarded in person who, for whatever reason, didn't use the
+/**
+ * Shared "today" helper for the date-range filters below.
+ */
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 
 /**
  * Phase 5, item 1/3 - shared aggregate fetch for the Dashboard cards +
@@ -461,8 +364,24 @@ function BaEarningsPanel({ token }) {
                 <tr key={c.id}>
                   <td>{c.landlordName}</td>
                   <td>{c.qualifiedAt ? new Date(c.qualifiedAt).toLocaleDateString('en-GB') : '—'}</td>
-                  <td>{money(c.payoutAmount)}</td>
-                  <td>{money(c.commissionBonusAmount)}</td>
+                  <td>
+                    {money(c.payoutAmount)}
+                    {c.breakdown?.unitBracket && (
+                      <div className="ba-earnings-panel__why">
+                        {c.breakdown.unitBracket.minUnits}–{c.breakdown.unitBracket.maxUnits ?? '+'} units bracket
+                        {c.breakdown.unitCount != null ? ` (had ${c.breakdown.unitCount})` : ''}
+                      </div>
+                    )}
+                    {!c.breakdown?.unitBracket && <div className="ba-earnings-panel__why">Flat rate</div>}
+                  </td>
+                  <td>
+                    {money(c.commissionBonusAmount)}
+                    {c.breakdown?.commissionTier && (
+                      <div className="ba-earnings-panel__why">
+                        {c.breakdown.commissionTier.commissionPercent}% tier (at {c.breakdown.commissionTier.targetQualifiedLandlords} qualified)
+                      </div>
+                    )}
+                  </td>
                   <td>{c.status === 'paid' ? 'Paid' : 'Qualified'}</td>
                 </tr>
               ))}
@@ -603,8 +522,6 @@ function BaDashboardStats({ token }) {
     return <div className="ba-portal-banner ba-portal-banner--error">{error}</div>;
   }
 
-  const tier = stats?.nextTier;
-
   return (
     <>
       <section className="ba-stats-cards ba-stats-cards--dashboard">
@@ -632,23 +549,22 @@ function BaDashboardStats({ token }) {
       </section>
 
       <section className="ba-portal-stub-card ba-tier-card">
-        <h3>Commission tier</h3>
+        <h3>Commission rate</h3>
         <p className="ba-tier-card__current">
-          {stats?.currentCommissionPercent ? `${stats.currentCommissionPercent}% commission on qualifying landlords` : 'No commission tier reached yet.'}
+          {stats?.currentCommissionPercent
+            ? `You currently earn ${stats.currentCommissionPercent}% of every qualifying landlord's subscription payment, recurring for as long as they stay subscribed.`
+            : 'No commission rate has been set yet — check back soon.'}
         </p>
-        {tier && (
-          <>
-            <div className="ba-tier-card__progress-track">
-              <div
-                className="ba-tier-card__progress-fill"
-                style={{ width: `${Math.min(100, (tier.currentQualifiedLandlords / tier.targetQualifiedLandlords) * 100)}%` }}
-              />
-            </div>
-            <p className="ba-tier-card__progress-label">
-              {tier.currentQualifiedLandlords} of {tier.targetQualifiedLandlords} to your next tier ({tier.commissionPercent}%)
-            </p>
-          </>
-        )}
+        <div className="ba-tier-card__earnings-row">
+          <div>
+            <div className="ba-tier-card__earnings-value">KES {(stats?.thisMonthCommissionEarned ?? 0).toLocaleString()}</div>
+            <div className="ba-tier-card__earnings-label">Earned this month</div>
+          </div>
+          <div>
+            <div className="ba-tier-card__earnings-value">KES {(stats?.lifetimeCommissionEarned ?? 0).toLocaleString()}</div>
+            <div className="ba-tier-card__earnings-label">Earned all-time</div>
+          </div>
+        </div>
       </section>
     </>
   );
@@ -866,8 +782,16 @@ export default function BaPortal() {
 
   function handleShareReferralLink() {
     if (!profile?.referralLink) return;
+    // FIX: this used to pass profile.phone (the BA's OWN number) as
+    // the wa.me recipient, which opens a WhatsApp chat with yourself
+    // instead of letting you choose which landlord to send it to.
+    // Omitting the phone number entirely makes wa.me open WhatsApp's
+    // own contact picker instead (see buildWaMeLink in
+    // src/utils/whatsapp.js) - the whole point of this button is to
+    // send the link to a landlord, a different person every time, not
+    // to a single fixed number.
     openWhatsAppReminder(
-      profile.phone,
+      null,
       `Hi! Register on RentaPay using my link and I'll help you get set up: ${profile.referralLink}`
     );
   }
@@ -999,7 +923,11 @@ export default function BaPortal() {
           </>
         )}
 
-        {activeTab === 'landlords' && <ClaimLandlordPanel token={token} />}
+        {activeTab === 'landlords' && (
+          <>
+            <OnboardedLandlordsPanel token={token} />
+          </>
+        )}
 
         {activeTab === 'stats' && <BaStatsPanel token={token} />}
 

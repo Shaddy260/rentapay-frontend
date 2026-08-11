@@ -1,102 +1,133 @@
 .admin-ba-rules__intro {
-  color: var(--color-ink-soft, #5C6663);
+  color: var(--color-text-muted, #6b7280);
   font-size: 0.9rem;
+  max-width: 760px;
   margin: 0 0 16px;
-  max-width: 640px;
 }
 
 .admin-ba-rules__scope {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.admin-ba-rules__scope select {
-  border: 1px solid var(--color-border, #E4DFD8);
-  border-radius: 8px;
-  padding: 6px 10px;
-  min-width: 240px;
-}
-
-.admin-ba-rules__note {
-  background: #fff9ee;
-  border: 1px solid #e0d4a9;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 0.85rem;
-  color: #7a5c0c;
-  margin-bottom: 14px;
-}
-
-.admin-ba-rules__error {
-  color: #A33;
-  margin: 8px 0;
-}
-
-.admin-ba-rules__meta {
-  color: var(--color-ink-soft, #5C6663);
-  font-size: 0.85rem;
-  margin: 2px 0 12px;
-}
-
-.admin-ba-rules__card {
-  border: 1px solid var(--color-border, #E4DFD8);
-  border-radius: 10px;
-  padding: 14px 16px;
+  gap: 10px;
   margin-bottom: 16px;
 }
 
+.admin-ba-rules__scope select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #d1d5db);
+}
+
+.admin-ba-rules__error {
+  color: var(--color-danger, #dc2626);
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+
+.admin-ba-rules__note {
+  background: var(--color-bg, #f5f6f8);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+  margin-bottom: 16px;
+}
+
+.admin-ba-rules__card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
 .admin-ba-rules__card h3 {
-  margin: 0 0 10px;
-  font-size: 1rem;
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+.admin-ba-rules__current-rate {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.admin-ba-rules__current-rate-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+}
+
+.admin-ba-rules__current-rate-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.admin-ba-rules__upcoming {
+  margin-bottom: 8px;
+}
+
+.admin-ba-rules__upcoming-row {
+  font-size: 0.85rem;
+  color: var(--color-accent, #2563eb);
+  margin: 2px 0;
+}
+
+.admin-ba-rules__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+  margin: 0 0 12px;
 }
 
 .admin-ba-rules__form-row {
   display: flex;
-  gap: 14px;
   flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
 }
 
-.admin-ba-rules__form-row label,
-.admin-ba-rules__tier-row label {
+.admin-ba-rules__form-row label {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 0.8rem;
-  color: var(--color-ink-soft, #5C6663);
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
 }
 
 .admin-ba-rules__form-row input,
-.admin-ba-rules__tier-row input {
-  border: 1px solid var(--color-border, #E4DFD8);
+.admin-ba-rules__form-row select {
+  padding: 8px 10px;
   border-radius: 8px;
-  padding: 6px 10px;
+  border: 1px solid var(--color-border, #d1d5db);
   font-size: 0.95rem;
-  width: 160px;
-}
-
-.admin-ba-rules__tiers {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.admin-ba-rules__tier-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.admin-ba-rules__tier-row input {
-  width: 110px;
+  min-width: 160px;
 }
 
 .admin-ba-rules__actions {
   display: flex;
   gap: 10px;
-  align-items: center;
-  margin-top: 12px;
+}
+
+.admin-ba-rules__history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.admin-ba-rules__history-table th {
+  text-align: left;
+  padding: 6px 10px;
+  color: var(--color-text-muted, #6b7280);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.admin-ba-rules__history-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border, #f0f1f3);
+}
+
+.admin-ba-rules__history-row--current td {
+  font-weight: 600;
+  color: var(--color-text, #111827);
 }

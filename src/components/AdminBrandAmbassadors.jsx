@@ -4,6 +4,7 @@ import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import AdminBaPayoutRules from './AdminBaPayoutRules.jsx';
+import AdminBaPayoutQualificationReport from './AdminBaPayoutQualificationReport.jsx';
 import { buildWaMeLink } from '../utils/whatsapp.js';
 import './AdminBrandAmbassadors.css';
 import './TenantOnboardingPanel.css';
@@ -16,7 +17,7 @@ import './TenantOnboardingPanel.css';
  * from AdminDashboard.jsx's tab switch.
  */
 export default function AdminBrandAmbassadors({ token }) {
-  const [view, setView] = useState('applications'); // 'applications' | 'roster' | 'payout-rules'
+  const [view, setView] = useState('applications'); // 'applications' | 'roster' | 'payout-rules' | 'payout-qualification-report'
   const [applications, setApplications] = useState(null);
   const [roster, setRoster] = useState(null);
   const [rosterStatus, setRosterStatus] = useState('');
@@ -75,6 +76,13 @@ export default function AdminBrandAmbassadors({ token }) {
   const [statusActionBusyId, setStatusActionBusyId] = useState(null);
   const [pendingOffboard, setPendingOffboard] = useState(null); // { id, name }
   const [offboardError, setOffboardError] = useState('');
+  // FIX (direct request: "under admin portal to suspend a BA there
+  // should be a confirmation as well - currently none"): Suspend used
+  // to fire straight from the button's onClick. Now it opens the same
+  // ConfirmDialog pattern already used for Offboard below, instead of
+  // acting on a single click.
+  const [pendingSuspend, setPendingSuspend] = useState(null); // { id, name }
+  const [suspendError, setSuspendError] = useState('');
 
   const loadApplications = useCallback(() => {
     setApplications(null);
@@ -126,12 +134,13 @@ export default function AdminBrandAmbassadors({ token }) {
 
   async function suspend(id) {
     setStatusActionBusyId(id);
-    setError('');
+    setSuspendError('');
     try {
       await api.suspendBrandAmbassador(id, token);
+      setPendingSuspend(null);
       loadRoster();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to suspend this Brand Ambassador.');
+      setSuspendError(err instanceof ApiError ? err.message : 'Failed to suspend this Brand Ambassador.');
     } finally {
       setStatusActionBusyId(null);
     }
@@ -235,6 +244,13 @@ export default function AdminBrandAmbassadors({ token }) {
         >
           Pricing &amp; Commission
         </button>
+        <button
+          type="button"
+          className={`admin-ba__filter-btn${view === 'payout-qualification-report' ? ' admin-ba__filter-btn--active' : ''}`}
+          onClick={() => setView('payout-qualification-report')}
+        >
+          Payout Run
+        </button>
       </div>
 
       {error && <p className="admin-ba__error">{error}</p>}
@@ -334,7 +350,11 @@ export default function AdminBrandAmbassadors({ token }) {
                   {(b.status === 'active' || b.status === 'suspended') && (
                     <div className="admin-ba__actions">
                       {b.status === 'active' && (
-                        <Button variant="ghost" disabled={statusActionBusyId === b.id} onClick={() => suspend(b.id)}>
+                        <Button
+                          variant="ghost"
+                          disabled={statusActionBusyId === b.id}
+                          onClick={() => { setSuspendError(''); setPendingSuspend({ id: b.id, name: b.full_name }); }}
+                        >
                           Suspend
                         </Button>
                       )}
@@ -360,6 +380,24 @@ export default function AdminBrandAmbassadors({ token }) {
       )}
 
       {view === 'payout-rules' && <AdminBaPayoutRules token={token} />}
+
+      {view === 'payout-qualification-report' && <AdminBaPayoutQualificationReport token={token} />}
+
+      <ConfirmDialog
+        open={!!pendingSuspend}
+        title="Suspend this Brand Ambassador?"
+        message={
+          pendingSuspend
+            ? `${pendingSuspend.name} will stop earning new payouts and their referral link/code will stop attributing new landlord signups until you reactivate them. Already-qualified or paid claims are untouched.`
+            : ''
+        }
+        confirmLabel="Yes, suspend"
+        danger
+        busy={statusActionBusyId === pendingSuspend?.id}
+        error={suspendError}
+        onConfirm={() => suspend(pendingSuspend.id)}
+        onCancel={() => { setPendingSuspend(null); setSuspendError(''); }}
+      />
 
       <ConfirmDialog
         open={!!pendingOffboard}

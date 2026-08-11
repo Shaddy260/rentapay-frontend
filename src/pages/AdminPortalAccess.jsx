@@ -14,13 +14,25 @@ import './Login.css'; // reuses the same card styling - no need to fork it
  */
 export default function AdminPortalAccess() {
   const navigate = useNavigate();
-  const [stage, setStage] = useState('password'); // 'password' | 'otp'
+  const [stage, setStage] = useState('password'); // 'password' | 'otp' | 'forgot' | 'reset'
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+
+  // Direct request: "there should be a way an admin changes [their]
+  // password from the admin login page... currently it's only
+  // in-app... when requesting to change password just send the reset
+  // code, don't ask admin to enter email, just send it already, and
+  // move to the next page entering otp and new password and
+  // confirmation." There's exactly one super-admin account, so
+  // there's nothing to identify - tapping "Forgot password?" fires
+  // the reset code immediately, no email field.
+  const [resetOtp, setResetOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   async function handleResendOtp() {
     setError('');
@@ -32,6 +44,52 @@ export default function AdminPortalAccess() {
       setError(err instanceof ApiError ? err.message : 'Failed to resend the code.');
     } finally {
       setResending(false);
+    }
+  }
+
+  async function handleForgotPasswordTap() {
+    setError('');
+    setMessage('');
+    setLoading(true);
+    try {
+      await api.adminForgotPassword();
+      setStage('reset');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to send a reset code.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResendResetCode() {
+    setError('');
+    setResending(true);
+    try {
+      await api.adminForgotPassword();
+      setMessage('A new reset code has been sent.');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to resend the code.');
+    } finally {
+      setResending(false);
+    }
+  }
+
+  async function handleResetPasswordSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await api.adminResetPassword({ otp: resetOtp, newPassword, confirmPassword });
+      setResetOtp('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPassword('');
+      setMessage('Password reset. Log in with your new password.');
+      setStage('password');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to reset the password.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -75,16 +133,25 @@ export default function AdminPortalAccess() {
     }
   }
 
+  const titles = {
+    password: 'Restricted access',
+    otp: 'Enter OTP',
+    forgot: 'Restricted access',
+    reset: 'Reset password',
+  };
+  const intros = {
+    password: 'This area is for platform administration only.',
+    otp: 'A code was sent to the admin phone. It expires in 5 minutes.',
+    forgot: 'This area is for platform administration only.',
+    reset: 'Enter the reset code just sent, then your new password.',
+  };
+
   return (
     <div className="login-page">
       <div className="login-page__panel">
         <div className="login-page__brand">RentaPay Admin</div>
-        <h1>{stage === 'password' ? 'Restricted access' : 'Enter OTP'}</h1>
-        <p className="login-page__intro">
-          {stage === 'password'
-            ? 'This area is for platform administration only.'
-            : 'A code was sent to the admin phone. It expires in 5 minutes.'}
-        </p>
+        <h1>{titles[stage]}</h1>
+        <p className="login-page__intro">{intros[stage]}</p>
 
         {error && (
           <div className="login-page__error" role="alert">
@@ -99,7 +166,7 @@ export default function AdminPortalAccess() {
           </div>
         )}
 
-        {stage === 'password' ? (
+        {stage === 'password' && (
           <form onSubmit={handlePasswordSubmit}>
             <div className="form-field">
               <label className="form-field__label" htmlFor="adminPassword">Password</label>
@@ -112,8 +179,18 @@ export default function AdminPortalAccess() {
               />
             </div>
             <Button type="submit" variant="primary" loading={loading}>Continue</Button>
+            <button
+              type="button"
+              className="login-page__resend-link"
+              onClick={handleForgotPasswordTap}
+              disabled={loading}
+            >
+              Forgot password?
+            </button>
           </form>
-        ) : (
+        )}
+
+        {stage === 'otp' && (
           <form onSubmit={handleOtpSubmit}>
             <div className="form-field">
               <label className="form-field__label" htmlFor="adminOtp">OTP code</label>
@@ -130,6 +207,52 @@ export default function AdminPortalAccess() {
             <Button type="submit" variant="primary" loading={loading}>Verify</Button>
             <button type="button" className="login-page__resend-link" onClick={handleResendOtp} disabled={resending}>
               {resending ? 'Resending…' : "Didn't see the code? Resend"}
+            </button>
+          </form>
+        )}
+
+        {stage === 'reset' && (
+          <form onSubmit={handleResetPasswordSubmit}>
+            <div className="form-field">
+              <label className="form-field__label" htmlFor="adminResetOtp">Reset code</label>
+              <input
+                id="adminResetOtp"
+                required
+                autoFocus
+                inputMode="numeric"
+                maxLength={6}
+                value={resetOtp}
+                onChange={(e) => setResetOtp(e.target.value)}
+              />
+            </div>
+            <div className="form-field">
+              <label className="form-field__label" htmlFor="adminNewPassword">New password</label>
+              <PasswordInput
+                id="adminNewPassword"
+                required
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="form-field">
+              <label className="form-field__label" htmlFor="adminConfirmPassword">Confirm new password</label>
+              <PasswordInput
+                id="adminConfirmPassword"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+            <Button type="submit" variant="primary" loading={loading}>Reset password</Button>
+            <button type="button" className="login-page__resend-link" onClick={handleResendResetCode} disabled={resending}>
+              {resending ? 'Resending…' : "Didn't see the code? Resend"}
+            </button>
+            <button
+              type="button"
+              className="login-page__resend-link"
+              onClick={() => { setStage('password'); setError(''); setMessage(''); }}
+            >
+              Back to login
             </button>
           </form>
         )}

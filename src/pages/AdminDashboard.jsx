@@ -12,6 +12,7 @@ import AdminStatistics from '../components/AdminStatistics.jsx';
 import AdminRevenueDashboard from '../components/AdminRevenueDashboard.jsx';
 import AdminCredentialsPanel from '../components/AdminCredentialsPanel.jsx';
 import AdminChangePasswordPanel from '../components/AdminChangePasswordPanel.jsx';
+import AdminHelpContactSettings from '../components/AdminHelpContactSettings.jsx';
 import AdminSqlPanel from '../components/AdminSqlPanel.jsx';
 import SupportChatWidget from '../components/SupportChatWidget.jsx';
 import SupportAnalyticsPanel from '../components/SupportAnalyticsPanel.jsx';
@@ -20,8 +21,6 @@ import AdminReportedAccounts from '../components/AdminReportedAccounts.jsx';
 import AdminBrandAmbassadors from '../components/AdminBrandAmbassadors.jsx';
 import AdminBaPayoutReview from '../components/AdminBaPayoutReview.jsx';
 import AdminBaQualificationDryRun from '../components/AdminBaQualificationDryRun.jsx';
-import AdminBaRegionsReport from '../components/AdminBaRegionsReport.jsx';
-import AdminSettingsPanel from '../components/AdminSettingsPanel.jsx';
 import AdminBaReconciliation from '../components/AdminBaReconciliation.jsx';
 import AdminBaSecurityReport from '../components/AdminBaSecurityReport.jsx';
 import AdminOnboardedLandlords from '../components/AdminOnboardedLandlords.jsx';
@@ -32,7 +31,7 @@ import Faq from '../components/Faq.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import LandlordManualPaymentConfirmations from '../components/LandlordManualPaymentConfirmations.jsx';
 import { api, ApiError } from '../api/client.js';
-import { useInstallPrompt } from '../utils/useInstallPrompt.js';
+import { isStandalone } from '../utils/useInstallPrompt.js';
 import '../components/InstallAppMenuItem.css';
 import NotificationsBell from '../components/NotificationsBell.jsx';
 import { initPushSubscription } from '../utils/push.js';
@@ -55,7 +54,15 @@ import Skeleton from '../components/Skeleton.jsx';
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const token = sessionStorage.getItem('rentapay_token');
-  const { canOffer: canOfferInstall, isIOS: installOnIOS, promptInstall } = useInstallPrompt();
+  // FIX ("download the app should be a TWA, not a PWA"): this used to
+  // drive the beforeinstallprompt PWA flow via useInstallPrompt(); now
+  // it just always offers the real signed APK download (unless
+  // already running as the installed standalone app), with iOS's
+  // "Add to Home Screen" as the one platform where a native APK
+  // install isn't possible at all.
+  const canOfferInstall = !isStandalone();
+  const installOnIOS = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  const APK_DOWNLOAD_PATH = '/downloads/app-release-signed.apk';
   const [showIOSInstallSteps, setShowIOSInstallSteps] = useState(false);
 
   const [metrics, setMetrics] = useState(null);
@@ -611,8 +618,7 @@ export default function AdminDashboard() {
             group: 'Brand Ambassadors',
             items: [
               { key: 'brand-ambassadors', label: 'Brand Ambassadors', icon: '🤝', onClick: () => setActiveTab('brand-ambassadors') },
-              { key: 'ba-payout-review', label: 'BA Payout Review', icon: '💵', onClick: () => setActiveTab('ba-payout-review') },
-              { key: 'ba-regions-report', label: 'BA Regions & Payout Report', icon: '🗺️', onClick: () => setActiveTab('ba-regions-report') },
+              { key: 'ba-payout-review', label: 'Payout Run', icon: '💵', onClick: () => setActiveTab('ba-payout-review') },
               { key: 'ba-reconciliation', label: 'BA Reconciliation', icon: '🔍', onClick: () => setActiveTab('ba-reconciliation') },
               { key: 'ba-security-report', label: 'BA Security Report', icon: '🛡️', onClick: () => setActiveTab('ba-security-report') },
             ],
@@ -626,13 +632,13 @@ export default function AdminDashboard() {
               { key: 'rating-flags', label: 'Rating Flags', icon: '🚩', onClick: () => setActiveTab('rating-flags') },
               { key: 'reported-accounts', label: 'Reported Accounts', icon: '⛔', onClick: () => setActiveTab('reported-accounts') },
               { key: 'faq', label: 'FAQs', icon: '📚', onClick: () => setActiveTab('faq') },
+              { key: 'help-contact-settings', label: 'Help & Contact Details', icon: '☎️', onClick: () => setActiveTab('help-contact-settings') },
               { key: 'support-analytics', label: 'Support Analytics', icon: '🎧', onClick: () => setActiveTab('support-analytics') },
             ],
           },
           {
             group: 'System',
             items: [
-              { key: 'settings', label: 'Settings', icon: '⚙️', onClick: () => setActiveTab('settings') },
               { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
               { key: 'sql', label: 'SQL', icon: '🗄️', onClick: () => setActiveTab('sql') },
               { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
@@ -647,7 +653,7 @@ export default function AdminDashboard() {
                   icon: '📲',
                   onClick: () => {
                     if (installOnIOS) setShowIOSInstallSteps(true);
-                    else promptInstall();
+                    else window.location.href = APK_DOWNLOAD_PATH;
                   },
                 }],
               }]
@@ -790,6 +796,7 @@ export default function AdminDashboard() {
         {activeTab === 'statistics' && <AdminStatistics token={token} />}
         {activeTab === 'revenue-dashboard' && <AdminRevenueDashboard token={token} />}
         {activeTab === 'faq' && <Faq audience="admin" />}
+        {activeTab === 'help-contact-settings' && <AdminHelpContactSettings token={token} />}
         {activeTab === 'support-analytics' && <SupportAnalyticsPanel token={token} />}
         {activeTab === 'credentials' && (
           <>
@@ -807,8 +814,6 @@ export default function AdminDashboard() {
             <AdminBaPayoutReview token={token} />
           </>
         )}
-        {activeTab === 'ba-regions-report' && <AdminBaRegionsReport token={token} />}
-        {activeTab === 'settings' && <AdminSettingsPanel token={token} />}
         {activeTab === 'ba-reconciliation' && (
           <AdminBaReconciliation token={token} prefill={baReconcilePrefill} onPrefillConsumed={() => setBaReconcilePrefill(null)} />
         )}
