@@ -579,21 +579,23 @@ export default function UnitDetail() {
               grouped into this same card since they're all about how
               this unit appears on the public listings page. */}
           <div className="unit-detail-hint u-divider-top">
-            <label className="u-checkbox-row u-checkbox-row--strong">
+            <label className="u-checkbox-row u-checkbox-row--strong u-checkbox-row--wrap">
               <input
                 type="checkbox"
                 checked={!!unit.requires_deposit}
                 disabled={depositBusy}
                 onChange={handleToggleRequiresDeposit}
               />
-              This unit requires a deposit from a future tenant
-              <InfoTip
-                text={
-                  unit.requires_deposit
-                    ? 'Prospective tenants browsing the public listing will see this unit requires a deposit.'
-                    : 'Prospective tenants browsing the public listing will see this unit does not require a deposit.'
-                }
-              />
+              <span>
+                This unit requires a deposit from a future tenant
+                <InfoTip
+                  text={
+                    unit.requires_deposit
+                      ? 'Prospective tenants browsing the public listing will see this unit requires a deposit.'
+                      : 'Prospective tenants browsing the public listing will see this unit does not require a deposit.'
+                  }
+                />
+              </span>
             </label>
             {unit.requires_deposit && (
               <div className="u-flex-row u-mt-2">
@@ -613,23 +615,25 @@ export default function UnitDetail() {
           </div>
 
           <div className="unit-detail-hint u-divider-top">
-            <label className="u-checkbox-row u-checkbox-row--strong">
+            <label className="u-checkbox-row u-checkbox-row--strong u-checkbox-row--wrap">
               <input
                 type="checkbox"
                 checked={!!unit.is_publicly_listed}
                 disabled={listingBusy}
                 onChange={handleTogglePublicListing}
               />
-              List this unit on the public listings page when vacant
-              <InfoTip
-                text={
-                  `Heads up: anyone browsing RentaPay's free listings page — no account needed — will be able to see this unit and message the WhatsApp number on file for it (your manager/caretaker's number, or yours if none is set) directly. There's no way to screen who reaches out first. ${
-                    unit.is_publicly_listed
-                      ? "This unit is currently public and will show up there once it's vacant."
-                      : "This unit is currently private — it will never appear on RentaPay's public listings page, even while vacant."
-                  }`
-                }
-              />
+              <span>
+                List this unit on the public listings page when vacant
+                <InfoTip
+                  text={
+                    `Heads up: anyone browsing RentaPay's free listings page — no account needed — will be able to see this unit and message the WhatsApp number on file for it (your manager/caretaker's number, or yours if none is set) directly. There's no way to screen who reaches out first. ${
+                      unit.is_publicly_listed
+                        ? "This unit is currently public and will show up there once it's vacant."
+                        : "This unit is currently private — it will never appear on RentaPay's public listings page, even while vacant."
+                    }`
+                  }
+                />
+              </span>
             </label>
           </div>
         </section>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Button from './Button.jsx';
-import CommentReveal from './CommentReveal.jsx';
+import InfoTip from './InfoTip.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import {
   isBiometricSupported,
@@ -71,7 +71,7 @@ export default function BiometricSettingsPanel({ phone, role, roleLevel, token, 
   return (
     <section className="settings-card" id="security">
       <h2>Fingerprint / device login</h2>
-      <CommentReveal
+      <InfoTip
         label="What does this do?"
         text="Once set up, this device can log you back in with your fingerprint or Face ID instead of retyping your password. This only affects this specific device/browser - it doesn't change your account password anywhere else."
       />

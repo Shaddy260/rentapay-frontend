@@ -319,6 +319,25 @@ body:has(.rate-reminder-overlay) {
   color: var(--color-ink);
 }
 
+/* Rows where the label text can wrap to 2+ lines on narrow screens
+   (checkbox + long sentence + InfoTip icon) - align-items: center
+   above looks fine on one line, but once the text wraps, centering
+   against the growing text block pushes the checkbox down oddly and,
+   worse, treats the icon as its own flex item that can get shoved
+   onto an orphan line below the wrapped text instead of sitting right
+   after the last word. Wrapping the text + icon together in one
+   inline span (see UnitDetail.jsx) keeps them wrapping as a single
+   unit; align-items: flex-start here keeps the checkbox pinned to the
+   first line instead of drifting to the vertical center of a
+   now-taller row.  */
+.u-checkbox-row--wrap {
+  align-items: flex-start;
+}
+.u-checkbox-row--wrap input[type="checkbox"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
 .u-mt-1 { margin-top: var(--space-1); }
 .u-mt-2 { margin-top: var(--space-2); }
 .u-mt-3 { margin-top: var(--space-3); }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api/client.js';
 import Button from './Button.jsx';
 import './AdminHelpContactSettings.css';
@@ -16,8 +16,8 @@ export default function AdminHelpContactSettings({ token }) {
   const [emailBusy, setEmailBusy] = useState(false);
 
   const [numbers, setNumbers] = useState([]);
-  const [addBusyType, setAddBusyType] = useState(null); // 'call' | 'whatsapp' | null
   const [rowBusyId, setRowBusyId] = useState(null);
+  const draftSeq = useRef(0);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -49,15 +49,14 @@ export default function AdminHelpContactSettings({ token }) {
   }
 
   function handleAddNumber(type) {
-    setAddBusyType(type);
     setError('');
     setNotice('');
-    api.createHelpContactNumber({ label: '', type, value: '', isActive: true }, token)
-      .then((created) => {
-        setNumbers((prev) => [...prev, created]);
-      })
-      .catch((err) => setError(err.message || 'Failed to add number.'))
-      .finally(() => setAddBusyType(null));
+    // Add a local, unsaved draft row only — nothing is sent to the backend
+    // until the person actually types a value and clicks Save. This avoids
+    // POSTing a blank value the moment "+ Add" is clicked.
+    draftSeq.current += 1;
+    const draftId = `draft-${draftSeq.current}`;
+    setNumbers((prev) => [...prev, { id: draftId, label: '', type, value: '', isActive: true, isDraft: true }]);
   }
 
   function updateLocalNumber(id, patch) {
@@ -65,16 +64,29 @@ export default function AdminHelpContactSettings({ token }) {
   }
 
   async function handleSaveNumber(number) {
+    if (!number.value || !number.value.trim()) {
+      setError('Enter a number before saving.');
+      return;
+    }
     setRowBusyId(number.id);
     setError('');
     setNotice('');
     try {
-      const saved = await api.updateHelpContactNumber(
-        number.id,
-        { label: number.label, type: number.type, value: number.value, isActive: number.isActive },
-        token
-      );
-      setNumbers((prev) => prev.map((n) => (n.id === number.id ? saved : n)));
+      if (number.isDraft) {
+        // First save of a new row: create it now that it actually has a value.
+        const created = await api.createHelpContactNumber(
+          { label: number.label, type: number.type, value: number.value, isActive: number.isActive },
+          token
+        );
+        setNumbers((prev) => prev.map((n) => (n.id === number.id ? created : n)));
+      } else {
+        const saved = await api.updateHelpContactNumber(
+          number.id,
+          { label: number.label, type: number.type, value: number.value, isActive: number.isActive },
+          token
+        );
+        setNumbers((prev) => prev.map((n) => (n.id === number.id ? saved : n)));
+      }
       setNotice('Contact number saved.');
     } catch (err) {
       setError(err.message || 'Failed to save contact number.');
@@ -84,6 +96,12 @@ export default function AdminHelpContactSettings({ token }) {
   }
 
   async function handleRemoveNumber(id) {
+    const target = numbers.find((n) => n.id === id);
+    // A draft row only exists locally — just drop it, no API call needed.
+    if (target && target.isDraft) {
+      setNumbers((prev) => prev.filter((n) => n.id !== id));
+      return;
+    }
     setRowBusyId(id);
     setError('');
     setNotice('');
@@ -131,7 +149,6 @@ export default function AdminHelpContactSettings({ token }) {
         onSave={handleSaveNumber}
         onRemove={handleRemoveNumber}
         onAdd={() => handleAddNumber('call')}
-        addBusy={addBusyType === 'call'}
         rowBusyId={rowBusyId}
       />
 
@@ -143,14 +160,13 @@ export default function AdminHelpContactSettings({ token }) {
         onSave={handleSaveNumber}
         onRemove={handleRemoveNumber}
         onAdd={() => handleAddNumber('whatsapp')}
-        addBusy={addBusyType === 'whatsapp'}
         rowBusyId={rowBusyId}
       />
     </div>
   );
 }
 
-function NumberList({ title, numbers, onChange, onSave, onRemove, onAdd, addBusy, rowBusyId }) {
+function NumberList({ title, numbers, onChange, onSave, onRemove, onAdd, rowBusyId }) {
   return (
     <div className="admin-help-contacts__list">
       <h3>{title}</h3>
@@ -187,7 +203,7 @@ function NumberList({ title, numbers, onChange, onSave, onRemove, onAdd, addBusy
           </Button>
         </div>
       ))}
-      <Button type="button" variant="ghost" loading={addBusy} onClick={onAdd}>
+      <Button type="button" variant="ghost" onClick={onAdd}>
         + Add {title.toLowerCase().replace(/s$/, '')}
       </Button>
     </div>

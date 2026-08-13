@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import ChatWidget from './ChatWidget.jsx';
 import Skeleton from './Skeleton.jsx';
+import CommentReveal from './CommentReveal.jsx';
 import './StatisticsPanel.css';
 import '../pages/TenantPortal.css';
 
@@ -117,7 +118,7 @@ export default function DisputesPanel({ token, role = 'landlord', isCaretaker = 
                       </>
                     ) : '—'}
                   </td>
-                  <td>{d.reason || <span className="tenant-portal-hint">No reason given</span>}</td>
+                  <td>{d.reason ? <CommentReveal text={d.reason} label="View reason" /> : <span className="tenant-portal-hint">No reason given</span>}</td>
                   <td><span className={`payment-status payment-status--${d.status === 'open' ? 'pending' : 'completed'}`}>{d.status}</span></td>
                   <td className="u-flex-row">
                     <button

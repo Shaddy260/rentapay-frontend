@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import { api, ApiError } from '../api/client.js';
-import CommentReveal from '../components/CommentReveal.jsx';
+import InfoTip from '../components/InfoTip.jsx';
 import './AddTenant.css'; // reuses the same simple form-page styling
 
 /**
@@ -240,7 +240,7 @@ export default function AddUnit() {
             <label className="form-field__label">
               Or create several units like this one at once
             </label>
-            <CommentReveal
+            <InfoTip
               label="How does this work?"
               text={`Uses the name, type, and rent typed above (e.g. "${unitName || '…'}"), and numbers the rest onward automatically.`}
             />

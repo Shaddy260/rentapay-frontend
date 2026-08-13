@@ -1,0 +1,166 @@
+.admin-sub-pricing__intro {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.9rem;
+  max-width: 760px;
+  margin: 0 0 16px;
+}
+
+.admin-sub-pricing__scope {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.admin-sub-pricing__scope select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #d1d5db);
+}
+
+.admin-sub-pricing__error {
+  color: var(--color-danger, #dc2626);
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+
+.admin-sub-pricing__note {
+  background: var(--color-bg, #f5f6f8);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+  margin-bottom: 16px;
+}
+
+.admin-sub-pricing__card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.admin-sub-pricing__card h3 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+.admin-sub-pricing__current-rate {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.admin-sub-pricing__current-rate-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+}
+
+.admin-sub-pricing__current-rate-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.admin-sub-pricing__upcoming {
+  margin-bottom: 8px;
+}
+
+.admin-sub-pricing__upcoming-row {
+  font-size: 0.85rem;
+  color: var(--color-accent, #2563eb);
+  margin: 2px 0;
+}
+
+.admin-sub-pricing__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+  margin: 0 0 12px;
+}
+
+.admin-sub-pricing__form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.admin-sub-pricing__form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.admin-sub-pricing__form-row input,
+.admin-sub-pricing__form-row select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #d1d5db);
+  font-size: 0.95rem;
+  min-width: 160px;
+}
+
+.admin-sub-pricing__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-sub-pricing__history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.admin-sub-pricing__history-table th {
+  text-align: left;
+  padding: 6px 10px;
+  color: var(--color-text-muted, #6b7280);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.admin-sub-pricing__history-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border, #f0f1f3);
+}
+
+.admin-sub-pricing__history-row--current td {
+  font-weight: 600;
+  color: var(--color-text, #111827);
+}
+
+.admin-sub-pricing__tiers-heading {
+  margin: 18px 0 4px;
+  font-size: 0.95rem;
+}
+
+.admin-sub-pricing__tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.admin-sub-pricing__tier-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.admin-sub-pricing__tier-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.admin-sub-pricing__tier-row input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #d1d5db);
+  width: 120px;
+}

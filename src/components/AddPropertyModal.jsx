@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Button from './Button.jsx';
 import InfoTip from './InfoTip.jsx';
+import ManualPaymentHelp from './ManualPaymentHelp.jsx';
 import { api, ApiError } from '../api/client.js';
 import { KENYA_COUNTIES } from '../constants/kenyaCounties.js';
 import { KENYA_CONSTITUENCIES } from '../constants/kenyaConstituencies.js';
@@ -71,8 +72,16 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
   });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [pending, setPending] = useState(null); // { checkoutRequestId, amountDue }
+  const [pending, setPending] = useState(null); // { checkoutRequestId, propertyPaymentId, amountDue }
   const [pollError, setPollError] = useState('');
+  // "Didn't receive the popup? Pay manually" fallback - same pattern as
+  // SubscriptionManage.jsx, wired to property_payment_id instead of the
+  // landlord's own subscription (see initiatePropertyPurchase's
+  // stkFailed handling).
+  const [manualForm, setManualForm] = useState({ transactionCode: '', mpesaPayerName: '', mpesaPayerPhone: '', mpesaSmsTimestamp: '' });
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+  const [manualError, setManualError] = useState('');
+  const [manualSubmitted, setManualSubmitted] = useState(false);
   // FEATURE (direct request: "include a searchbar when the landlords
   // are choosing counties"): same searchable-select pattern as the
   // onboarding wizard (RegisterFlow.jsx) - narrows the county/
@@ -120,13 +129,79 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
         },
         token
       );
-      setPending({ checkoutRequestId: res.checkoutRequestId, amountDue: res.amountDue });
+      setPending({ checkoutRequestId: res.checkoutRequestId, propertyPaymentId: res.propertyPaymentId, amountDue: res.amountDue });
+      if (res.stkFailed) {
+        // Same fallback as signup/renewal: no prompt went out, so skip
+        // straight to the manual-payment form instead of polling for
+        // an STK completion that will never come.
+        setPollError("We couldn't send the automatic M-Pesa prompt right now - pay manually below instead.");
+        setStep('manual');
+        return;
+      }
       setStep('polling');
       pollStatus(res.checkoutRequestId);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to start payment.');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleManualSubmit(e) {
+    e.preventDefault();
+    setManualError('');
+    if (!manualForm.transactionCode || !manualForm.mpesaPayerName || !manualForm.mpesaPayerPhone) {
+      setManualError('Please fill in all fields exactly as shown on your M-Pesa confirmation SMS.');
+      return;
+    }
+    setManualSubmitting(true);
+    try {
+      await api.submitManualSubscriptionPayment(
+        {
+          propertyPaymentId: pending.propertyPaymentId,
+          transactionCode: manualForm.transactionCode.trim(),
+          amountPaid: pending.amountDue,
+          mpesaPayerName: manualForm.mpesaPayerName.trim(),
+          mpesaPayerPhone: manualForm.mpesaPayerPhone.trim(),
+          mpesaSmsTimestamp: manualForm.mpesaSmsTimestamp ? new Date(manualForm.mpesaSmsTimestamp).toISOString() : null,
+          periodMonths: Number(form.periodMonths),
+          unitsCount: Number(form.unitsCount),
+        },
+        token
+      );
+      setManualSubmitted(true);
+      pollManualStatus();
+    } catch (err) {
+      setManualError(err instanceof ApiError ? (Array.isArray(err.details) ? err.details.join(' ') : err.message) : 'Failed to submit payment.');
+    } finally {
+      setManualSubmitting(false);
+    }
+  }
+
+  // Waiting on admin review rather than Safaricom - polls less
+  // aggressively and for longer, same as SubscriptionManage.jsx.
+  async function pollManualStatus() {
+    setPollError('');
+    const MAX_ATTEMPTS = 40;
+    const INTERVAL_MS = 15000;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+      try {
+        const res = await api.checkPropertyPurchaseStatusById(pending.propertyPaymentId, token);
+        if (res.status === 'completed') {
+          setStep('done');
+          setTimeout(() => onDone?.(res.propertyId), 900);
+          return;
+        }
+        if (res.status === 'failed') {
+          setPollError('Your submitted payment could not be verified. Please double-check the transaction code and try again, or contact support.');
+          setManualSubmitted(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Manual property payment poll failed, retrying:', err.message);
+      }
+      await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
     }
   }
 
@@ -147,8 +222,12 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
           return;
         }
         if (res.status === 'failed') {
-          setPollError(res.reason ? `Payment was not completed: ${res.reason}.` : 'Payment was not completed (cancelled or timed out).');
-          setStep('details');
+          setPollError(
+            res.reason
+              ? `Payment was not completed: ${res.reason}. You can pay manually below instead.`
+              : 'Payment was not completed (cancelled or insufficient funds). You can pay manually below instead.'
+          );
+          setStep('manual');
           return;
         }
       } catch (err) {
@@ -156,8 +235,8 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
       }
       await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
     }
-    setPollError("We couldn't confirm your payment yet. If you completed the M-Pesa prompt, wait a moment and try again.");
-    setStep('details');
+    setPollError("We couldn't confirm your payment yet. If the M-Pesa prompt failed, was cancelled, or you had insufficient funds, you can pay manually below instead.");
+    setStep('manual');
   }
 
   return (
@@ -287,6 +366,41 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
               An M-Pesa prompt for KES {pending?.amountDue?.toLocaleString()} was sent. Enter your PIN to
               complete the purchase - this page will update automatically.
             </p>
+          </div>
+        )}
+
+        {step === 'manual' && (
+          <div className="modal-form">
+            {pollError && !manualSubmitted && <p className="modal-error">{pollError}</p>}
+            {manualSubmitted ? (
+              <>
+                <p>Your payment is being reviewed. This page will update automatically once it's confirmed.</p>
+                {pollError && <p className="modal-error">{pollError}</p>}
+                <ManualPaymentHelp variant="admin" />
+              </>
+            ) : (
+              <form onSubmit={handleManualSubmit}>
+                <p>
+                  Pay KES {pending?.amountDue?.toLocaleString()} directly to RentaPay's paybill, then enter the
+                  M-Pesa confirmation details below so it can be verified.
+                </p>
+                {manualError && <p className="modal-error">{manualError}</p>}
+
+                <label className="form-field__label" htmlFor="manualTxCode">M-Pesa transaction code</label>
+                <input id="manualTxCode" required value={manualForm.transactionCode} onChange={(e) => setManualForm((f) => ({ ...f, transactionCode: e.target.value }))} placeholder="e.g. QGH7XYZ123" />
+
+                <label className="form-field__label" htmlFor="manualPayerName">Name on the M-Pesa SMS</label>
+                <input id="manualPayerName" required value={manualForm.mpesaPayerName} onChange={(e) => setManualForm((f) => ({ ...f, mpesaPayerName: e.target.value }))} />
+
+                <label className="form-field__label" htmlFor="manualPayerPhone">Phone number that paid</label>
+                <input id="manualPayerPhone" required value={manualForm.mpesaPayerPhone} onChange={(e) => setManualForm((f) => ({ ...f, mpesaPayerPhone: e.target.value }))} placeholder="07XXXXXXXX" />
+
+                <label className="form-field__label" htmlFor="manualTimestamp">Time of payment (optional)</label>
+                <input id="manualTimestamp" type="datetime-local" value={manualForm.mpesaSmsTimestamp} onChange={(e) => setManualForm((f) => ({ ...f, mpesaSmsTimestamp: e.target.value }))} />
+
+                <Button type="submit" variant="mpesa" loading={manualSubmitting}>Submit for review</Button>
+              </form>
+            )}
           </div>
         )}
 

@@ -15,12 +15,10 @@ function dateOnly(iso) {
  * two of the original four signals (duplicate phone attempts,
  * not-referred-but-matched) policed the old manual claim-submission
  * flow, which no longer exists - attribution is now automatic via the
- * referral link/code at signup. The backend returns those two as
- * `{ retired: true, reason }` instead of a list; this component
- * renders that as an explicit "retired" note rather than a silent
- * empty state. The other two (rapid-fire onboarding, disputed
- * attributions) are still live checks, rebuilt against `landlords`
- * directly.
+ * referral link/code at signup, so per direct request those two
+ * fields are removed outright rather than kept as a "retired" note.
+ * The other two (rapid-fire onboarding, disputed attributions) are
+ * still live checks, rebuilt against `landlords` directly.
  */
 export default function AdminBaSecurityReport({ token, onReview }) {
   const [report, setReport] = useState(null);
@@ -53,16 +51,6 @@ export default function AdminBaSecurityReport({ token, onReview }) {
   return (
     <section className="admin-ba-security">
       <p className="admin-ba-security__window">Scanning the last {report.windowDays} days across all Brand Ambassadors.</p>
-
-      <div className="admin-ba-security__section admin-ba-security__section--retired">
-        <h3>Duplicate phone attempts</h3>
-        <p className="admin-ba-security__retired">{report.duplicatePhoneAttempts.reason}</p>
-      </div>
-
-      <div className="admin-ba-security__section admin-ba-security__section--retired">
-        <h3>Not referred but matched</h3>
-        <p className="admin-ba-security__retired">{report.notReferredButMatched.reason}</p>
-      </div>
 
       <div className="admin-ba-security__section">
         <h3>Rapid-fire onboarding ({report.rapidFireOnboarding.length})</h3>

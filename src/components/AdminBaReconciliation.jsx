@@ -105,8 +105,8 @@ export default function AdminBaReconciliation({ token, prefill, onPrefillConsume
             {result.matchedInSystem.length === 0 && <p className="admin-ba-reconcile__empty">None.</p>}
             <ul>
               {result.matchedInSystem.map((m, i) => (
-                <li key={m.claim.id || i}>
-                  {m.pasted.name || m.pasted.raw} — matches claim for {m.claim.submitted_name} ({m.claim.submitted_phone})
+                <li key={m.landlord.id || i}>
+                  {m.pasted.name || m.pasted.raw} — matches onboarded landlord {m.landlord.name} ({m.landlord.phone})
                 </li>
               ))}
             </ul>
@@ -114,7 +114,7 @@ export default function AdminBaReconciliation({ token, prefill, onPrefillConsume
 
           <div className="admin-ba-reconcile__bucket admin-ba-reconcile__bucket--flagged">
             <h3>Claimed but missing from system ({result.counts.missing})</h3>
-            <p className="admin-ba-reconcile__hint">Potential inflation — these appear in the pasted list with no corresponding claim.</p>
+            <p className="admin-ba-reconcile__hint">Potential inflation — these appear in the pasted list with no corresponding onboarded landlord that day.</p>
             {result.claimedButMissingFromSystem.length === 0 && <p className="admin-ba-reconcile__empty">None.</p>}
             <ul>
               {result.claimedButMissingFromSystem.map((e, i) => (
@@ -123,18 +123,25 @@ export default function AdminBaReconciliation({ token, prefill, onPrefillConsume
             </ul>
           </div>
 
-          <div className="admin-ba-reconcile__bucket admin-ba-reconcile__bucket--flagged">
-            <h3>Edited after submission ({result.counts.edited})</h3>
-            <p className="admin-ba-reconcile__hint">Name or phone number was changed after the claim was first logged — worth a manual look.</p>
-            {result.editedAfterSubmission.length === 0 && <p className="admin-ba-reconcile__empty">None.</p>}
-            <ul>
-              {result.editedAfterSubmission.map((c) => (
-                <li key={c.id}>
-                  {c.submitted_name} ({c.submitted_phone}) — {c.edit_history.length} edit{c.edit_history.length === 1 ? '' : 's'}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {!result.editedAfterSubmissionRetired ? (
+            <div className="admin-ba-reconcile__bucket admin-ba-reconcile__bucket--flagged">
+              <h3>Edited after submission ({result.counts.edited})</h3>
+              <p className="admin-ba-reconcile__hint">Name or phone number was changed after the claim was first logged — worth a manual look.</p>
+              {result.editedAfterSubmission.length === 0 && <p className="admin-ba-reconcile__empty">None.</p>}
+              <ul>
+                {result.editedAfterSubmission.map((c) => (
+                  <li key={c.id}>
+                    {c.submitted_name} ({c.submitted_phone}) — {c.edit_history.length} edit{c.edit_history.length === 1 ? '' : 's'}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="admin-ba-reconcile__bucket">
+              <h3>Edited after submission</h3>
+              <p className="admin-ba-reconcile__hint">{result.editedAfterSubmissionRetiredReason || 'This check no longer applies.'}</p>
+            </div>
+          )}
         </div>
       )}
     </section>

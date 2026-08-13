@@ -70,6 +70,7 @@ const Settings = lazy(() => import('./pages/Settings.jsx'));
 const TenantSettings = lazy(() => import('./pages/TenantSettings.jsx'));
 const Messages = lazy(() => import('./pages/Messages.jsx'));
 const Terms = lazy(() => import('./pages/Terms.jsx'));
+const Resources = lazy(() => import('./pages/Resources.jsx'));
 const Privacy = lazy(() => import('./pages/Privacy.jsx'));
 const StatusPage = lazy(() => import('./pages/StatusPage.jsx'));
 const SubscriptionLockGate = lazy(() => import('./components/SubscriptionLockGate.jsx'));
@@ -128,6 +129,8 @@ export default function App() {
           <Route path="/ba-terms" element={<BaTerms />} />
           <Route path="/register" element={<RegisterFlow />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/learn" element={<Navigate to="/resources" replace />} />
           <Route path="/privacy" element={<Privacy />} /><Route path="/status" element={<StatusPage />} />
           <Route path="/dashboard" element={<SubscriptionLockGate><Dashboard /></SubscriptionLockGate>} />
           <Route path="/units-status/:status" element={<SubscriptionLockGate><UnitsStatusPage /></SubscriptionLockGate>} />

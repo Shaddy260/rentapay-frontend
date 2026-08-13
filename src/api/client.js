@@ -315,6 +315,20 @@ export const api = {
   createHelpContactNumber: (payload, token) => request('/admin/settings/help-contacts/numbers', { method: 'POST', body: payload, token }),
   updateHelpContactNumber: (id, payload, token) => request(`/admin/settings/help-contacts/numbers/${id}`, { method: 'PATCH', body: payload, token }),
   deleteHelpContactNumber: (id, token) => request(`/admin/settings/help-contacts/numbers/${id}`, { method: 'DELETE', token }),
+
+  // Subscription fee (base rate + period discount tiers) - affects
+  // signup, adding a property, add-units, and renewals everywhere.
+  getSubscriptionPricing: (token) => request('/admin/settings/subscription-pricing', { token }),
+  updateSubscriptionPricing: (payload, token) => request('/admin/settings/subscription-pricing', { method: 'PATCH', body: payload, token }),
+
+  // Loyalty discounts for landlords who've subscribed consecutively.
+  getLoyaltyDiscountCandidates: (minMonths, token) =>
+    request(`/admin/settings/loyalty-discounts/candidates${minMonths ? `?minMonths=${encodeURIComponent(minMonths)}` : ''}`, { token }),
+  getActiveLoyaltyDiscounts: (token) => request('/admin/settings/loyalty-discounts/active', { token }),
+  getLoyaltyDiscountHistory: (landlordId, token) =>
+    request(`/admin/settings/loyalty-discounts/history${landlordId ? `?landlordId=${encodeURIComponent(landlordId)}` : ''}`, { token }),
+  bulkGrantLoyaltyDiscount: (payload, token) => request('/admin/settings/loyalty-discounts/bulk-grant', { method: 'POST', body: payload, token }),
+  revokeLoyaltyDiscount: (landlordId, token) => request(`/admin/settings/loyalty-discounts/${landlordId}`, { method: 'DELETE', token }),
   completeSetupWizard: (payload, token) => request('/auth/landlord/complete-setup-wizard', { method: 'POST', body: payload, token }),
   updatePropertyDetails: (payload, token) => request('/auth/landlord/property', { method: 'PATCH', body: payload, token }),
   getMyLandlordProfile: (token) => request('/auth/landlord/me', { token }),
@@ -366,6 +380,8 @@ export const api = {
   hideCommunityReply: (replyId, token) => request(`/community/replies/${replyId}/hide`, { method: 'POST', token }),
   reportCommunityContent: (payload, token) => request('/community/report', { method: 'POST', body: payload, token }),
   getSubscriptionStatus: (token, propertyId) => request(`/subscriptions/status${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
+  getSubscriptionQuote: (unitsCount, periodMonths, token) =>
+    request(`/subscriptions/quote?unitsCount=${encodeURIComponent(unitsCount)}&periodMonths=${encodeURIComponent(periodMonths)}`, { token }),
   renewSubscription: (payload, token) => request('/subscriptions/renew', { method: 'POST', body: payload, token }),
   addUnitsMidPeriod: (payload, token) => request('/subscriptions/add-units', { method: 'POST', body: payload, token }),
   submitManualSubscriptionPayment: (payload, token) => request('/subscriptions/manual-payment', { method: 'POST', body: payload, token }),
@@ -382,6 +398,11 @@ export const api = {
   // triggered right after a tenant payment is confirmed.
   getNextRatingReminder: (token) => request('/tenants/rating-reminders/next', { token }),
   snoozeRatingReminder: (reminderId, mode, token) => request(`/tenants/rating-reminders/${reminderId}/snooze`, { method: 'POST', body: { mode }, token }),
+  // DIRECT REQUEST: "sending such landlords whose subscription is not
+  // ended that there is a discount to their next renewal... reminding
+  // them... should be in app and popup not email."
+  getLoyaltyDiscountReminder: (token) => request('/subscriptions/loyalty-discount-reminder', { token }),
+  snoozeLoyaltyDiscountReminder: (discountId, mode, token) => request(`/subscriptions/loyalty-discount-reminder/${discountId}/snooze`, { method: 'POST', body: { mode }, token }),
   flagTenantRating: (ratingId, payload, token) => request(`/tenants/my-ratings/${ratingId}/flag`, { method: 'POST', body: payload, token }),
   listTenantReputations: (token) => request('/tenants/reputations', { token }),
   rateLandlord: (payload, token) => request('/tenants/rate-landlord', { method: 'POST', body: payload, token }),
@@ -673,6 +694,7 @@ export const api = {
   assignUnitToProperty: (unitId, payload, token) => request(`/properties/units/${unitId}/assign`, { method: 'PATCH', body: payload, token }),
   purchaseProperty: (payload, token) => request('/properties/purchase', { method: 'POST', body: payload, token }),
   checkPropertyPurchaseStatus: (checkoutRequestId, token) => request(`/properties/purchase-status/${checkoutRequestId}`, { token }),
+  checkPropertyPurchaseStatusById: (propertyPaymentId, token) => request(`/properties/purchase-status-by-id/${propertyPaymentId}`, { token }),
 
   // Property Managers (second-party portal access, landlord-managed)
   listPropertyManagers: (token) => request('/property-managers', { token }),

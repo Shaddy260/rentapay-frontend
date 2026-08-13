@@ -6,7 +6,6 @@ import PasswordInput from '../components/PasswordInput.jsx';
 import PaymentDetailsCard from '../components/PaymentDetailsCard.jsx';
 import ManualPaymentHelp from '../components/ManualPaymentHelp.jsx';
 import InfoTip from '../components/InfoTip.jsx';
-import CommentReveal from '../components/CommentReveal.jsx';
 import { api } from '../api/client.js';
 import { KENYA_COUNTIES } from '../constants/kenyaCounties.js';
 import { KENYA_CONSTITUENCIES } from '../constants/kenyaConstituencies.js';
@@ -1688,7 +1687,7 @@ export default function RegisterFlow() {
                       autoFocus
                     />
                   </div>
-                  <CommentReveal
+                  <InfoTip
                     label="How does this work?"
                     text={'Uses the name, type, and rent typed above, and numbers the rest onward automatically (e.g. "A1" \u2192 A1, A2, A3…).'}
                   />

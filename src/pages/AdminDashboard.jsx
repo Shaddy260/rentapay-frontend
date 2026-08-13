@@ -25,6 +25,8 @@ import AdminBaReconciliation from '../components/AdminBaReconciliation.jsx';
 import AdminBaSecurityReport from '../components/AdminBaSecurityReport.jsx';
 import AdminOnboardedLandlords from '../components/AdminOnboardedLandlords.jsx';
 import AdminLandlordLeads from '../components/AdminLandlordLeads.jsx';
+import AdminSubscriptionPricing from '../components/AdminSubscriptionPricing.jsx';
+import AdminLoyaltyDiscounts from '../components/AdminLoyaltyDiscounts.jsx';
 import LandlordEditModal from '../components/LandlordEditModal.jsx';
 import { downloadCsv } from '../utils/downloadCsv.js';
 import Faq from '../components/Faq.jsx';
@@ -612,6 +614,8 @@ export default function AdminDashboard() {
               { key: 'onboarded-landlords', label: "Today's Onboarded Landlords", icon: '📋', onClick: () => setActiveTab('onboarded-landlords') },
               { key: 'landlord-leads', label: 'Landlord Leads', icon: '📥', onClick: () => setActiveTab('landlord-leads') },
               { key: 'manual-subscription-payments', label: 'Landlord Manual Payments', icon: '💳', badge: sidebarCounts.landlordPayments, onClick: () => setActiveTab('manual-subscription-payments') },
+              { key: 'subscription-pricing', label: 'Subscription Fee', icon: '🏷️', onClick: () => setActiveTab('subscription-pricing') },
+              { key: 'loyalty-discounts', label: 'Loyalty Discounts', icon: '🎁', onClick: () => setActiveTab('loyalty-discounts') },
             ],
           },
           {
@@ -807,6 +811,8 @@ export default function AdminDashboard() {
         {activeTab === 'sql' && <AdminSqlPanel token={token} />}
         {activeTab === 'rating-flags' && <AdminRatingFlags token={token} />}
         {activeTab === 'reported-accounts' && <AdminReportedAccounts token={token} />}
+        {activeTab === 'subscription-pricing' && <AdminSubscriptionPricing token={token} />}
+        {activeTab === 'loyalty-discounts' && <AdminLoyaltyDiscounts token={token} />}
         {activeTab === 'brand-ambassadors' && <AdminBrandAmbassadors token={token} />}
         {activeTab === 'ba-payout-review' && (
           <>

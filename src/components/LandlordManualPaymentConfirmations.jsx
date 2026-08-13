@@ -150,6 +150,11 @@ export default function LandlordManualPaymentConfirmations({ token }) {
                 ⚠️ Duplicate — this transaction code was already used for a confirmed payment. Contact this account holder to clarify before confirming.
               </div>
             )}
+            {item.amount_mismatch && (
+              <div className="ppc-card__mismatch-banner">
+                ⚠️ Amount mismatch — expected KES {Number(item.expected_amount).toLocaleString()} but KES {Number(item.amount_paid).toLocaleString()} was submitted. Double-check before confirming.
+              </div>
+            )}
             <div className="ppc-card__row">
               <div className="ppc-card__info">
                 <div className="ppc-card__name">{item.landlords?.full_name || 'Unknown landlord'}</div>
@@ -160,6 +165,9 @@ export default function LandlordManualPaymentConfirmations({ token }) {
 
             <div className="ppc-card__details">
               <div><span>Amount paid</span><span>KES {Number(item.amount_paid).toLocaleString()}</span></div>
+              {item.expected_amount != null && (
+                <div><span>Expected amount</span><span>KES {Number(item.expected_amount).toLocaleString()}</span></div>
+              )}
               <div><span>Transaction code</span><span>{item.transaction_code}</span></div>
               <div><span>M-Pesa payer</span><span>{item.mpesa_payer_name}</span></div>
               {item.mpesa_payer_phone && <div><span>Sent from phone</span><span>{item.mpesa_payer_phone}</span></div>}

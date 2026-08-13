@@ -65,6 +65,17 @@ function OnboardedLandlordsPanel({ token }) {
     setDateTo(todayIsoDate());
   }
 
+  function handleShowThisWeek() {
+    const now = new Date();
+    // Monday-start week, to match the Stats section's weekly rollups.
+    const day = now.getUTCDay(); // 0 = Sun ... 6 = Sat
+    const diffToMonday = day === 0 ? 6 : day - 1;
+    const monday = new Date(now);
+    monday.setUTCDate(now.getUTCDate() - diffToMonday);
+    setDateFrom(monday.toISOString().slice(0, 10));
+    setDateTo(todayIsoDate());
+  }
+
   function handleShowAll() {
     setDateFrom('');
     setDateTo('');
@@ -89,6 +100,7 @@ function OnboardedLandlordsPanel({ token }) {
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} min={dateFrom || undefined} />
           </label>
           <button type="button" className="ba-referral-card__btn" onClick={handleShowToday}>Today</button>
+          <button type="button" className="ba-referral-card__btn" onClick={handleShowThisWeek}>This week</button>
           <button type="button" className="ba-referral-card__btn" onClick={handleShowAll}>All time</button>
         </div>
       </div>

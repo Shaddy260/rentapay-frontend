@@ -134,6 +134,31 @@
   animation: landing-fade-up 0.7s ease forwards;
 }
 
+.landing__hero-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  text-align: left;
+}
+
+.landing__hero-inner .landing__hero-content {
+  text-align: center;
+  flex: 1 1 480px;
+}
+
+@media (max-width: 860px) {
+  .landing__hero-inner {
+    flex-direction: column;
+  }
+}
+
 .landing__hero-photos {
   position: absolute;
   inset: 0;

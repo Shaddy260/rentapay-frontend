@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import PasswordInput from '../components/PasswordInput.jsx';
 import HelpButton from '../components/HelpButton.jsx';
 import Faq from '../components/Faq.jsx';
 import InstallAppBanner from '../components/InstallAppBanner.jsx';
 import GoogleSignInButton from '../components/GoogleSignInButton.jsx';
+import LockoutCountdown from '../components/LockoutCountdown.jsx';
 import { api, ApiError } from '../api/client.js';
 import { isBiometricSupported, listBiometricEntries, unlockWithBiometric } from '../utils/biometricAuth.js';
 import { isStandalone } from '../utils/useInstallPrompt.js';
@@ -38,7 +39,7 @@ function describeError(err) {
         return { title: 'Account suspended', detail: err.message };
       }
       if (err.status === 423) {
-        return { title: 'Account temporarily locked', detail: err.message };
+        return { title: 'Account temporarily locked', detail: err.message, lockedUntil: err.raw?.lockedUntil || null };
       }
       if (err.status === 503) {
         return { title: 'Platform temporarily unavailable', detail: err.message, action: 'lockdown' };
@@ -54,7 +55,9 @@ function describeError(err) {
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [identifier, setIdentifier] = useState(() => {
+    if (location.state?.prefillIdentifier) return location.state.prefillIdentifier;
     try {
       return localStorage.getItem('rentapay_remembered_email') || '';
     } catch {
@@ -430,7 +433,13 @@ export default function Login() {
           ) : errorInfo && (
             <div className="login-page__error" role="alert">
               <strong>{errorInfo.title}</strong>
-              <p>{errorInfo.detail}</p>
+              {errorInfo.lockedUntil ? (
+                <p>
+                  <LockoutCountdown until={errorInfo.lockedUntil} onExpire={() => setErrorInfo(null)} />
+                </p>
+              ) : (
+                <p>{errorInfo.detail}</p>
+              )}
               {errorInfo.action === 'verify' && (
                 <a href="/verify-account" className="login-page__resend-link">Verify your account now →</a>
               )}

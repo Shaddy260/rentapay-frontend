@@ -1,0 +1,57 @@
+.landing-login-card {
+  position: relative;
+  z-index: 1;
+  width: min(360px, 100%);
+  background: #fff;
+  color: var(--color-ink);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(201, 162, 75, 0.5);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
+  padding: var(--space-6);
+  text-align: left;
+}
+
+.landing-login-card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  margin: 0 0 var(--space-4) 0;
+  color: var(--color-ink);
+}
+
+.landing-login-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.landing-login-card__form input {
+  width: 100%;
+}
+
+.landing-login-card__error {
+  color: #b3261e;
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.landing-login-card__footer {
+  margin: var(--space-4) 0 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted, #666);
+  text-align: center;
+}
+
+.landing-login-card__footer a {
+  color: var(--gold-dark);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Sits beside the hero copy on wide screens, stacks below it on
+   narrow ones - see .landing__hero-content--with-login in Landing.css */
+@media (max-width: 860px) {
+  .landing-login-card {
+    width: 100%;
+    margin: 0 auto;
+  }
+}

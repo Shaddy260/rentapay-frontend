@@ -4,6 +4,7 @@ import HeroPhotoBackground from '../components/HeroPhotoBackground.jsx';
 import PlatformReviews from '../components/PlatformReviews.jsx';
 import InstallAppBanner from '../components/InstallAppBanner.jsx';
 import DownloadAppSection from '../components/DownloadAppSection.jsx';
+import LandingLoginCard from '../components/LandingLoginCard.jsx';
 import './Landing.css';
 
 /**
@@ -22,6 +23,7 @@ export default function Landing() {
         <div className="landing__nav-brand">RentaPay</div>
         <nav className="landing__nav-links">
           <Link to="/find-a-house" className="landing__nav-link">Browse listings</Link>
+          <Link to="/resources" className="landing__nav-link">Resources</Link>
           <Link to="/login" className="landing__nav-link">Log in</Link>
           <Link to="/register" className="landing__nav-cta">Get started</Link>
         </nav>
@@ -32,25 +34,26 @@ export default function Landing() {
         <div className="landing__hero-blob landing__hero-blob--b" aria-hidden="true" />
         <HeroPhotoBackground />
 
-        <div className="landing__hero-content">
-          <span className="landing__eyebrow">✦ Premium property management, built for Kenya</span>
-          <h1>Management made simple.</h1>
-          <p className="landing__hero-sub">
-            Easily manage your properties and tenants, take M-Pesa payments,
-            and monitor every unit in real time — all from one place, on any
-            phone.
-          </p>
-          <p className="landing__hero-sub landing__hero-sub--gold">
-            Searching for a home? Discover vacant units in your preferred
-            location in seconds.
-          </p>
-          <div className="landing__hero-actions">
-            <Link to="/register" className="landing__btn landing__btn--primary">Get started</Link>
-            <Link to="/find-a-house" className="landing__btn landing__btn--secondary">Browse listings</Link>
+        <div className="landing__hero-inner">
+          <div className="landing__hero-content">
+            <span className="landing__eyebrow">✦ Premium property management, built for Kenya</span>
+            <h1>Management made simple.</h1>
+            <p className="landing__hero-sub">
+              Easily manage your properties and tenants, take M-Pesa payments,
+              and monitor every unit in real time — all from one place, on any
+              phone.
+            </p>
+            <p className="landing__hero-sub landing__hero-sub--gold">
+              Searching for a home? Discover vacant units in your preferred
+              location in seconds.
+            </p>
+            <div className="landing__hero-actions">
+              <Link to="/register" className="landing__btn landing__btn--primary">Get started</Link>
+              <Link to="/find-a-house" className="landing__btn landing__btn--secondary">Browse listings</Link>
+            </div>
           </div>
-          <p className="landing__hero-note">
-            Already have an account? <Link to="/login">Log in</Link>
-          </p>
+
+          <LandingLoginCard />
         </div>
       </section>
 
@@ -137,6 +140,7 @@ export default function Landing() {
         <div className="landing__footer-links">
           <Link to="/terms">Terms of Service</Link>
           <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/resources">Resources</Link>
           <Link to="/status">System Status</Link>
         </div>
       </footer>

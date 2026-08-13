@@ -20,6 +20,7 @@ import BulkRentChangeModal from '../components/BulkRentChangeModal.jsx';
 import BulkDueDateChangeModal from '../components/BulkDueDateChangeModal.jsx';
 import LandlordStatistics from '../components/LandlordStatistics.jsx';
 import RateTenantReminderPopup from '../components/RateTenantReminderPopup.jsx';
+import LoyaltyDiscountReminderPopup from '../components/LoyaltyDiscountReminderPopup.jsx';
 import PaymentHistoryPanel from '../components/PaymentHistoryPanel.jsx';
 import DisputesPanel from '../components/DisputesPanel.jsx';
 import PaymentPlanRequestsPanel from '../components/PaymentPlanRequestsPanel.jsx';
@@ -618,6 +619,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard-page">
       <RateTenantReminderPopup token={token} />
+      <LoyaltyDiscountReminderPopup token={token} />
       <VirtualAssistant
         ref={assistantRef}
         steps={assistantSteps}

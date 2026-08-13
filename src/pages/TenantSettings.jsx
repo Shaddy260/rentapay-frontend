@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/Button.jsx';
 import BiometricSettingsPanel from '../components/BiometricSettingsPanel.jsx';
-import CommentReveal from '../components/CommentReveal.jsx';
+
 import InfoTip from '../components/InfoTip.jsx';
 import { api, ApiError } from '../api/client.js';
 import './Settings.css';
@@ -162,7 +162,7 @@ export default function TenantSettings() {
 
       <section className="settings-card">
         <h2>Export your data</h2>
-        <CommentReveal
+        <InfoTip
           label="What's included?"
           text="Download everything RentaPay holds about your account - your profile, payment history, maintenance requests, document records, and reputation ratings - as a single file you can keep."
         />

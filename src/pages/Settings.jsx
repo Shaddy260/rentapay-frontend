@@ -9,7 +9,6 @@ import { api, ApiError } from '../api/client.js';
 import './Settings.css';
 import Skeleton from '../components/Skeleton.jsx';
 import InfoTip from '../components/InfoTip.jsx';
-import CommentReveal from '../components/CommentReveal.jsx';
 
 /**
  * Settings hub - shared by landlords and property managers (a manager
@@ -1188,11 +1187,10 @@ export default function Settings() {
 
       {!isManager && (
         <section className="settings-card">
-          <h2>Export your data</h2>
-          <CommentReveal
-            label="What's included?"
-            text="Download everything RentaPay holds for your account - properties, units, tenants, payments, expenses, maintenance requests, and document records - as a single file you can keep."
-          />
+          <h2>
+            Export your data
+            <InfoTip text="Download everything RentaPay holds for your account - properties, units, tenants, payments, expenses, maintenance requests, and document records - as a single file you can keep." />
+          </h2>
           <Button onClick={handleExportData} disabled={exportingData} variant="ghost">
             {exportingData ? 'Preparing your export…' : '⬇ Export my data'}
           </Button>

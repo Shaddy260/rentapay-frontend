@@ -8,10 +8,6 @@ import './AddTenant.css';
 import Skeleton from '../components/Skeleton.jsx';
 import InfoTip from '../components/InfoTip.jsx';
 
-const PERIOD_DISCOUNTS = { 1: 0, 3: 0.05, 6: 0.10, 12: 0.15 };
-// Updated per direct request: KES 150 -> 70 -> 50/unit/month
-const BASE_RATE = 50;
-
 export default function SubscriptionManage() {
   const navigate = useNavigate();
   const token = sessionStorage.getItem('rentapay_token');
@@ -257,9 +253,76 @@ export default function SubscriptionManage() {
     };
   }, [pending, manualAwaiting, token, preRenewalSnapshot]);
 
-  const discount = PERIOD_DISCOUNTS[periodMonths] ?? 0;
-  const rate = Math.round(BASE_RATE * (1 - discount) * 100) / 100;
-  const totalCost = Math.round(rate * unitsCount * periodMonths * 100) / 100;
+  // FIX (P1 support - loyalty-discount-roadmap.md): this used to be a
+  // client-side calculation against hardcoded PERIOD_DISCOUNTS/BASE_RATE
+  // constants, which silently drifted from reality the moment an admin
+  // changed pricing (AdminSubscriptionPricing.jsx) or the landlord had a
+  // loyalty discount granted/consumed - the landlord could be shown one
+  // total here and be charged a different one by the actual STK push.
+  // Now sourced from the same calculateSubscriptionCost() the backend
+  // uses for everything else, discount(s) included, via /subscriptions/quote.
+  const [quote, setQuote] = useState(null);
+  const [quoteError, setQuoteError] = useState('');
+  useEffect(() => {
+    if (!token) return undefined;
+    const unitsNum = Number(unitsCount);
+    const periodNum = Number(periodMonths);
+    if (!Number.isFinite(unitsNum) || unitsNum < 1 || !Number.isFinite(periodNum) || periodNum < 1) {
+      setQuote(null);
+      return undefined;
+    }
+    let cancelled = false;
+    setQuoteError('');
+    api
+      .getSubscriptionQuote(unitsNum, periodNum, token)
+      .then((res) => { if (!cancelled) setQuote(res); })
+      .catch((err) => { if (!cancelled) setQuoteError(err instanceof ApiError ? err.message : 'Failed to calculate price.'); });
+    return () => { cancelled = true; };
+  }, [unitsCount, periodMonths, token]);
+
+  // P3 (roadmap): "display the loyalty discount as its own line
+  // (separate from the period-length discount) so the landlord sees
+  // exactly why the price dropped" - previously the total was shown
+  // as one lump figure with, at best, a parenthetical note. Both
+  // discounts apply additively to the same base cost (see
+  // calculateSubscriptionCost in utils/pricing.js), so their KES
+  // amounts here are exact, not approximations.
+  const priceBreakdown = quote
+    ? (() => {
+        const baseCost = Math.round(quote.baseRatePerUnitPerMonth * Number(unitsCount) * Number(periodMonths) * 100) / 100;
+        const periodDiscountAmount = Math.round(baseCost * quote.periodDiscount * 100) / 100;
+        const loyaltyDiscountAmount = Math.round(baseCost * quote.loyaltyDiscount * 100) / 100;
+        return { baseCost, periodDiscountAmount, loyaltyDiscountAmount };
+      })()
+    : null;
+
+  function PriceBreakdown({ compact }) {
+    if (!quote || !priceBreakdown) return null;
+    return (
+      <div className={`subscription-price-breakdown${compact ? ' subscription-price-breakdown--compact' : ''}`}>
+        <div className="subscription-price-breakdown__row">
+          <span>Base price ({unitsCount} unit{Number(unitsCount) === 1 ? '' : 's'} × {periodMonths} mo × KES {quote.baseRatePerUnitPerMonth}/unit/mo)</span>
+          <span>KES {priceBreakdown.baseCost.toLocaleString()}</span>
+        </div>
+        {quote.periodDiscount > 0 && (
+          <div className="subscription-price-breakdown__row subscription-price-breakdown__row--discount">
+            <span>Period discount ({Math.round(quote.periodDiscount * 100)}%)</span>
+            <span>-KES {priceBreakdown.periodDiscountAmount.toLocaleString()}</span>
+          </div>
+        )}
+        {quote.loyaltyDiscount > 0 && (
+          <div className="subscription-price-breakdown__row subscription-price-breakdown__row--discount subscription-price-breakdown__row--loyalty">
+            <span>Loyalty discount ({Math.round(quote.loyaltyDiscount * 100)}%)</span>
+            <span>-KES {priceBreakdown.loyaltyDiscountAmount.toLocaleString()}</span>
+          </div>
+        )}
+        <div className="subscription-price-breakdown__row subscription-price-breakdown__row--total">
+          <span>Total</span>
+          <span>KES {quote.totalCost.toLocaleString()}</span>
+        </div>
+      </div>
+    );
+  }
 
   async function handleRenew(e) {
     e.preventDefault();
@@ -267,6 +330,14 @@ export default function SubscriptionManage() {
     setSubmitting(true);
     try {
       const res = await api.renewSubscription({ plan: 'starter', periodMonths: Number(periodMonths), unitsCount: Number(unitsCount) }, token);
+      if (res.stkFailed) {
+        // No prompt went out - jump straight to the manual-payment
+        // form already on this page instead of leaving the landlord
+        // looking at a dead-end "failed to start renewal" message.
+        setError('');
+        setShowManualPay(true);
+        return;
+      }
       setPending({ checkoutRequestId: res.checkoutRequestId, amountDue: res.amountDue }, status);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to start renewal.');
@@ -362,8 +433,14 @@ export default function SubscriptionManage() {
             />
           </div>
         </div>
-        <p className="u-font-strong u-mb-4">Total: KES {totalCost.toLocaleString()} (KES {rate}/unit/month)</p>
-        <Button type="submit" variant="mpesa" loading={submitting}>Pay via M-Pesa</Button>
+        <div className="u-mb-4">
+          {quote
+            ? <PriceBreakdown />
+            : quoteError
+              ? <span className="add-tenant-error">{quoteError}</span>
+              : <p className="u-font-strong">Calculating price…</p>}
+        </div>
+        <Button type="submit" variant="mpesa" loading={submitting} disabled={!quote}>Pay via M-Pesa</Button>
       </form>
 
       {/* Direct request: STK popups sometimes fail/delay/never arrive -
@@ -396,6 +473,12 @@ export default function SubscriptionManage() {
       {showManualPay && (
         <div className="add-tenant-form add-tenant-form--bordered">
           <PaymentDetailsCard note="Once you've paid, fill in the details below exactly as shown on your M-Pesa confirmation SMS - the same way your tenants submit theirs." />
+          {quote && (
+            <div className="u-mb-3">
+              <p className="u-text-muted u-mb-2">Expected amount for this submission:</p>
+              <PriceBreakdown compact />
+            </div>
+          )}
           {manualError && <p className="add-tenant-error">{manualError}</p>}
           <form onSubmit={handleManualSubmit}>
             <label className="form-field__label">Transaction code</label>
