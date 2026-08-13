@@ -20,20 +20,15 @@ export default function DownloadAppSection() {
         <div className="download-app__body">
           <h3>Download RentaPay App</h3>
           <p className="download-app__desc">
-            Get the real Android app, straight to your phone - no Play
-            Store needed.
+            Get the RentaPay app on your phone.
           </p>
           <a
             href={APK_PATH}
             download="RentaPay.apk"
             className="download-app__btn"
           >
-            Download RentaPay App
+            Download the App
           </a>
-          <p className="download-app__note">
-            Direct APK install - Android will ask you to allow installs
-            from this source the first time, that&apos;s expected.
-          </p>
           <p className="download-app__version">
             {ANDROID_PACKAGE} &middot; v{pkg.version}
           </p>

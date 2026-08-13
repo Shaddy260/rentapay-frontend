@@ -9,11 +9,18 @@ function dateOnly(iso) {
 
 /**
  * BUILD SPEC PHASE 11 - Part C: Cross-BA security report (standing, no
- * BA selection required). Four sections matching the four signals,
- * each a simple list/table with counts and a "review" link into the
- * reconciliation tool (Part B) pre-filled with that BA and date.
- * Visible on a normal admin visit via the sidebar tab, not something
- * admin has to know to search for.
+ * BA selection required).
+ *
+ * REBUILT (Section A of the 2026-08-remove-manual-ba-claims migration):
+ * two of the original four signals (duplicate phone attempts,
+ * not-referred-but-matched) policed the old manual claim-submission
+ * flow, which no longer exists - attribution is now automatic via the
+ * referral link/code at signup. The backend returns those two as
+ * `{ retired: true, reason }` instead of a list; this component
+ * renders that as an explicit "retired" note rather than a silent
+ * empty state. The other two (rapid-fire onboarding, disputed
+ * attributions) are still live checks, rebuilt against `landlords`
+ * directly.
  */
 export default function AdminBaSecurityReport({ token, onReview }) {
   const [report, setReport] = useState(null);
@@ -47,53 +54,24 @@ export default function AdminBaSecurityReport({ token, onReview }) {
     <section className="admin-ba-security">
       <p className="admin-ba-security__window">Scanning the last {report.windowDays} days across all Brand Ambassadors.</p>
 
-      <div className="admin-ba-security__section">
-        <h3>Duplicate phone attempts ({report.duplicatePhoneAttempts.length})</h3>
-        <p className="admin-ba-security__hint">More than one Brand Ambassador has tried to claim the same phone number — includes rejected/conflicting attempts.</p>
-        {report.duplicatePhoneAttempts.length === 0 && <p className="admin-ba-security__empty">None found.</p>}
-        <ul className="admin-ba-security__cards">
-          {report.duplicatePhoneAttempts.map((d) => (
-            <li key={d.phone} className="admin-ba-security__card">
-              <strong>{d.phone}</strong>
-              <ul>
-                {d.bas.map((b) => (
-                  <li key={b.baId}>
-                    {b.baName} ({b.baCode}) — {b.claimIds.length} attempt{b.claimIds.length === 1 ? '' : 's'}
-                    <button type="button" className="admin-ba-security__review-link" onClick={() => onReview?.({ baId: b.baId })}>
-                      Review
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
+      <div className="admin-ba-security__section admin-ba-security__section--retired">
+        <h3>Duplicate phone attempts</h3>
+        <p className="admin-ba-security__retired">{report.duplicatePhoneAttempts.reason}</p>
+      </div>
+
+      <div className="admin-ba-security__section admin-ba-security__section--retired">
+        <h3>Not referred but matched</h3>
+        <p className="admin-ba-security__retired">{report.notReferredButMatched.reason}</p>
       </div>
 
       <div className="admin-ba-security__section">
-        <h3>Not referred but matched ({report.notReferredButMatched.length})</h3>
-        <p className="admin-ba-security__hint">Matched purely via a post-hoc phone lookup, not the referral link at signup. Not automatically wrong — a weaker signal worth a glance.</p>
-        {report.notReferredButMatched.length === 0 && <p className="admin-ba-security__empty">None found.</p>}
+        <h3>Rapid-fire onboarding ({report.rapidFireOnboarding.length})</h3>
+        <p className="admin-ba-security__hint">Landlords onboarded unusually close together in time by one Brand Ambassador — a rough proxy for signups logged without an actual field visit.</p>
+        {report.rapidFireOnboarding.length === 0 && <p className="admin-ba-security__empty">None found.</p>}
         <ul className="admin-ba-security__cards">
-          {report.notReferredButMatched.map((c) => (
-            <li key={c.claimId} className="admin-ba-security__card">
-              {c.baName} — {c.submittedName} ({c.submittedPhone})
-              <button type="button" className="admin-ba-security__review-link" onClick={() => onReview?.({ baId: c.baId, date: dateOnly(c.createdAt) })}>
-                Review
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="admin-ba-security__section">
-        <h3>Rapid-fire submissions ({report.rapidFireSubmissions.length})</h3>
-        <p className="admin-ba-security__hint">Claims logged unusually close together in time — a rough proxy for claims logged without the actual field visit.</p>
-        {report.rapidFireSubmissions.length === 0 && <p className="admin-ba-security__empty">None found.</p>}
-        <ul className="admin-ba-security__cards">
-          {report.rapidFireSubmissions.map((r) => (
+          {report.rapidFireOnboarding.map((r) => (
             <li key={r.baId} className="admin-ba-security__card">
-              {r.baName} — {r.count} claims within {r.windowMinutes} minutes
+              {r.baName} — {r.count} landlords within {r.windowMinutes} minutes
               <button type="button" className="admin-ba-security__review-link" onClick={() => onReview?.({ baId: r.baId, date: dateOnly(r.from) })}>
                 Review
               </button>
@@ -108,7 +86,7 @@ export default function AdminBaSecurityReport({ token, onReview }) {
         {report.disputedAttributions.length === 0 && <p className="admin-ba-security__empty">None found.</p>}
         <ul className="admin-ba-security__cards">
           {report.disputedAttributions.map((d) => (
-            <li key={d.claimId} className="admin-ba-security__card">
+            <li key={d.landlordId} className="admin-ba-security__card">
               {d.baName} — {d.landlordName}
               <button type="button" className="admin-ba-security__review-link" onClick={() => onReview?.({ baId: d.baId, date: dateOnly(d.disputedAt) })}>
                 Review

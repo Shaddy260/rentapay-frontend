@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from './Button.jsx';
+import PasswordInput from './PasswordInput.jsx';
 import './ConfirmDialog.css';
 
 /**
@@ -23,16 +24,39 @@ export default function ConfirmDialog({
   cancelLabel = 'Cancel',
   danger = true,
   typeToConfirm, // if set, e.g. "DELETE" or a unit name, must be typed exactly to enable the confirm button
+  // FIX (direct request): suspend/activate/offboard/restore for a
+  // Brand Ambassador should require the admin password to confirm,
+  // same as it already does for a landlord. Passing this re-collects
+  // the admin's password here and hands it to onConfirm(password)
+  // instead of onConfirm() - the caller re-checks it server-side and
+  // does NOT proceed on a wrong password.
+  requirePassword = false,
   busy = false,
   error,
   onConfirm,
   onCancel,
 }) {
   const [typed, setTyped] = useState('');
+  const [password, setPassword] = useState('');
+
+  // Reset both fields whenever the dialog opens/closes so a leftover
+  // password from a previous action can't linger and get submitted
+  // for a different one.
+  useEffect(() => {
+    if (!open) {
+      setTyped('');
+      setPassword('');
+    }
+  }, [open]);
 
   if (!open) return null;
 
-  const canConfirm = !typeToConfirm || typed.trim() === typeToConfirm;
+  const canConfirm = (!typeToConfirm || typed.trim() === typeToConfirm) && (!requirePassword || password.length > 0);
+
+  function handleConfirm() {
+    if (requirePassword) onConfirm?.(password);
+    else onConfirm?.();
+  }
 
   return (
     <div className="modal-overlay" onClick={() => !busy && onCancel?.()}>
@@ -52,6 +76,18 @@ export default function ConfirmDialog({
             />
           </div>
         )}
+        {requirePassword && (
+          <div className="form-field">
+            <label className="form-field__label" htmlFor="confirm-dialog-password">Admin password</label>
+            <PasswordInput
+              id="confirm-dialog-password"
+              autoFocus
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+        )}
         {error && <p className="form-error">{error}</p>}
         <div className="confirm-dialog__actions">
           <Button
@@ -59,7 +95,7 @@ export default function ConfirmDialog({
             variant={danger ? 'danger' : 'primary'}
             disabled={!canConfirm || busy}
             loading={busy}
-            onClick={onConfirm}
+            onClick={handleConfirm}
           >
             {confirmLabel}
           </Button>

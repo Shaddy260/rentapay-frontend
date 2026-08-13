@@ -978,9 +978,14 @@ export const api = {
   approveBaApplication: (id, token) => request(`/brand-ambassadors/applications/${id}/approve`, { method: 'POST', token }),
   rejectBaApplication: (id, reason, token) => request(`/brand-ambassadors/applications/${id}/reject`, { method: 'POST', body: { reason }, token }),
   listBrandAmbassadors: (status, token) => request(`/brand-ambassadors${status ? `?status=${status}` : ''}`, { token }),
-  suspendBrandAmbassador: (id, token) => request(`/brand-ambassadors/${id}/suspend`, { method: 'POST', token }),
-  reactivateBrandAmbassador: (id, token) => request(`/brand-ambassadors/${id}/reactivate`, { method: 'POST', token }),
-  offboardBrandAmbassador: (id, token) => request(`/brand-ambassadors/${id}/offboard`, { method: 'POST', token }),
+  // FIX (direct request): suspend/reactivate/offboard/restore now all
+  // require the admin password, same as a landlord's suspend/activate
+  // - each sends it in the body and the backend re-checks it before
+  // touching the account.
+  suspendBrandAmbassador: (id, password, token) => request(`/brand-ambassadors/${id}/suspend`, { method: 'POST', body: { password }, token }),
+  reactivateBrandAmbassador: (id, password, token) => request(`/brand-ambassadors/${id}/reactivate`, { method: 'POST', body: { password }, token }),
+  offboardBrandAmbassador: (id, password, token) => request(`/brand-ambassadors/${id}/offboard`, { method: 'POST', body: { password }, token }),
+  restoreBrandAmbassador: (id, password, token) => request(`/brand-ambassadors/${id}/restore`, { method: 'POST', body: { password }, token }),
   // BA portal (Phase 3) - the logged-in BA's own profile, scoped server-side to their JWT.
   getMyBaProfile: (token) => request('/brand-ambassadors/me', { token }),
   updateBaProfile: (payload, token) => request('/brand-ambassadors/me', { method: 'PATCH', body: payload, token }),

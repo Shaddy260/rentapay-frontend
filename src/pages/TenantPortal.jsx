@@ -283,7 +283,9 @@ export default function TenantPortal() {
     setSavingDetails(true);
     setDetailsError('');
     try {
-      await api.updateOwnProfile(detailsDraft, token);
+      // eslint-disable-next-line no-unused-vars
+      const { email, ...editableDetails } = detailsDraft;
+      await api.updateOwnProfile(editableDetails, token);
       setEditingDetails(false);
       load(); // refresh `profile` with the saved values
     } catch (err) {

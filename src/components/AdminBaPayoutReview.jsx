@@ -44,7 +44,6 @@ export default function AdminBaPayoutReview({ token }) {
   const [review, setReview] = useState(null);
   const [error, setError] = useState('');
   const [expandedBaId, setExpandedBaId] = useState(null);
-  const [selectedClaimIds, setSelectedClaimIds] = useState({}); // baId -> Set(claimId)
   const [busyBaId, setBusyBaId] = useState(null);
 
   const load = useCallback(() => {
@@ -69,26 +68,14 @@ export default function AdminBaPayoutReview({ token }) {
     setExpandedBaId((prev) => (prev === baId ? null : baId));
   }
 
-  function toggleClaim(baId, claimId) {
-    setSelectedClaimIds((prev) => {
-      const set = new Set(prev[baId] || []);
-      if (set.has(claimId)) set.delete(claimId);
-      else set.add(claimId);
-      return { ...prev, [baId]: set };
-    });
-  }
-
-  function selectAllForBa(baId, claims) {
-    setSelectedClaimIds((prev) => ({ ...prev, [baId]: new Set(claims.map((c) => c.id)) }));
-  }
-
-  async function markPaid(baId, claims) {
-    const selected = selectedClaimIds[baId];
-    const claimIds = selected && selected.size > 0 ? [...selected] : claims.map((c) => c.id);
+  // Commission accrues automatically per completed landlord payment
+  // (no more per-landlord "claim" to hand-pick) - Mark Paid/Not Paid
+  // always applies to this BA's whole selected cycle.
+  async function markPaid(baId) {
     setBusyBaId(baId);
     setError('');
     try {
-      await api.markBaPeriodPaid(baId, { periodType, periodKey, claimIds }, token);
+      await api.markBaPeriodPaid(baId, { periodType, periodKey }, token);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to mark this Brand Ambassador as paid.');
@@ -97,13 +84,11 @@ export default function AdminBaPayoutReview({ token }) {
     }
   }
 
-  async function markNotPaid(baId, claims) {
-    const selected = selectedClaimIds[baId];
-    const claimIds = selected && selected.size > 0 ? [...selected] : claims.map((c) => c.id);
+  async function markNotPaid(baId) {
     setBusyBaId(baId);
     setError('');
     try {
-      await api.markBaPeriodNotPaid(baId, { periodType, periodKey, claimIds }, token);
+      await api.markBaPeriodNotPaid(baId, { periodType, periodKey }, token);
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to update this Brand Ambassador\'s payout status.');
@@ -188,8 +173,6 @@ export default function AdminBaPayoutReview({ token }) {
           {review.bas.map((row) => {
             const isExpanded = expandedBaId === row.ba.id;
             const isInactive = row.ba.status !== 'active';
-            const selected = selectedClaimIds[row.ba.id];
-            const selectedCount = selected ? selected.size : 0;
 
             return (
               <li key={row.ba.id} className={`admin-ba-payout__item ${isInactive ? 'admin-ba-payout__item--flagged' : ''}`}>
@@ -220,24 +203,18 @@ export default function AdminBaPayoutReview({ token }) {
                     <ul className="admin-ba-payout__claims">
                       {row.claims.map((c) => (
                         <li key={c.id} className="admin-ba-payout__claim">
-                          <label>
-                            <input type="checkbox" checked={selected ? selected.has(c.id) : false} onChange={() => toggleClaim(row.ba.id, c.id)} />
-                            {c.landlordName} {c.landlordLocation ? `— ${c.landlordLocation}` : ''}
-                          </label>
+                          <span>{c.landlordName} {c.landlordLocation ? `— ${c.landlordLocation}` : ''}</span>
                           <span>
-                            {money(c.payoutAmount)} + {money(c.commissionBonusAmount)} commission · {c.qualificationStatus}
+                            {money(c.commissionBonusAmount)} commission · {c.qualificationStatus}
                           </span>
                         </li>
                       ))}
                     </ul>
                     <div className="admin-ba-payout__actions">
-                      <button type="button" className="admin-ba-payout__link-btn" onClick={() => selectAllForBa(row.ba.id, row.claims)}>
-                        Select all
-                      </button>
-                      <Button onClick={() => markPaid(row.ba.id, row.claims)} disabled={busyBaId === row.ba.id} >
-                        Mark {selectedCount > 0 ? `${selectedCount} ` : ''}as Paid
+                      <Button onClick={() => markPaid(row.ba.id)} disabled={busyBaId === row.ba.id} >
+                        Mark as Paid
                       </Button>
-                      <Button onClick={() => markNotPaid(row.ba.id, row.claims)} disabled={busyBaId === row.ba.id} variant="ghost">
+                      <Button onClick={() => markNotPaid(row.ba.id)} disabled={busyBaId === row.ba.id} variant="ghost">
                         Mark as Not Paid
                       </Button>
                       <Button onClick={() => downloadStatement(row.ba.id)} variant="ghost">

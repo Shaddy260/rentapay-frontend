@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { ToastProvider } from './components/Toast.jsx';
 import InactivityLogout from './components/InactivityLogout.jsx';
 import OfflineBanner from './components/OfflineBanner.jsx';
+import ApkInstallRedirect from './components/ApkInstallRedirect.jsx';
 import UpdateChecker from './components/UpdateChecker.jsx';
 import EngagementToast from './components/EngagementToast.jsx';
 import VacancyAlertOptIn from './components/VacancyAlertOptIn.jsx';
@@ -98,6 +99,11 @@ export default function App() {
     <ToastProvider>
       <BrowserRouter>
         <OfflineBanner />
+        {/* Intercepts Chrome's native beforeinstallprompt (PWA install
+            banner) app-wide and redirects it to the APK download - see
+            ApkInstallRedirect.jsx. Does not affect manifest.json/sw.js,
+            which still need to work for the TWA build. */}
+        <ApkInstallRedirect />
         <UpdateChecker />
         <InactivityLogout />
         <PublicEngagementWidgets />

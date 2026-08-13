@@ -70,9 +70,10 @@ export default function AdminBrandAmbassadors({ token }) {
       setLinkError('Could not copy automatically - select and copy the link below instead.');
     }
   }
-  // PHASE 16 - suspend/reactivate are simple one-click toggles;
-  // offboard is permanent, so it gets its own confirm dialog that
-  // states plainly the referral link keeps working.
+  // PHASE 16 - suspend/reactivate/offboard/restore all route through
+  // ConfirmDialog with requirePassword, same as a landlord's
+  // suspend/activate does on the main admin dashboard - none of these
+  // fire on a bare click anymore.
   const [statusActionBusyId, setStatusActionBusyId] = useState(null);
   const [pendingOffboard, setPendingOffboard] = useState(null); // { id, name }
   const [offboardError, setOffboardError] = useState('');
@@ -83,6 +84,20 @@ export default function AdminBrandAmbassadors({ token }) {
   // acting on a single click.
   const [pendingSuspend, setPendingSuspend] = useState(null); // { id, name }
   const [suspendError, setSuspendError] = useState('');
+  // FIX (direct request: "offboard or activate an account should ask
+  // for the password"): Reactivate used to fire straight from the
+  // button's onClick with no password check. Now it opens a confirm
+  // dialog too, same shape as suspend/offboard.
+  const [pendingReactivate, setPendingReactivate] = useState(null); // { id, name }
+  const [reactivateError, setReactivateError] = useState('');
+  // FIX (direct request: "there should be a way for admin to restore
+  // an offboarded BA account"): offboard was previously a one-way
+  // door in the UI (backend already only allowed active/suspended ->
+  // inactive). This adds the missing reverse action for an inactive
+  // BA, gated behind the admin password like every other status
+  // change here.
+  const [pendingRestore, setPendingRestore] = useState(null); // { id, name }
+  const [restoreError, setRestoreError] = useState('');
 
   const loadApplications = useCallback(() => {
     setApplications(null);
@@ -132,11 +147,12 @@ export default function AdminBrandAmbassadors({ token }) {
     }
   }
 
-  async function suspend(id) {
-    setStatusActionBusyId(id);
+  async function confirmSuspend(password) {
+    if (!pendingSuspend) return;
+    setStatusActionBusyId(pendingSuspend.id);
     setSuspendError('');
     try {
-      await api.suspendBrandAmbassador(id, token);
+      await api.suspendBrandAmbassador(pendingSuspend.id, password, token);
       setPendingSuspend(null);
       loadRoster();
     } catch (err) {
@@ -146,29 +162,46 @@ export default function AdminBrandAmbassadors({ token }) {
     }
   }
 
-  async function reactivate(id) {
-    setStatusActionBusyId(id);
-    setError('');
+  async function confirmReactivate(password) {
+    if (!pendingReactivate) return;
+    setStatusActionBusyId(pendingReactivate.id);
+    setReactivateError('');
     try {
-      await api.reactivateBrandAmbassador(id, token);
+      await api.reactivateBrandAmbassador(pendingReactivate.id, password, token);
+      setPendingReactivate(null);
       loadRoster();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to reactivate this Brand Ambassador.');
+      setReactivateError(err instanceof ApiError ? err.message : 'Failed to reactivate this Brand Ambassador.');
     } finally {
       setStatusActionBusyId(null);
     }
   }
 
-  async function confirmOffboard() {
+  async function confirmOffboard(password) {
     if (!pendingOffboard) return;
     setStatusActionBusyId(pendingOffboard.id);
     setOffboardError('');
     try {
-      await api.offboardBrandAmbassador(pendingOffboard.id, token);
+      await api.offboardBrandAmbassador(pendingOffboard.id, password, token);
       setPendingOffboard(null);
       loadRoster();
     } catch (err) {
       setOffboardError(err instanceof ApiError ? err.message : 'Failed to offboard this Brand Ambassador.');
+    } finally {
+      setStatusActionBusyId(null);
+    }
+  }
+
+  async function confirmRestore(password) {
+    if (!pendingRestore) return;
+    setStatusActionBusyId(pendingRestore.id);
+    setRestoreError('');
+    try {
+      await api.restoreBrandAmbassador(pendingRestore.id, password, token);
+      setPendingRestore(null);
+      loadRoster();
+    } catch (err) {
+      setRestoreError(err instanceof ApiError ? err.message : 'Failed to restore this Brand Ambassador.');
     } finally {
       setStatusActionBusyId(null);
     }
@@ -344,9 +377,10 @@ export default function AdminBrandAmbassadors({ token }) {
                     {b.landlordsOnboarded} landlord{b.landlordsOnboarded === 1 ? '' : 's'} onboarded ·{' '}
                     {b.qualifiedPendingPayout} qualified pending payout
                   </p>
-                  {/* PHASE 16 - suspend/reactivate/offboard. 'inactive'
-                      and 'rejected' are terminal here: nothing to do
-                      from this row for either. */}
+                  {/* PHASE 16 - suspend/reactivate/offboard for an
+                      active or suspended BA; restore for an offboarded
+                      (inactive) one. 'rejected' stays terminal - no
+                      action from this row. */}
                   {(b.status === 'active' || b.status === 'suspended') && (
                     <div className="admin-ba__actions">
                       {b.status === 'active' && (
@@ -359,7 +393,11 @@ export default function AdminBrandAmbassadors({ token }) {
                         </Button>
                       )}
                       {b.status === 'suspended' && (
-                        <Button variant="ghost" disabled={statusActionBusyId === b.id} onClick={() => reactivate(b.id)}>
+                        <Button
+                          variant="ghost"
+                          disabled={statusActionBusyId === b.id}
+                          onClick={() => { setReactivateError(''); setPendingReactivate({ id: b.id, name: b.full_name }); }}
+                        >
                           Reactivate
                         </Button>
                       )}
@@ -369,6 +407,17 @@ export default function AdminBrandAmbassadors({ token }) {
                         onClick={() => { setOffboardError(''); setPendingOffboard({ id: b.id, name: b.full_name }); }}
                       >
                         Offboard
+                      </Button>
+                    </div>
+                  )}
+                  {b.status === 'inactive' && (
+                    <div className="admin-ba__actions">
+                      <Button
+                        variant="ghost"
+                        disabled={statusActionBusyId === b.id}
+                        onClick={() => { setRestoreError(''); setPendingRestore({ id: b.id, name: b.full_name }); }}
+                      >
+                        Restore
                       </Button>
                     </div>
                   )}
@@ -388,15 +437,33 @@ export default function AdminBrandAmbassadors({ token }) {
         title="Suspend this Brand Ambassador?"
         message={
           pendingSuspend
-            ? `${pendingSuspend.name} will stop earning new payouts and their referral link/code will stop attributing new landlord signups until you reactivate them. Already-qualified or paid claims are untouched.`
+            ? `${pendingSuspend.name} will stop earning new payouts and their referral link/code will stop attributing new landlord signups until you reactivate them. Already-qualified or paid claims are untouched. Re-enter your admin password to proceed.`
             : ''
         }
         confirmLabel="Yes, suspend"
         danger
+        requirePassword
         busy={statusActionBusyId === pendingSuspend?.id}
         error={suspendError}
-        onConfirm={() => suspend(pendingSuspend.id)}
+        onConfirm={confirmSuspend}
         onCancel={() => { setPendingSuspend(null); setSuspendError(''); }}
+      />
+
+      <ConfirmDialog
+        open={!!pendingReactivate}
+        title="Reactivate this Brand Ambassador?"
+        message={
+          pendingReactivate
+            ? `${pendingReactivate.name} will be able to log in and their referral link/code will resume attributing new landlord signups. Re-enter your admin password to proceed.`
+            : ''
+        }
+        confirmLabel="Yes, reactivate"
+        danger={false}
+        requirePassword
+        busy={statusActionBusyId === pendingReactivate?.id}
+        error={reactivateError}
+        onConfirm={confirmReactivate}
+        onCancel={() => { setPendingReactivate(null); setReactivateError(''); }}
       />
 
       <ConfirmDialog
@@ -404,14 +471,32 @@ export default function AdminBrandAmbassadors({ token }) {
         title="Offboard this Brand Ambassador?"
         message={
           pendingOffboard
-            ? `This permanently marks ${pendingOffboard.name} as inactive. Their referral link keeps working - new landlord signups through it will still be credited to them - but their pending claims will stop qualifying for new payouts going forward. Already-qualified or paid claims are untouched. This cannot be reversed from here.`
+            ? `This marks ${pendingOffboard.name} as inactive. Their referral link keeps working - new landlord signups through it will still be credited to them - but their pending claims will stop qualifying for new payouts going forward. Already-qualified or paid claims are untouched. You can restore them later from here if needed. Re-enter your admin password to proceed.`
             : ''
         }
         confirmLabel="Yes, offboard"
+        requirePassword
         busy={statusActionBusyId === pendingOffboard?.id}
         error={offboardError}
         onConfirm={confirmOffboard}
         onCancel={() => { setPendingOffboard(null); setOffboardError(''); }}
+      />
+
+      <ConfirmDialog
+        open={!!pendingRestore}
+        title="Restore this Brand Ambassador?"
+        message={
+          pendingRestore
+            ? `${pendingRestore.name} will be marked active again and will be able to log in and resume earning new payouts. Re-enter your admin password to proceed.`
+            : ''
+        }
+        confirmLabel="Yes, restore"
+        danger={false}
+        requirePassword
+        busy={statusActionBusyId === pendingRestore?.id}
+        error={restoreError}
+        onConfirm={confirmRestore}
+        onCancel={() => { setPendingRestore(null); setRestoreError(''); }}
       />
     </div>
   );

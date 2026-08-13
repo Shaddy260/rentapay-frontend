@@ -12,6 +12,17 @@
   margin-bottom: 24px;
 }
 
+.admin-ba-security__section--retired {
+  opacity: 0.7;
+}
+
+.admin-ba-security__retired {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: 0.875rem;
+  font-style: italic;
+  margin: 0;
+}
+
 .admin-ba-security__section h3 {
   margin: 0 0 4px;
 }
