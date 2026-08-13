@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Button from './Button.jsx';
 import { api, ApiError } from '../api/client.js';
 import Skeleton from './Skeleton.jsx';
+import TapToReveal from './TapToReveal.jsx';
 
 // FIX (direct request): broadcasting used to be a one-shot "type a
 // message, hit send, modal closes" composer with no record of what
@@ -83,9 +84,9 @@ export default function BroadcastPanel({ token, role, properties, onClose }) {
           <h2>Broadcast</h2>
           <button type="button" className="ghost-link" onClick={onClose}>Close</button>
         </div>
-        <p className="broadcast-panel__hint">
+        <TapToReveal className="broadcast-panel__hint">
           Sent messages show up as a bell notification for every tenant (and your {role === 'manager' ? 'team' : 'managers and caretakers'}).
-        </p>
+        </TapToReveal>
 
         <div className="broadcast-panel__thread" ref={scrollRef}>
           {messages === null && <Skeleton rows={3} />}

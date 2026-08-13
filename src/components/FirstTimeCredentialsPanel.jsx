@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Avatar from './Avatar.jsx';
 import './StatisticsPanel.css';
 import Skeleton from './Skeleton.jsx';
+import TapToReveal from './TapToReveal.jsx';
 
 const ROLE_LABELS = { tenant: 'Tenants', manager: 'Managers', caretaker: 'Caretakers' };
 
@@ -133,9 +134,9 @@ export default function FirstTimeCredentialsPanel({ token, viewerRole }) {
             {selectedPerson.property_name && <p><strong>Property:</strong> {selectedPerson.property_name}</p>}
             {selectedPerson.landlord_name && <p><strong>Landlord:</strong> {selectedPerson.landlord_name}</p>}
             <p><strong>Expires:</strong> {selectedPerson.expires_at ? new Date(selectedPerson.expires_at).toLocaleString() : 'No expiry — verified automatically'}</p>
-            <p className="tenant-portal-hint">
+            <TapToReveal className="tenant-portal-hint">
               This picture is pulled live from their profile, so it will always reflect their most recent update - it isn't a snapshot from account creation.
-            </p>
+            </TapToReveal>
             <button type="button" className="modal-card__close" onClick={() => setSelectedPerson(null)}>Close</button>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import './AdminBaPayoutRules.css';
+import TapToReveal from './TapToReveal.jsx';
 
 /**
  * Consolidated Change Instructions - Section E (percentage commission,
@@ -146,10 +147,10 @@ export default function AdminBaPayoutRules({ token }) {
       ) : (
         <>
           {isOverride && !current && (
-            <p className="admin-ba-rules__note">
+            <TapToReveal className="admin-ba-rules__note">
               This BA has no custom rate yet — currently using the global default. Set one below to give them a
               custom rate.
-            </p>
+            </TapToReveal>
           )}
 
           <section className="admin-ba-rules__card">

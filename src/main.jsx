@@ -4,10 +4,8 @@ import App from './App.jsx';
 import './styles/global.css';
 import { initSentry } from './utils/sentry.js';
 import { syncOfflineQueue } from './api/client.js';
-import { initHintToggles } from './utils/hintToggle.js';
 
 initSentry();
-initHintToggles();
 
 // OFFLINE FIX: replay anything queued while the connection was down
 // (payment confirmations, chat messages, etc. - see offlineDb.js) as

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import './AdminBaReconciliation.css';
+import TapToReveal from './TapToReveal.jsx';
 
 /**
  * BUILD SPEC PHASE 11 - Part B: Reconciliation ("compare the list the
@@ -114,7 +115,7 @@ export default function AdminBaReconciliation({ token, prefill, onPrefillConsume
 
           <div className="admin-ba-reconcile__bucket admin-ba-reconcile__bucket--flagged">
             <h3>Claimed but missing from system ({result.counts.missing})</h3>
-            <p className="admin-ba-reconcile__hint">Potential inflation — these appear in the pasted list with no corresponding onboarded landlord that day.</p>
+            <TapToReveal className="admin-ba-reconcile__hint">Potential inflation — these appear in the pasted list with no corresponding onboarded landlord that day.</TapToReveal>
             {result.claimedButMissingFromSystem.length === 0 && <p className="admin-ba-reconcile__empty">None.</p>}
             <ul>
               {result.claimedButMissingFromSystem.map((e, i) => (
@@ -126,7 +127,7 @@ export default function AdminBaReconciliation({ token, prefill, onPrefillConsume
           {!result.editedAfterSubmissionRetired ? (
             <div className="admin-ba-reconcile__bucket admin-ba-reconcile__bucket--flagged">
               <h3>Edited after submission ({result.counts.edited})</h3>
-              <p className="admin-ba-reconcile__hint">Name or phone number was changed after the claim was first logged — worth a manual look.</p>
+              <TapToReveal className="admin-ba-reconcile__hint">Name or phone number was changed after the claim was first logged — worth a manual look.</TapToReveal>
               {result.editedAfterSubmission.length === 0 && <p className="admin-ba-reconcile__empty">None.</p>}
               <ul>
                 {result.editedAfterSubmission.map((c) => (

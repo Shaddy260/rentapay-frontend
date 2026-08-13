@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import ChatWidget from './ChatWidget.jsx';
 import './DisputeChargeButton.css';
+import TapToReveal from './TapToReveal.jsx';
 
 /**
  * FEATURE (direct request: "dispute a charge - a lightweight 'this
@@ -99,10 +100,10 @@ export default function DisputeChargeButton({
         <div className="modal-overlay" onClick={() => !submitting && setPromptOpen(false)}>
           <div className="modal-shell dispute-charge-prompt" onClick={(e) => e.stopPropagation()}>
             <h2>Dispute this charge?</h2>
-            <p className="dispute-charge-prompt__hint">
+            <TapToReveal className="dispute-charge-prompt__hint">
               This posts a message into your {role === 'tenant' ? "landlord's" : "tenant's"} chat with the payment details already
               filled in, so you don't have to re-explain it. Add anything specific below (optional).
-            </p>
+            </TapToReveal>
             <form onSubmit={handleSubmit}>
               <textarea
                 autoFocus

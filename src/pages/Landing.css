@@ -61,6 +61,23 @@
   color: var(--color-primary);
 }
 
+.landing__nav-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.landing__nav-login {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  text-decoration: none;
+}
+
+.landing__nav-login:hover {
+  color: var(--color-primary);
+}
+
 .landing__nav-cta {
   font-size: var(--text-sm);
   font-weight: 700;
@@ -502,10 +519,10 @@
 
 @media (max-width: 560px) {
   .landing__nav-links {
-    gap: var(--space-3);
-  }
-  .landing__nav-link {
     display: none;
+  }
+  .landing__nav-actions {
+    gap: var(--space-3);
   }
   .landing__feature-grid {
     grid-template-columns: 1fr;

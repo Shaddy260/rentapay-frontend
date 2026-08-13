@@ -247,7 +247,11 @@ export default function Login() {
 
     if (res.paymentPending) {
       try {
-        sessionStorage.setItem(
+        // localStorage (not sessionStorage) so this survives the
+        // person closing the app entirely while a manual payment is
+        // still awaiting admin confirmation - see RegisterFlow.jsx's
+        // STORAGE_KEY comment.
+        localStorage.setItem(
           'rentapay_register_progress',
           JSON.stringify({
             stepIndex: 1,
@@ -256,11 +260,12 @@ export default function Login() {
             amountDue: res.amountDue,
             defaultPropertyId: null,
             resumedFromLogin: true,
+            savedAt: Date.now(),
             form: { fullName: '', phone: res.phone || '', email: '', unitsCount: '', periodMonths: '' },
           })
         );
       } catch {
-        // sessionStorage unavailable - fall back to step 0
+        // localStorage unavailable - fall back to step 0
       }
       navigate('/register');
       return;
@@ -293,14 +298,16 @@ export default function Login() {
         // back to the very first wizard step (Property). Stashed here
         // for RegisterFlow.jsx to read on mount, same mechanism it
         // already uses for the resumedFromLogin/paymentPending case
-        // above.
-        sessionStorage.setItem(
+        // above. localStorage, not sessionStorage - same "survives
+        // the app being closed for weeks" reasoning as above.
+        localStorage.setItem(
           'rentapay_register_progress',
           JSON.stringify({
             stepIndex: res.setupWizardStep ?? 3,
             landlordId: null,
             defaultPropertyId: res.setupWizardPropertyId || null,
             resumedFromLogin: true,
+            savedAt: Date.now(),
             form: { fullName: '', phone: res.phone || fallbackIdentifier || '', email: '', unitsCount: '', periodMonths: '' },
           })
         );

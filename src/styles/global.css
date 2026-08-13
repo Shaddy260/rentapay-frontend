@@ -450,35 +450,19 @@ body:has(.rate-reminder-overlay) {
   cursor: pointer;
 }
 
-/* Site-wide: secondary explanatory/helper caption text (hints,
-   descriptions, notes, sub-labels) is collapsed behind a small tap-to-
-   reveal "i" toggle by hintToggle.js, across every page and role -
-   landlord, tenant, caretaker, property manager, admin, and public
-   pages. The toggle button itself is inserted by that script. */
-.hint-toggle__content {
-  display: none;
-}
-.hint-toggle__content.is-open {
-  display: block;
-}
-.hint-toggle__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1px solid currentColor;
+/* Tap-to-reveal hint toggle */
+.tap-to-reveal__toggle {
   background: none;
-  opacity: 0.55;
-  font-size: 11px;
-  line-height: 1;
+  border: 1px dashed var(--color-border, #c9c9c9);
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--color-text-secondary, #6b6b6b);
   cursor: pointer;
-  vertical-align: middle;
-  margin: 2px 0;
-  padding: 0;
 }
-.hint-toggle__btn:hover,
-.hint-toggle__btn[aria-expanded="true"] {
-  opacity: 1;
+
+.tap-to-reveal__toggle:hover {
+  background: var(--color-surface-hover, rgba(0, 0, 0, 0.04));
+  color: var(--color-text, #333);
 }

@@ -19,9 +19,6 @@ export default function DownloadAppSection() {
         <div className="download-app__icon" aria-hidden="true">📲</div>
         <div className="download-app__body">
           <h3>Download RentaPay App</h3>
-          <p className="download-app__desc">
-            Get the RentaPay app on your phone.
-          </p>
           <a
             href={APK_PATH}
             download="RentaPay.apk"

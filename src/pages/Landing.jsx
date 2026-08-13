@@ -4,7 +4,6 @@ import HeroPhotoBackground from '../components/HeroPhotoBackground.jsx';
 import PlatformReviews from '../components/PlatformReviews.jsx';
 import InstallAppBanner from '../components/InstallAppBanner.jsx';
 import DownloadAppSection from '../components/DownloadAppSection.jsx';
-import LandingLoginCard from '../components/LandingLoginCard.jsx';
 import './Landing.css';
 
 /**
@@ -24,9 +23,11 @@ export default function Landing() {
         <nav className="landing__nav-links">
           <Link to="/find-a-house" className="landing__nav-link">Browse listings</Link>
           <Link to="/resources" className="landing__nav-link">Resources</Link>
-          <Link to="/login" className="landing__nav-link">Log in</Link>
-          <Link to="/register" className="landing__nav-cta">Get started</Link>
         </nav>
+        <div className="landing__nav-actions">
+          <Link to="/login" className="landing__nav-login">Log in</Link>
+          <Link to="/register" className="landing__nav-cta">Get started</Link>
+        </div>
       </header>
 
       <section className="landing__hero">
@@ -52,8 +53,6 @@ export default function Landing() {
               <Link to="/find-a-house" className="landing__btn landing__btn--secondary">Browse listings</Link>
             </div>
           </div>
-
-          <LandingLoginCard />
         </div>
       </section>
 
@@ -93,7 +92,6 @@ export default function Landing() {
       <section className="landing__features">
         <div className="landing__features-inner">
           <h2>Everything rent management should be</h2>
-          <p className="landing__features-sub">Premium tools, no premium price.</p>
           <div className="landing__feature-grid">
             <div className="landing__feature">
               <span className="landing__feature-icon">💳</span>

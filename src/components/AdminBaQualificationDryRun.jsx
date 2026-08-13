@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
+import TapToReveal from './TapToReveal.jsx';
 import './AdminBaQualificationDryRun.css';
 
 /**
@@ -50,10 +51,10 @@ export default function AdminBaQualificationDryRun({ token }) {
       <div className="admin-ba-dry-run__header">
         <div>
           <h3>Qualification dry-run</h3>
-          <p className="admin-ba-dry-run__hint">
+          <TapToReveal className="admin-ba-dry-run__hint">
             Runs the qualification check against real data - nothing is written, no BA is notified. Use this right after changing payout rates or commission tiers to see what
             WOULD happen on the next real run.
-          </p>
+          </TapToReveal>
         </div>
         <div className="admin-ba-dry-run__actions">
           <Button onClick={handleRun} disabled={running}>

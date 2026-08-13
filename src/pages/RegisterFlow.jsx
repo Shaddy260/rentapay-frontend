@@ -24,7 +24,7 @@ import './RegisterFlow.css';
  * right here (editEmail) instead of being stuck waiting on a code that
  * can never arrive.
  */
-function VerifyEmailStep({ landlordId, email, onEmailCorrected, onVerified, onBack }) {
+function VerifyEmailStep({ landlordId, email, onEmailCorrected, onVerified }) {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -81,9 +81,6 @@ function VerifyEmailStep({ landlordId, email, onEmailCorrected, onVerified, onBa
 
   return (
     <div className="register-page__section-divider u-text-left">
-      <button type="button" className="add-tenant-back u-mb-4 u-inline-block" onClick={onBack}>
-        ← Back
-      </button>
       <h2>Verify your email</h2>
 
       {editingEmail ? (
@@ -135,7 +132,7 @@ function VerifyEmailStep({ landlordId, email, onEmailCorrected, onVerified, onBa
     </div>
   );
 }
-import { BASE_RATE, previewCost } from '../utils/pricing.js';
+import { loadPricingSettings, getCachedPricingSettings, previewCost } from '../utils/pricing.js';
 
 const STEPS = [
   { key: 'details', title: 'Your details', subtitle: 'Name, phone, plan' },
@@ -147,19 +144,30 @@ const STEPS = [
   { key: 'done', title: 'All set', subtitle: 'Dashboard unlocked' },
 ];
 
-// Everything captured here survives a page refresh mid-registration.
-// Without this, refreshing on the M-Pesa-pending or OTP step loses
-// landlordId/checkoutRequestId entirely - the account already exists
-// server-side with a pending payment, but the frontend would have no
-// way to resume, leaving the person stuck. sessionStorage (not
-// localStorage) is used deliberately: it clears when the tab closes,
-// which is the right lifetime for a half-finished signup.
+// Everything captured here survives a page refresh mid-registration -
+// AND surviving the tab/app being closed entirely and reopened much
+// later (direct request: "remember the last stage a user was at even
+// if he closes the phone and comes back even after 100 days"). This
+// is why localStorage is used here, not sessionStorage - sessionStorage
+// clears the moment the tab/app closes, which used to strand a
+// landlord who paid manually, closed the app while waiting for an
+// admin to confirm it, and came back days later: they'd land back at
+// step 0 with no memory of the account they already half-created.
+// A generous TTL guards against resuming into a genuinely stale/
+// abandoned attempt indefinitely - see PROGRESS_TTL_MS below.
 const STORAGE_KEY = 'rentapay_register_progress';
+const PROGRESS_TTL_MS = 100 * 24 * 60 * 60 * 1000; // 100 days
 
 function loadPersistedProgress() {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.savedAt && Date.now() - parsed.savedAt > PROGRESS_TTL_MS) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null; // corrupted/blocked storage - just start fresh
   }
@@ -167,9 +175,9 @@ function loadPersistedProgress() {
 
 function persistProgress(snapshot) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...snapshot, savedAt: Date.now() }));
   } catch {
-    // sessionStorage can throw in private-browsing/storage-full edge
+    // localStorage can throw in private-browsing/storage-full edge
     // cases - registration still works, the person just loses resume
     // capability on refresh, which is a reasonable degradation.
   }
@@ -273,6 +281,17 @@ export default function RegisterFlow() {
   // Only meaningful for the manual-entry path - link-based codes never
   // surface this to the person, per the "fail silently" rule above.
   const [referralNotFound, setReferralNotFound] = useState(false);
+
+  const [, setPricingLoaded] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    // Live rate/discount tiers from admin's current settings, not a
+    // hardcoded number - see utils/pricing.js. setPricingLoaded just
+    // forces a re-render once it resolves so the cost preview below
+    // picks up the freshly-cached values.
+    loadPricingSettings().then(() => { if (!cancelled) setPricingLoaded(true); });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const code = referralCode.trim();
@@ -464,7 +483,7 @@ export default function RegisterFlow() {
   // a value; otherwise show 0.
   const cost = form.unitsCount && form.periodMonths
     ? previewCost(Number(form.unitsCount), Number(form.periodMonths))
-    : { rate: BASE_RATE, discount: 0, total: 0 };
+    : { rate: getCachedPricingSettings().baseRatePerUnitPerMonth, discount: 0, total: 0 };
 
   function updateForm(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -820,7 +839,7 @@ export default function RegisterFlow() {
       // Payment is confirmed, so a normal login will succeed and land
       // them back on this exact step via the resumingLoggedInLandlord
       // shortcut above.
-      sessionStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY);
       sessionStorage.setItem('rentapay_info_message', 'Payment confirmed! Please log in to continue setting up your account.');
       navigate('/login');
       return;
@@ -1299,7 +1318,7 @@ export default function RegisterFlow() {
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="password">Password<InfoTip text="Can't be your phone number or your name." /></label>
-                    <PasswordInput id="password" required value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="Min 8 characters, 1 uppercase, 1 number, 1 symbol" />
+                    <PasswordInput id="password" required value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="At least 6 characters" />
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="unitsCount">Number of units</label>
@@ -1352,20 +1371,12 @@ export default function RegisterFlow() {
               email={form.email}
               onEmailCorrected={(newEmail) => updateForm('email', newEmail)}
               onVerified={() => setStepIndex(2)}
-              onBack={() => setStepIndex(0)}
             />
           )}
 
           {/* STEP 2: M-Pesa payment pending */}
           {stepIndex === 2 && (
             <div className="mpesa-pending">
-              <button
-                type="button"
-                className="add-tenant-back u-mb-4 u-inline-block"
-                onClick={() => setStepIndex(1)}
-              >
-                ← Back
-              </button>
               {paymentInitiating ? (
                 <>
                   <h2>Starting your payment…</h2>
@@ -1601,7 +1612,6 @@ export default function RegisterFlow() {
                   </div>
                 )}
                 <div className="register-page__actions">
-                  <Button type="button" variant="ghost" onClick={() => setStepIndex(3)}>Back</Button>
                   <Button type="submit" variant="primary">Continue</Button>
                 </div>
               </form>
@@ -1724,7 +1734,6 @@ export default function RegisterFlow() {
               </div>
 
               <div className="register-page__actions">
-                <Button type="button" variant="ghost" onClick={() => setStepIndex(4)}>Back</Button>
                 <Button type="button" variant="primary" loading={loading} disabled={units.length === 0} onClick={handleUnitsSubmit}>
                   Continue with {units.length} unit{units.length === 1 ? '' : 's'}
                 </Button>
@@ -1760,7 +1769,7 @@ export default function RegisterFlow() {
                   authenticated right here, just go straight there -
                   zero extra round trips.
                 */}
-                <Button variant="primary" onClick={() => { sessionStorage.removeItem(STORAGE_KEY); navigate('/dashboard'); }}>
+                <Button variant="primary" onClick={() => { localStorage.removeItem(STORAGE_KEY); navigate('/dashboard'); }}>
                   Go to my dashboard
                 </Button>
               </div>

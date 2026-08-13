@@ -15,6 +15,7 @@ import { api, ApiError } from '../api/client.js';
 import ProfilePhotoUpload from '../components/ProfilePhotoUpload.jsx';
 import './Settings.css';
 import './BaPortal.css';
+import TapToReveal from '../components/TapToReveal.jsx';
 
 /**
  * Build spec Phase 3 - BA Portal: Login, Redirect, Shell.
@@ -449,7 +450,7 @@ function BaLeaderboardPanel({ token }) {
   return (
     <section className="ba-leaderboard-panel">
       <h2>Leaderboard</h2>
-      <p className="ba-leaderboard-panel__hint">Ranked by qualified landlords onboarded. Opt in from Settings to appear here - your own rank is always shown below.</p>
+      <TapToReveal className="ba-leaderboard-panel__hint">Ranked by qualified landlords onboarded. Opt in from Settings to appear here - your own rank is always shown below.</TapToReveal>
 
       <div className="ba-earnings-panel__period-bar">
         {[
@@ -709,9 +710,9 @@ function BaSettingsPanel({ profile, token, onProfileChange }) {
       <h2 className="settings-cluster-title u-mt-6">Notification preferences</h2>
       <section className="settings-card">
         <h2>Push notifications</h2>
-        <p className="settings-card__hint">
+        <TapToReveal className="settings-card__hint">
           Get notified on this device when one of your onboarded landlords qualifies for payout.
-        </p>
+        </TapToReveal>
         {pushState === 'unsupported' && <p className="settings-card__hint">Push notifications aren't supported on this browser.</p>}
         {pushState === 'denied' && <p className="settings-card__hint">Notifications are blocked for this site in your browser settings.</p>}
         {pushState === 'granted' && <p className="settings-card__hint">✅ Push notifications are on for this device.</p>}
@@ -926,9 +927,9 @@ export default function BaPortal() {
                   </button>
                 </div>
               </div>
-              <p className="ba-referral-card__hint">
+              <TapToReveal className="ba-referral-card__hint">
                 Walk the landlord through registering directly on this link - it auto-tags their account to you the moment they sign up.
-              </p>
+              </TapToReveal>
             </section>
 
             <BaDashboardStats token={token} />

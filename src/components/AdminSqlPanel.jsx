@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import './StatisticsPanel.css';
 import './AdminSqlPanel.css';
 import Skeleton from './Skeleton.jsx';
+import TapToReveal from './TapToReveal.jsx';
 
 // "I also want all things in supabase be shown in admin portal and any
 // edit in admin portal reflects in supabase as well - let it have its
@@ -90,9 +91,9 @@ export default function AdminSqlPanel({ token }) {
       <div className="tenant-section__header-row">
         <h2>SQL — Supabase Tables</h2>
       </div>
-      <p className="tenant-portal-hint">
+      <TapToReveal className="tenant-portal-hint">
         Live view of your Supabase tables. Click any editable cell to change it — saves straight to Supabase. Greyed cells are read-only or hidden (passwords, OTP codes) for safety.
-      </p>
+      </TapToReveal>
       {activeTable === 'landlords' && (
         <p className="tenant-portal-hint admin-sql-panel__note">
           ⚠️ Each apartment (<code>properties</code> table) can have its own independent <code>subscription_expires_at</code>/<code>unit_limit</code>. Editing a landlord row here only affects apartments still riding the landlord's pooled plan — for an apartment with its own subscription, edit its row in <strong>properties</strong> instead.

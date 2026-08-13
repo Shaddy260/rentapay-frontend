@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import TapToReveal from './TapToReveal.jsx';
 
 /**
  * FEATURE (direct request: "in-app rent negotiation / payment plan
@@ -200,9 +201,9 @@ function PaymentPlanBuilderModal({ token, defaultTotal, onClose, onDone }) {
         </div>
         <form className="modal-form" onSubmit={submit}>
           {error && <p className="modal-error">{error}</p>}
-          <p className="tenant-portal-hint">
+          <TapToReveal className="tenant-portal-hint">
             Split what you owe into installments your landlord can approve or decline. This sends them the proposal directly in chat.
-          </p>
+          </TapToReveal>
 
           {installments.map((inst, idx) => (
             <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 8 }}>

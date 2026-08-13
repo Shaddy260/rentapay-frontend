@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../api/client.js';
 import Button from './Button.jsx';
 import './BulkRentChangeModal.css';
+import TapToReveal from './TapToReveal.jsx';
 
 // Direct request: "bulk actions are largely absent - a landlord with
 // many units raising rent 10% across the board currently has to
@@ -163,7 +164,7 @@ export default function BulkRentChangeModal({ token, properties, onClose, onDone
               <input type="date" required value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} />
             )}
 
-            <p className="bulk-rent-modal__hint">Every affected tenant is notified individually, same as a single rent change.</p>
+            <TapToReveal className="bulk-rent-modal__hint">Every affected tenant is notified individually, same as a single rent change.</TapToReveal>
             <div className="modal-actions">
               <button type="button" className="ghost-link" onClick={onClose}>Cancel</button>
               <Button type="submit" variant="primary" loading={busy}>Apply</Button>

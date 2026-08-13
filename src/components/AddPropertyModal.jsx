@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from './Button.jsx';
 import InfoTip from './InfoTip.jsx';
 import ManualPaymentHelp from './ManualPaymentHelp.jsx';
 import { api, ApiError } from '../api/client.js';
 import { KENYA_COUNTIES } from '../constants/kenyaCounties.js';
 import { KENYA_CONSTITUENCIES } from '../constants/kenyaConstituencies.js';
-import { previewCost } from '../utils/pricing.js';
+import { loadPricingSettings, previewCost } from '../utils/pricing.js';
 import './AddPropertyModal.css';
 
 /**
@@ -93,6 +93,16 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
   const filteredConstituencies = (KENYA_CONSTITUENCIES[form.county] || []).filter((c) =>
     c.toLowerCase().includes(constituencySearch.trim().toLowerCase())
   );
+
+  const [, setPricingLoaded] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    // Live rate/discount tiers from admin's current settings - see
+    // utils/pricing.js. Forces a re-render once loaded so the cost
+    // preview below reflects the freshly-cached values.
+    loadPricingSettings().then(() => { if (!cancelled) setPricingLoaded(true); });
+    return () => { cancelled = true; };
+  }, []);
 
   const cost = form.unitsCount && form.periodMonths
     ? previewCost(Number(form.unitsCount), Number(form.periodMonths))

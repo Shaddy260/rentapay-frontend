@@ -57,6 +57,10 @@ export default function AdminLoyaltyDiscounts({ token }) {
   const CONSUMED_BY_LABELS = { subscription_payment: 'M-Pesa renewal', manual_payment: 'Manual payment', property_payment: 'Property purchase/renewal' };
 
   const loadCandidates = useCallback(() => {
+    // Skip while the "minimum consecutive months" field is mid-edit
+    // (briefly empty as the user clears it to type a new value) -
+    // firing a request with '' would error and flash the error state.
+    if (minMonths === '') return;
     setCandidates(null);
     setCandidatesError('');
     setSelected(new Set());
@@ -166,7 +170,24 @@ export default function AdminLoyaltyDiscounts({ token }) {
               type="number"
               min="1"
               value={minMonths}
-              onChange={(e) => setMinMonths(Number(e.target.value) || 1)}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === '') {
+                  // Let the field go empty while typing instead of
+                  // snapping back to 1, which previously made the old
+                  // digit stick around (e.g. clearing "1" then typing
+                  // "2" produced "12" instead of "2").
+                  setMinMonths('');
+                  return;
+                }
+                const parsed = Number(raw);
+                if (!Number.isNaN(parsed)) setMinMonths(parsed);
+              }}
+              onBlur={() => {
+                // Only fall back to the default once the user is done
+                // editing, not on every keystroke.
+                if (minMonths === '' || minMonths < 1) setMinMonths(1);
+              }}
             />
           </label>
           <Button variant="ghost" onClick={loadCandidates}>Refresh</Button>

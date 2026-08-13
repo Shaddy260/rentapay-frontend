@@ -309,6 +309,12 @@ export const api = {
   adminResetPassword: (payload) => request('/auth/admin/reset-password', { method: 'POST', body: payload }),
   changeAdminPassword: (payload, token) => request('/auth/admin/change-password', { method: 'POST', body: payload, token }),
   getHelpContacts: () => request('/settings/public/help-contacts'),
+
+  // Live base rate + period discount tiers, no auth - used to preview
+  // cost on the signup screen and "add a property" flow so they never
+  // show a stale/hardcoded price after admin changes it.
+  getPublicSubscriptionPricing: () => request('/settings/public/subscription-pricing'),
+
   getAdminSettings: (token) => request('/admin/settings', { token }),
   updateHelpEmail: (payload, token) => request('/admin/settings/help-contacts', { method: 'PATCH', body: payload, token }),
   listHelpContactNumbers: (token) => request('/admin/settings/help-contacts/numbers', { token }),

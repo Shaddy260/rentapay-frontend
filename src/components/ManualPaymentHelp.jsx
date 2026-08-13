@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useHelpContacts } from './HelpButton.jsx';
 import { useToast } from './Toast.jsx';
 import './ManualPaymentHelp.css';
+import TapToReveal from './TapToReveal.jsx';
 
 // Shared across every "waiting for manual payment verification" screen -
 // landlord sign-up, landlord subscription renewal/failed-prompt (verified
@@ -83,10 +84,10 @@ export default function ManualPaymentHelp({ variant = 'admin', landlordContact, 
             This is taking longer than usual - please call customer care on <strong>{callNumbersText}</strong> so we can help you directly.
           </p>
         ) : (
-          <p className="manual-payment-help__note">
+          <TapToReveal className="manual-payment-help__note">
             Manual payments take a while to confirm since they're checked by hand - this can take anywhere from a few
             minutes up to about an hour. No need to resubmit; you'll be notified the moment it's verified.
-          </p>
+          </TapToReveal>
         )
       ) : (
         <p className="manual-payment-help__note">

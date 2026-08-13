@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, ApiError } from '../api/client.js';
 import './AnnualReportPanel.css';
+import TapToReveal from './TapToReveal.jsx';
 
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = [currentYear, currentYear - 1, currentYear - 2];
@@ -83,9 +84,9 @@ export default function AnnualReportPanel({ token, propertyId, isCaretaker = fal
           </button>
         )}
       </div>
-      <p className="tenant-portal-hint">
+      <TapToReveal className="tenant-portal-hint">
         The P&L report includes expected vs. collected rent, expenses, and net income per month — opens directly in Excel or Google Sheets.
-      </p>
+      </TapToReveal>
 
       {showTaxForm && !isCaretaker && (
         <div className="annual-report-panel__tax-form">

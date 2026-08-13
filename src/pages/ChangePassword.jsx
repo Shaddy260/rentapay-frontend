@@ -88,7 +88,7 @@ export default function ChangePassword() {
         <div className="login-page__brand">RentaPay</div>
         <h1>Set a new password</h1>
         <p className="login-page__intro">
-          Choose a password you'll remember. At least 8 characters, with an uppercase letter, a number, and a special character.
+          Choose a password you'll remember. At least 6 characters — letters, numbers, or both.
         </p>
 
         <form onSubmit={handleSubmit}>
