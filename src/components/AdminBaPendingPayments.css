@@ -1,0 +1,177 @@
+.admin-ba-pending__link-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: var(--color-ink-tint, #f4f2ee);
+}
+
+.admin-ba-pending__link-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-ba-pending__link-label {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-muted, #888);
+}
+
+.admin-ba-pending__link-value {
+  font-size: var(--text-sm, 0.9375rem);
+  word-break: break-all;
+}
+
+.admin-ba-pending__awaiting {
+  font-size: var(--text-sm, 0.9375rem);
+  color: #8a5a00;
+  background: rgba(230, 160, 0, 0.08);
+  border: 1px solid rgba(230, 160, 0, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+}
+
+.admin-ba-pending__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-ba-pending__count {
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-muted, #888);
+}
+
+.admin-ba-pending__notice {
+  color: #2e7d32;
+  margin-bottom: 12px;
+}
+
+.admin-ba-pending__error {
+  color: #A33;
+  margin-bottom: 12px;
+}
+
+.admin-ba-pending__empty {
+  color: var(--color-muted, #888);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-pending__group {
+  margin-bottom: 18px;
+}
+
+.admin-ba-pending__group-header {
+  margin-bottom: 8px;
+}
+
+.admin-ba-pending__group-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-pending__group-count {
+  color: var(--color-muted, #888);
+  font-weight: normal;
+}
+
+.admin-ba-pending__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.admin-ba-pending__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--color-surface, #fff);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.admin-ba-pending__card:has(input:checked) {
+  border-color: var(--color-ink, #22282A);
+  background: var(--color-ink-tint, #f4f2ee);
+}
+
+.admin-ba-pending__card input[type='checkbox'] {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.admin-ba-pending__card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-ba-pending__card-line1 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-pending__ba-code {
+  color: var(--color-muted, #888);
+  font-size: var(--text-xs, 0.8125rem);
+}
+
+.admin-ba-pending__period {
+  margin-left: auto;
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-muted, #888);
+  background: var(--color-ink-tint, #f4f2ee);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+.admin-ba-pending__card-line2 {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-muted, #888);
+  word-break: break-all;
+}
+
+.admin-ba-pending__card-line3 {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-muted, #888);
+}
+
+.admin-ba-pending__card-line4 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-pending__mpesa {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-muted, #888);
+}
+
+@media (max-width: 700px) {
+  .admin-ba-pending__cards {
+    grid-template-columns: 1fr;
+  }
+}

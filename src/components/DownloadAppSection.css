@@ -1,82 +1,38 @@
-/* Reuses the landing page's gold/surface tokens (defined on .landing in
-   Landing.css) so it sits consistently wherever it's rendered on that
-   page - no new palette introduced. */
-.download-app {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0 var(--space-6) var(--space-8);
-}
-
-.download-app__card {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-5);
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-hairline);
-  border-left: 3px solid var(--gold);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  box-shadow: var(--shadow-sm);
-}
-
-.download-app__icon {
-  font-size: 2rem;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.download-app__body h3 {
-  margin: 0 0 var(--space-2) 0;
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  color: var(--color-ink);
-}
-
-.download-app__desc {
-  margin: 0 0 var(--space-4) 0;
-  color: var(--color-ink-soft);
-  font-size: var(--text-sm);
-}
-
-.download-app__btn {
+/* Small pill button sitting in the landing page's top nav, next to
+   Log in / Get started (see .landing__nav-actions in Landing.css).
+   Reuses the landing page's gold/surface tokens so it stays
+   consistent wherever it's rendered. */
+.download-app-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: var(--text-base);
-  font-weight: 700;
-  padding: 0.8rem 1.6rem;
+  gap: 0.35rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  background: var(--gold-soft-bg);
+  border: 1px solid var(--gold-light);
+  padding: 0.45rem 0.85rem;
   border-radius: var(--radius-md);
   text-decoration: none;
-  background: linear-gradient(135deg, var(--gold-light), var(--gold) 60%, var(--gold-dark));
-  color: var(--color-primary-dark);
-  box-shadow: 0 6px 20px rgba(201, 162, 75, 0.35);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
 }
 
-.download-app__btn:hover {
-  filter: brightness(1.06);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(201, 162, 75, 0.45);
+.download-app-pill:hover {
+  background: var(--gold-light);
+  transform: translateY(-1px);
 }
 
-.download-app__note {
-  margin: var(--space-3) 0 0 0;
-  font-size: var(--text-xs);
-  color: var(--color-ink-soft);
-  max-width: 44ch;
-}
-
-.download-app__version {
-  margin: var(--space-2) 0 0 0;
-  font-size: var(--text-xs);
-  color: var(--color-ink-soft);
-  opacity: 0.65;
-  font-family: var(--font-mono, monospace);
+.download-app-pill__icon {
+  font-size: 1em;
+  line-height: 1;
 }
 
 @media (max-width: 640px) {
-  .download-app__card {
-    flex-direction: column;
-    align-items: flex-start;
+  .download-app-pill__label {
+    display: none;
+  }
+  .download-app-pill {
+    padding: 0.45rem 0.6rem;
   }
 }

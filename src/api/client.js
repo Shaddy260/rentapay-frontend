@@ -463,7 +463,6 @@ export const api = {
   createUnit: (payload, token) => request('/units', { method: 'POST', body: payload, token }),
   createUnitsBulk: (payload, token) => request('/units/bulk', { method: 'POST', body: payload, token }),
   updateRent: (unitId, payload, token) => request(`/units/${unitId}/rent`, { method: 'PATCH', body: payload, token }),
-  renameUnit: (unitId, payload, token) => request(`/units/${unitId}/name`, { method: 'PATCH', body: payload, token }),
   updateDueDate: (unitId, payload, token) => request(`/units/${unitId}/due-date`, { method: 'PATCH', body: payload, token }),
   updateUnitPaymentOverride: (unitId, payload, token) => request(`/units/${unitId}/payment-override`, { method: 'PATCH', body: payload, token }),
   updateUnitStatus: (unitId, payload, token) => request(`/units/${unitId}/status`, { method: 'PATCH', body: payload, token }),
@@ -986,6 +985,28 @@ export const api = {
   confirmBaEmailOtp: (email, code) => request('/brand-ambassadors/email/verify-otp', { method: 'POST', body: { email, code } }),
   submitBaOnboarding: (payload) => request('/brand-ambassadors/apply', { method: 'POST', body: payload }),
   validateBaOnboardingLink: (onboardingToken) => request(`/brand-ambassadors/onboarding-link/validate?token=${encodeURIComponent(onboardingToken || '')}`),
+
+  // BA Monthly Payment Details & Payout Workflow - Phase 2 public
+  // submission form (/ba-payout-submit?token=...).
+  validateBaPayoutLink: (token) => request(`/brand-ambassadors/payout-link/validate?token=${encodeURIComponent(token || '')}`),
+  submitBaPayoutDetails: (payload) => request('/brand-ambassadors/payout-link/submit', { method: 'POST', body: payload }),
+  getMyBaPayoutSubmission: (token, email) =>
+    request(`/brand-ambassadors/payout-link/my-submission?token=${encodeURIComponent(token || '')}&email=${encodeURIComponent(email || '')}`),
+  getBaPayoutLinkCurrent: (token) => request('/brand-ambassadors/payout-link/current', { token }),
+  getBaPendingPayments: (token) => request('/brand-ambassadors/payout-link/pending', { token }),
+  getBaAwaitingPaymentDetails: (token) => request('/brand-ambassadors/payout-link/awaiting-details', { token }),
+  markBaPaymentsPaid: (submissionIds, token) =>
+    request('/brand-ambassadors/payout-link/mark-paid', { method: 'POST', body: { submissionIds }, token }),
+  getBaCompletedPeriods: (token) => request('/brand-ambassadors/payout-link/completed-periods', { token }),
+  getBaCompletedPayments: (periodKey, token) =>
+    request(`/brand-ambassadors/payout-link/completed${periodKey ? `?periodKey=${encodeURIComponent(periodKey)}` : ''}`, { token }),
+  downloadBaCompletedPayoutPdf: (periodKey, token) =>
+    downloadBaFile(
+      '/brand-ambassadors/payout-link/completed/pdf',
+      periodKey ? { periodKey } : {},
+      token,
+      `ba-payout-completed-${periodKey || 'all'}.pdf`
+    ),
 
   // Phase 9 - public marketing landlord-lead capture form. No auth.
   submitLandlordLead: (payload) => request('/public/landlord-leads', { method: 'POST', body: payload }),

@@ -30,7 +30,6 @@ import SupportChatWidget from '../components/SupportChatWidget.jsx';
 import { useSharedPoll } from '../utils/sharedPoll.js';
 import PendingPaymentsBell from '../components/PendingPaymentsBell.jsx';
 import VirtualAssistant, { buildLandlordAssistantSteps } from '../components/VirtualAssistant.jsx';
-import RateRentaPayCard from '../components/RateRentaPayCard.jsx';
 import PaymentMethodBadge from '../components/PaymentMethodBadge.jsx';
 // PERFORMANCE FIX (direct request: audit for slow-loading code):
 // TenantListExport pulls in the `xlsx` library, which is large
@@ -1381,12 +1380,6 @@ export default function Dashboard() {
             onConfirmed={() => load(activePropertyId)}
           />
         )}
-
-        {/* Rate RentaPay - moved out of Settings (spec: Settings &
-            Financial Statistics section 2.4), collapsed by default so
-            it stays a light prompt rather than pushing the page's
-            actual work down. */}
-        <RateRentaPayCard token={token} />
 
         {/* Unit tiles - full-fill color-coded heat-map grid, grouped by
             status, paginated into their own pages per status (redesign

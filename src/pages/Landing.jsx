@@ -25,6 +25,7 @@ export default function Landing() {
           <Link to="/resources" className="landing__nav-link">Resources</Link>
         </nav>
         <div className="landing__nav-actions">
+          <DownloadAppSection />
           <Link to="/login" className="landing__nav-login">Log in</Link>
           <Link to="/register" className="landing__nav-cta">Get started</Link>
         </div>
@@ -128,8 +129,9 @@ export default function Landing() {
           from InstallAppBanner above - that one triggers the browser's
           native PWA install prompt; this one is a plain static-file
           download of the signed TWA-wrapped APK for people who want the
-          app directly, since there's no Play Store listing yet. */}
-      <DownloadAppSection />
+          app directly, since there's no Play Store listing yet.
+          FIX (direct request): moved into the top nav next to Log in /
+          Get started as a small pill - see DownloadAppSection.jsx. */}
 
       <PlatformReviews />
 

@@ -53,6 +53,7 @@ const SharedReputation = lazy(() => import('./pages/SharedReputation.jsx'));
 const ReceiptVerify = lazy(() => import('./pages/ReceiptVerify.jsx'));
 const TenantOnboarding = lazy(() => import('./pages/TenantOnboarding.jsx'));
 const BaOnboarding = lazy(() => import('./pages/BaOnboarding.jsx'));
+const BaPayoutSubmit = lazy(() => import('./pages/BaPayoutSubmit.jsx'));
 const LandlordLeadForm = lazy(() => import('./pages/LandlordLeadForm.jsx'));
 const BaTerms = lazy(() => import('./pages/BaTerms.jsx'));
 const RegisterFlow = lazy(() => import('./pages/RegisterFlow.jsx'));
@@ -125,6 +126,10 @@ export default function App() {
           {/* BUILD SPEC PHASE 2: the one generic, always-live public
               "Become a Brand Ambassador" link - no token in the URL. */}
           <Route path="/become-a-ba" element={<BaOnboarding />} />
+          {/* BA Monthly Payment Details & Payout Workflow - Phase 2:
+              public, token-carrying "submit your payout M-Pesa
+              details" link admin shares each month. */}
+          <Route path="/ba-payout-submit" element={<BaPayoutSubmit />} />
           <Route path="/partner-with-us" element={<LandlordLeadForm />} />
           <Route path="/ba-terms" element={<BaTerms />} />
           <Route path="/register" element={<RegisterFlow />} />

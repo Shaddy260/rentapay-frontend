@@ -65,8 +65,6 @@ export default function UnitDetail() {
   const [notice, setNotice] = useState(''); // success/info banner text
 
   // Inline-edit state
-  const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState('');
   const [editingRent, setEditingRent] = useState(false);
   const [rentDraft, setRentDraft] = useState('');
   const [rentEffectiveOption, setRentEffectiveOption] = useState('immediately'); // 'immediately' | 'next_month' | 'custom'
@@ -227,22 +225,6 @@ export default function UnitDetail() {
       setError(err.message);
     } finally {
       setDepositBusy(false);
-    }
-  }
-
-  async function handleSaveName() {
-    if (!nameDraft.trim()) return;
-    setBusy(true);
-    setError('');
-    try {
-      await api.renameUnit(unitId, { newUnitName: nameDraft.trim() }, token);
-      setNotice('Unit renamed.');
-      setEditingName(false);
-      load();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -491,32 +473,9 @@ export default function UnitDetail() {
         {/* Card 1: Unit Info (redesign spec section 3, card order #1) */}
         <section className="unit-detail-card">
           <h2 className="unit-detail-card__header">Unit info</h2>
-          {editingName ? (
-            <form
-              className="unit-name-edit-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSaveName();
-              }}
-            >
-              <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} autoFocus />
-              <button type="submit" disabled={busy}>Save</button>
-              <button type="button" className="ghost-link" onClick={() => setEditingName(false)}>Cancel</button>
-            </form>
-          ) : (
-            <div className="unit-info-name-row">
-              <h1 className="unit-info-name">Unit {unit.unit_name}</h1>
-              <button
-                className="ghost-link"
-                onClick={() => {
-                  setNameDraft(unit.unit_name);
-                  setEditingName(true);
-                }}
-              >
-                Rename
-              </button>
-            </div>
-          )}
+          <div className="unit-info-name-row">
+            <h1 className="unit-info-name">Unit {unit.unit_name}</h1>
+          </div>
           <p className="unit-detail-type">{unit.unit_type}</p>
           <span className="unit-detail-code">{unit.unit_payment_code}</span>
         </section>
