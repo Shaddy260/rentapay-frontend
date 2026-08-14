@@ -4,7 +4,6 @@ import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import InfoTip from './InfoTip.jsx';
 import './AdminLoyaltyDiscounts.css';
-import InfoTip from './InfoTip.jsx';
 
 /**
  * Detects landlords whose subscription has run for consecutive
