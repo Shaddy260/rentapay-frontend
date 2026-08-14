@@ -11,6 +11,7 @@ import Faq from '../components/Faq.jsx';
 import { openWhatsAppReminder } from '../utils/whatsapp.js';
 import { HELP_WHATSAPP } from '../components/HelpButton.jsx';
 import { initPushSubscription } from '../utils/push.js';
+import { useSharedPoll } from '../utils/sharedPoll.js';
 import { api, ApiError } from '../api/client.js';
 import ProfilePhotoUpload from '../components/ProfilePhotoUpload.jsx';
 import './Settings.css';
@@ -445,7 +446,6 @@ function BaLeaderboardPanel({ token }) {
   }, [period, token]);
 
   const topN = (data?.leaderboard || []).slice(0, LEADERBOARD_TOP_N);
-  const myRowInTopN = topN.some((row) => row.isMe);
 
   return (
     <section className="ba-leaderboard-panel">
@@ -498,12 +498,18 @@ function BaLeaderboardPanel({ token }) {
           </table>
           </div>
 
-          {data?.myRank && !myRowInTopN && (
+          {/* Always rendered as its own separate row, regardless of whether
+              this BA also appears in the opted-in table above. The table
+              ranks only opted-in BAs (#1, #2, ... among that subset), which
+              is a different number from this BA's real standing among every
+              active BA - so "you're #2" in the table above and "#2 of 47
+              overall" here can legitimately both be true and both need to be
+              visible, not one hiding the other. */}
+          {data?.myRank ? (
             <div className="ba-leaderboard-panel__my-rank">
-              Your rank: #{data.myRank.rank} of {data.myRank.totalActiveBAs} · {data.myRank.qualifiedCount} qualified
+              Your rank (all active BAs): #{data.myRank.rank} of {data.myRank.totalActiveBAs} · {data.myRank.qualifiedCount} qualified
             </div>
-          )}
-          {!data?.myRank && (
+          ) : (
             <div className="ba-leaderboard-panel__my-rank">Your rank isn't available right now.</div>
           )}
         </>
@@ -702,8 +708,10 @@ function BaSettingsPanel({ profile, token, onProfileChange }) {
 
       <h2 className="settings-cluster-title u-mt-6">Account &amp; security</h2>
       <section className="settings-card">
-        <h2>Password</h2>
-        <p className="settings-card__hint">Change the password you use to log in.</p>
+        <h2>
+          Password
+          <InfoTip text="Change the password you use to log in." />
+        </h2>
         <Button variant="ghost" onClick={() => navigate('/change-password')}>Change password</Button>
       </section>
 
@@ -736,6 +744,101 @@ function BaSettingsPanel({ profile, token, onProfileChange }) {
   );
 }
 
+/**
+ * BA-scoped Announcements tab. BAs aren't attached to a landlord
+ * account, so the only announcements that can ever reach them are
+ * platform-wide broadcasts targeted at group 'ba' or 'all' (see the
+ * BA branch in announcement.controller.js's listAnnouncements) - a BA
+ * never sends announcements themselves and never sees a "delete for
+ * everyone" option, only "delete for me" (same as a tenant).
+ * This used to only reach BAs via SMS/push (notify()), with nothing
+ * to see inside the BA portal itself - this tab is what closes that
+ * gap.
+ */
+function BaAnnouncementsPanel({ token, onChange }) {
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api
+      .listAnnouncements(token)
+      .then((res) => setAnnouncements(res.announcements || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  function handleMarkRead(a) {
+    if (a.isRead) return;
+    api
+      .markAnnouncementRead(a.id, token)
+      .then(() => {
+        setAnnouncements((list) => list.map((x) => (x.id === a.id ? { ...x, isRead: true } : x)));
+        onChange?.();
+      })
+      .catch(() => {});
+  }
+
+  function handleDelete(a) {
+    setDeletingId(a.id);
+    api
+      .deleteAnnouncement(a.id, 'self', token)
+      .then(() => {
+        setAnnouncements((list) => list.filter((x) => x.id !== a.id));
+        onChange?.();
+      })
+      .catch(() => {})
+      .finally(() => setDeletingId(null));
+  }
+
+  return (
+    <section className="ba-claim-panel">
+      <h2>Announcements</h2>
+      <InfoTip text={<>
+        Platform-wide messages from RentaPay show up here, in addition to the SMS/push you already get.
+      </>} />
+
+      {loading ? (
+        <Skeleton rows={3} />
+      ) : announcements.length === 0 ? (
+        <p className="ba-claim-panel__empty">No announcements yet.</p>
+      ) : (
+        <ul className="announcement-bell__list ba-announcements-list">
+          {announcements.map((a) => (
+            <li
+              key={a.id}
+              className={`announcement-bell__item ${a.isRead ? '' : 'announcement-bell__item--unread'}`}
+              aria-disabled={deletingId === a.id}
+              onClick={() => handleMarkRead(a)}
+            >
+              <div className="announcement-bell__item-top">
+                <span className={`announcement-bell__sender announcement-bell__sender--${a.sender_role || 'system'}`}>
+                  {a.senderLabel || 'RentaPay'}
+                </span>
+              </div>
+              <p>{a.message}</p>
+              <span className="announcement-bell__time">{new Date(a.created_at).toLocaleString()}</span>
+              <button
+                type="button"
+                className="ba-referral-card__btn u-mt-2"
+                disabled={deletingId === a.id}
+                onClick={(e) => { e.stopPropagation(); handleDelete(a); }}
+              >
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export default function BaPortal() {
   const navigate = useNavigate();
   const token = sessionStorage.getItem('rentapay_token');
@@ -747,6 +850,7 @@ export default function BaPortal() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [announcementUnreadCount, setAnnouncementUnreadCount] = useState(0);
 
   const load = useCallback(() => {
     if (!token) {
@@ -782,6 +886,24 @@ export default function BaPortal() {
   useEffect(() => {
     if (token) initPushSubscription(token);
   }, [token]);
+
+  // Keeps the sidebar's "Announcements" badge current even while the
+  // BA is sitting on a different tab, same lightweight polling every
+  // other bell-style badge in the app already rides (see
+  // AnnouncementBell.jsx).
+  const loadAnnouncementUnreadCount = useCallback(() => {
+    if (!token) return;
+    api
+      .listAnnouncements(token)
+      .then((res) => setAnnouncementUnreadCount(res.unreadCount || 0))
+      .catch(() => {});
+  }, [token]);
+
+  useEffect(() => {
+    loadAnnouncementUnreadCount();
+  }, [loadAnnouncementUnreadCount]);
+
+  useSharedPoll(loadAnnouncementUnreadCount, 30000);
 
   function handleCopyReferralLink() {
     if (!profile?.referralLink) return;
@@ -848,6 +970,7 @@ export default function BaPortal() {
             items: [
               { key: 'landlords', label: 'My Onboarded Landlords', icon: '🧾', onClick: () => setActiveTab('landlords') },
               { key: 'stats', label: 'Stats', icon: '📊', onClick: () => setActiveTab('stats') },
+              { key: 'announcements', label: 'Announcements', icon: '📣', badge: announcementUnreadCount, onClick: () => setActiveTab('announcements') },
             ],
           },
           {
@@ -972,6 +1095,10 @@ export default function BaPortal() {
           <>
             <OnboardedLandlordsPanel token={token} />
           </>
+        )}
+
+        {activeTab === 'announcements' && (
+          <BaAnnouncementsPanel token={token} onChange={loadAnnouncementUnreadCount} />
         )}
 
         {activeTab === 'stats' && <BaStatsPanel token={token} />}

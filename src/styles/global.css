@@ -132,7 +132,8 @@ a {
       of the modal on top of it. Removed those duplicates so this is
       the only .modal-overlay definition left in the app. */
 body:has(.modal-overlay),
-body:has(.rate-reminder-overlay) {
+body:has(.rate-reminder-overlay),
+body:has(.subscription-lock-gate) {
   overflow: hidden;
 }
 
@@ -144,6 +145,7 @@ body:has(.rate-reminder-overlay) {
   max-width: 420px;
   max-height: calc(100vh - 48px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,0.2));
 }
 
@@ -157,6 +159,28 @@ body:has(.rate-reminder-overlay) {
    nothing else on the page does. Deliberately scoped to `table`
    only, not a blanket "make everything scrollable" rule, since the
    request was specifically "lists only, not the whole platform".
+
+   BUG FIX (platform-wide misalignment - every list, every user type):
+   the previous version of this rule also forced `thead`, `tbody`, AND
+   `tr` to `display: table` individually. That doesn't keep them as
+   one table - it turns EACH of them into its own separate, independent
+   table, and each one computes its own column widths purely from its
+   own content, with no relationship to the others. So the header row
+   was one table, and every single body row was ANOTHER table, each
+   sizing its columns differently depending on how long that row's own
+   text happened to be. That's why headers drifted away from the data
+   under them and rows didn't line up with each other - it wasn't a
+   rendering glitch, the rows genuinely were unrelated tables sitting
+   on top of each other.
+
+   Fix: only the table itself needs to switch to a block box so it can
+   scroll on its own. `thead`/`tbody`/`tr` are left at their default
+   table-role display values (table-header-group / table-row-group /
+   table-row) instead of being pulled out into separate tables, so
+   there's exactly one column-width calculation shared by the header
+   and every row, and everything stays in straight, matching columns
+   from top to bottom while the whole thing still scrolls sideways as
+   one unit on narrow screens.
    ===================================================================== */
 @media (max-width: 720px) {
   table {
@@ -165,14 +189,6 @@ body:has(.rate-reminder-overlay) {
     -webkit-overflow-scrolling: touch;
     white-space: nowrap;
     max-width: 100%;
-  }
-
-  table thead,
-  table tbody,
-  table tr {
-    display: table;
-    width: 100%;
-    table-layout: auto;
   }
 }
 
@@ -207,6 +223,7 @@ body:has(.rate-reminder-overlay) {
 .broadcast-panel__thread {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--space-4, 16px);
   display: flex;
   flex-direction: column;

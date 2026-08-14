@@ -283,7 +283,16 @@ export default function TenantPortal() {
     setSavingDetails(true);
     setDetailsError('');
     try {
-      await api.updateOwnProfile(detailsDraft, token);
+      // FIX: email is shown here disabled/locked - display only - but
+      // detailsDraft still carries whatever value was loaded into it.
+      // Sending that key at all (even unchanged) trips the server's
+      // "primary email can't be changed after registration" guard
+      // (see editOwnProfile), which was rejecting every save of this
+      // form - including just a secondary phone or emergency contact
+      // update - with an error about email that had nothing to do
+      // with what was actually being edited.
+      const { email, ...editablePayload } = detailsDraft;
+      await api.updateOwnProfile(editablePayload, token);
       setEditingDetails(false);
       load(); // refresh `profile` with the saved values
     } catch (err) {

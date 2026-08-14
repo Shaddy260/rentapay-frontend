@@ -125,6 +125,7 @@
 .onboarding-requests__scroll {
   max-height: 360px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding-right: 4px;
   display: flex;
   flex-direction: column;

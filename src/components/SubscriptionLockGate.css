@@ -12,6 +12,9 @@
 .subscription-lock-gate__card {
   max-width: 480px;
   width: 100%;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   text-align: center;
   padding: var(--space-6, 32px);
   border-radius: var(--radius-lg, 14px);

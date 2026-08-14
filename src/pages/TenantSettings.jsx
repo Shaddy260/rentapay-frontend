@@ -4,6 +4,7 @@ import Button from '../components/Button.jsx';
 import BiometricSettingsPanel from '../components/BiometricSettingsPanel.jsx';
 
 import InfoTip from '../components/InfoTip.jsx';
+import ProfilePhotoUpload from '../components/ProfilePhotoUpload.jsx';
 import { api, ApiError } from '../api/client.js';
 import './Settings.css';
 
@@ -121,11 +122,28 @@ export default function TenantSettings() {
       {notice && <div className="settings-banner settings-banner--ok">{notice}</div>}
       {error && <div className="settings-banner settings-banner--error">{error}</div>}
 
-      <h2 className="settings-cluster-title">Account &amp; security</h2>
+      {/* FIX (follow the same section-cluster order the BA portal's
+          Settings tab uses - profile photo first, before Account &
+          security - so every role's Settings page reads the same
+          way): tenant photo was previously only ever visible, never
+          editable, in the portal header. */}
+      <h2 className="settings-cluster-title">Profile photo</h2>
+      <section className="settings-card">
+        <ProfilePhotoUpload
+          name={profile?.full_name}
+          photoUrl={profile?.photo_url}
+          token={token}
+          onChange={(photoUrl) => setProfile((p) => ({ ...p, photo_url: photoUrl }))}
+        />
+      </section>
+
+      <h2 className="settings-cluster-title u-mt-6">Account &amp; security</h2>
 
       <section className="settings-card">
-        <h2>Password</h2>
-        <p className="settings-card__hint">Change the password you use to log in.</p>
+        <h2>
+          Password
+          <InfoTip text="Change the password you use to log in." />
+        </h2>
         <Button variant="ghost" onClick={() => navigate('/change-password')}>Change password</Button>
       </section>
 

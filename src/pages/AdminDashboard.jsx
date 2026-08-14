@@ -719,9 +719,10 @@ export default function AdminDashboard() {
               <div className="form-field">
                 <label className="form-field__label">Send to</label>
                 <select value={broadcastTargetGroup} onChange={(e) => setBroadcastTargetGroup(e.target.value)}>
-                  <option value="all">Everyone (all landlords, managers, caretakers, and tenants)</option>
+                  <option value="all">Everyone (all landlords, managers, caretakers, tenants, and brand ambassadors)</option>
                   <option value="tenants">Tenants only</option>
                   <option value="landlord_team">Landlords, managers, and caretakers only</option>
+                  <option value="ba">Brand ambassadors only</option>
                 </select>
               </div>
               <div className="form-field">

@@ -94,6 +94,7 @@
      itself stays a fixed length no matter how many reviews exist. */
   max-height: 360px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--color-border, #eee);
   border-radius: var(--radius-md, 12px);
 }

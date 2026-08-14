@@ -9,6 +9,7 @@ import { api, ApiError } from '../api/client.js';
 import './Settings.css';
 import Skeleton from '../components/Skeleton.jsx';
 import InfoTip from '../components/InfoTip.jsx';
+import ProfilePhotoUpload from '../components/ProfilePhotoUpload.jsx';
 
 /**
  * Settings hub - shared by landlords and property managers (a manager
@@ -87,6 +88,13 @@ export default function Settings() {
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [savingDescription, setSavingDescription] = useState(false);
   const [savingCaretaker, setSavingCaretaker] = useState(false);
+  // FIX (direct request): a property's name could previously only be
+  // set once, either at signup or when buying it via AddPropertyModal
+  // - there was no way to correct it afterward (e.g. a typo, or a
+  // rename). Same edit/save pattern as description/rules above.
+  const [editingNameId, setEditingNameId] = useState(null);
+  const [nameDraft, setNameDraft] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   // --- Property manager add/edit state (landlord only) ---
   const [showAddManager, setShowAddManager] = useState(false);
@@ -132,6 +140,12 @@ export default function Settings() {
   // (before we know whether anything is saved yet) doesn't flash the
   // wrong state.
   const [myContact, setMyContact] = useState({ fullName: '', phone: '', whatsappNumber: '', email: '', gender: '', notificationStyle: 'ring', kraPin: '' });
+  // FIX (follow the BA portal Settings tab's section order - Profile
+  // photo is its own cluster at the very top, above Account &
+  // security/Team & Access): previously the only place a landlord or
+  // manager could change their photo was the AccountMenu dropdown in
+  // the header, with no equivalent in Settings itself.
+  const [myPhotoUrl, setMyPhotoUrl] = useState(null);
   const [exportingData, setExportingData] = useState(false);
   // Phase 14 - landlord-side BA attribution dispute. Only ever tells
   // us whether the prompt should show at all (eligible) and whether
@@ -200,10 +214,12 @@ export default function Settings() {
         if (isManager) {
           setMyAccess(secondRes.manager);
           loadedContact = { fullName: secondRes.manager?.full_name || '', phone: secondRes.manager?.phone || '', whatsappNumber: secondRes.manager?.whatsapp_number || '', email: secondRes.manager?.email || '', gender: secondRes.manager?.gender || '', notificationStyle: secondRes.manager?.notification_style || 'ring' };
+          setMyPhotoUrl(secondRes.manager?.photo_url || null);
           if (peersRes) setManagers(peersRes.managers || []);
         } else {
           setManagers(secondRes.managers || []);
           loadedContact = profileRes?.contact || { fullName: '', phone: '', whatsappNumber: '', email: '', gender: '', notificationStyle: 'ring' };
+          setMyPhotoUrl(profileRes?.photoUrl || null);
           if (profileRes?.baAttribution) setBaAttribution(profileRes.baAttribution);
         }
         setMyContact(loadedContact);
@@ -277,6 +293,30 @@ export default function Settings() {
   function startEditingDescription(property) {
     setEditingDescriptionId(property.id);
     setDescriptionDraft(property.description || '');
+  }
+
+  function startEditingName(property) {
+    setEditingNameId(property.id);
+    setNameDraft(property.name || '');
+  }
+
+  async function saveName(propertyId) {
+    if (!nameDraft.trim()) {
+      setError('Property name cannot be empty.');
+      return;
+    }
+    setSavingName(true);
+    setError('');
+    try {
+      await api.updateProperty(propertyId, { name: nameDraft.trim() }, token);
+      setNotice('Property name updated.');
+      setEditingNameId(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to update property name.');
+    } finally {
+      setSavingName(false);
+    }
   }
 
   async function saveDescription(propertyId) {
@@ -461,10 +501,20 @@ export default function Settings() {
     setSavingMyContact(true);
     setError('');
     try {
+      // FIX: phone/email are shown here as locked/disabled - display
+      // only, never actually editable - but myContact still carries
+      // whatever value was loaded into them. Sending those keys at
+      // all (even unchanged) trips the server's "primary phone/email
+      // can't be changed after registration" guard (see
+      // updateMyContact / updateManager), which was rejecting every
+      // save of this form - including something as unrelated as just
+      // the KRA PIN - with a confusing "cannot be changed" error that
+      // had nothing to do with what was actually being edited.
+      const { phone, email, ...editablePayload } = myContact;
       if (isManager) {
-        await api.updatePropertyManager(myAccess.id, myContact, token);
+        await api.updatePropertyManager(myAccess.id, editablePayload, token);
       } else {
-        await api.updateMyContact(myContact, token);
+        await api.updateMyContact(editablePayload, token);
       }
       setNotice('Your contact details were updated. Tenants will see this reflected immediately.');
       setEditingMyContact(false);
@@ -543,12 +593,27 @@ export default function Settings() {
       {notice && <div className="settings-banner settings-banner--ok">{notice}</div>}
       {error && <div className="settings-banner settings-banner--error">{error}</div>}
 
+      {/* FIX (follow the BA portal Settings tab's section order):
+          Profile photo is now its own cluster at the very top here
+          too, same as BaPortal.jsx / TenantSettings.jsx - previously
+          the only place to change this was the AccountMenu dropdown
+          in the header, with no equivalent inside Settings itself. */}
+      <h2 className="settings-cluster-title">Profile photo</h2>
+      <section className="settings-card">
+        <ProfilePhotoUpload
+          name={myContact.fullName}
+          photoUrl={myPhotoUrl}
+          token={token}
+          onChange={(photoUrl) => setMyPhotoUrl(photoUrl)}
+        />
+      </section>
+
       {/* Settings/Financial Statistics spec, section 2.1: light visual
           hierarchy - two clusters instead of one flat scroll of
           same-weight cards. "Team & Access" groups who has access and
           how tenants reach them; "Account" groups the account-level
           settings (payment, data, device security). */}
-      <h2 className="settings-cluster-title">Team &amp; Access</h2>
+      <h2 className="settings-cluster-title u-mt-6">Team &amp; Access</h2>
 
       {/* ---------------- Caretaker contacts ---------------- */}
       <section className="settings-card">
@@ -572,10 +637,27 @@ export default function Settings() {
           <ul className="settings-manager-list">
             {properties.map((p) => (
               <li key={p.id} className="settings-manager-row">
-                <div className="settings-manager-row__name">
-                  <strong>{p.name}</strong>
-                  {p.location && <span> — {p.location}</span>}
-                </div>
+                {editingNameId === p.id ? (
+                  <div className="settings-manager-row__edit">
+                    <input
+                      placeholder="Property name"
+                      value={nameDraft}
+                      onChange={(e) => setNameDraft(e.target.value)}
+                    />
+                    <div className="settings-manager-row__actions">
+                      <Button variant="primary" loading={savingName} onClick={() => saveName(p.id)}>Save</Button>
+                      <button type="button" className="ghost-link" onClick={() => setEditingNameId(null)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="settings-manager-row__name">
+                    <strong>{p.name}</strong>
+                    {p.location && <span> — {p.location}</span>}
+                    <button type="button" className="ghost-link" onClick={() => startEditingName(p)} style={{ marginLeft: 8 }}>
+                      Edit name
+                    </button>
+                  </div>
+                )}
 
                 {editingPropertyId === p.id ? (
                   <div className="settings-manager-row__edit">
@@ -1073,6 +1155,29 @@ export default function Settings() {
         </section>
       )}
 
+      <h2 className="settings-cluster-title u-mt-6">Account &amp; security</h2>
+
+      {/* FIX (follow the BA portal / TenantSettings pattern): a
+          dedicated password-change entry point inside Settings
+          itself, not just the AccountMenu dropdown - same
+          "Password" card BaSettingsPanel and TenantSettings.jsx
+          already use. */}
+      <section className="settings-card">
+        <h2>
+          Password
+          <InfoTip text="Change the password you use to log in." />
+        </h2>
+        <Button variant="ghost" onClick={() => navigate('/change-password')}>Change password</Button>
+      </section>
+
+      <BiometricSettingsPanel
+        phone={myContact.phone}
+        role={role}
+        roleLevel={roleLevel}
+        token={token}
+        label={myContact.fullName}
+      />
+
       <h2 className="settings-cluster-title u-mt-6">Account</h2>
 
       {/* ---------------- Payment method ----------------
@@ -1197,14 +1302,6 @@ export default function Settings() {
           {exportError && <p className="modal-error">{exportError}</p>}
         </section>
       )}
-
-      <BiometricSettingsPanel
-        phone={myContact.phone}
-        role={role}
-        roleLevel={roleLevel}
-        token={token}
-        label={myContact.fullName}
-      />
 
       <ConfirmDialog
         open={!!pendingRemoveManager}

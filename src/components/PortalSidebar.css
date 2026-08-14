@@ -76,6 +76,7 @@
   padding: var(--space-2) 0;
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .portal-sidebar__item {

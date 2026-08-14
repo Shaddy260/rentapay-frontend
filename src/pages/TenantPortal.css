@@ -227,6 +227,7 @@
 .payment-plan__scroll {
   max-height: 240px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* FEATURE (spec item 4): long-press-to-select an installment row,

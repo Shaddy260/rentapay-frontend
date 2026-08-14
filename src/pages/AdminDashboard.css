@@ -433,6 +433,7 @@
   z-index: 200;
   background: var(--color-bg);
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1.5rem;
   animation: admin-drilldown-in 0.15s ease;
 }
@@ -537,6 +538,7 @@ body.admin-drilldown-open {
 
 .admin-messages-layout__list {
   overflow-y: auto;
+  overscroll-behavior: contain;
   border-right: 1px solid var(--color-hairline, #eee);
   padding-right: 10px;
 }

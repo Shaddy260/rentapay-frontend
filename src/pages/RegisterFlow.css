@@ -564,14 +564,19 @@
   margin-top: -0.4rem;
 }
 
+/* DIRECT REQUEST: the OTP box and its Confirm button were too small/
+   easy to miss next to the email field above them - bumped both up
+   to match (roughly) the weight of the main form-field inputs/
+   buttons elsewhere on this page, instead of the compact secondary-
+   action sizing this shared with TenantOnboarding.css's version. */
 .tenant-onboarding-email-verify__btn {
-  padding: 0.45rem 0.8rem;
-  border-radius: 8px;
-  border: 1px solid #2563eb;
+  padding: 0.85rem 1.1rem;
+  border-radius: 10px;
+  border: 2px solid #2563eb;
   background: #eef4ff;
   color: #2563eb;
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -582,18 +587,18 @@
 
 .tenant-onboarding-email-verify__code-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
   align-items: center;
   flex-wrap: wrap;
 }
 
 .tenant-onboarding-email-verify__code-row input {
-  width: 110px;
-  padding: 0.45rem 0.6rem;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 0.95rem;
-  letter-spacing: 0.15em;
+  width: 160px;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 2px solid #d1d5db;
+  font-size: 1.15rem;
+  letter-spacing: 0.2em;
 }
 
 .tenant-onboarding-email-verify__resend {

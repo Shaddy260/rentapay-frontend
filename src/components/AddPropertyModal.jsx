@@ -94,6 +94,38 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
     c.toLowerCase().includes(constituencySearch.trim().toLowerCase())
   );
 
+  // DIRECT REQUEST: some landlords only start working with a Brand
+  // Ambassador after their first property already exists - this is a
+  // manual, OPTIONAL slot, never auto-filled or auto-linked from
+  // anything (unlike RegisterFlow.jsx's ?ref= link-based field, there
+  // is no URL-based version of this - the landlord always has to type
+  // it in themselves). Same live "Referred by <n>" resolution as
+  // RegisterFlow.jsx's manual-entry path, reusing the identical
+  // resolveBaReferralCode lookup so a typo'd/expired code is caught
+  // before submitting rather than failing silently on the backend.
+  const [refCode, setRefCode] = useState('');
+  const [referredByName, setReferredByName] = useState(null);
+  const [referralNotFound, setReferralNotFound] = useState(false);
+  useEffect(() => {
+    const code = refCode.trim();
+    if (!code) { setReferredByName(null); setReferralNotFound(false); return; }
+    let cancelled = false;
+    api
+      .resolveBaReferralCode(code)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.matched) {
+          setReferredByName(res.fullName);
+          setReferralNotFound(false);
+        } else {
+          setReferredByName(null);
+          setReferralNotFound(res.reason === 'not_found');
+        }
+      })
+      .catch(() => { if (!cancelled) { setReferredByName(null); setReferralNotFound(false); } });
+    return () => { cancelled = true; };
+  }, [refCode]);
+
   const [, setPricingLoaded] = useState(false);
   useEffect(() => {
     let cancelled = false;
@@ -136,6 +168,7 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
           mapsLink: form.mapsLink || undefined,
           unitsCount: Number(form.unitsCount),
           periodMonths: Number(form.periodMonths),
+          refCode: refCode.trim() || undefined,
         },
         token
       );
@@ -267,6 +300,25 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
 
             <label className="form-field__label" htmlFor="propName">Estate name</label>
             <input id="propName" required value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="e.g. Greenwood Apartments" />
+
+            <label className="form-field__label" htmlFor="propRefCode">Referral code (optional)</label>
+            <input
+              id="propRefCode"
+              value={refCode}
+              onChange={(e) => setRefCode(e.target.value.toUpperCase())}
+              placeholder="e.g. JASRAH-4KLT7"
+              aria-invalid={referralNotFound || undefined}
+              className={referralNotFound ? 'form-field__input--error' : undefined}
+            />
+            {referredByName ? (
+              <p className="form-field__hint">Referred by <strong>{referredByName}</strong>.</p>
+            ) : referralNotFound ? (
+              <p className="form-field__error">
+                No such referral code exists — please check with your BA or leave this field blank.
+              </p>
+            ) : (
+              <InfoTip text={<>Working with a RentaPay Brand Ambassador on this property? Enter their code here - completely optional, and only applies if you don't already have one linked to your account.</>} />
+            )}
 
             <label className="form-field__label" htmlFor="propLocation">Location</label>
             <input id="propLocation" value={form.location} onChange={(e) => update('location', e.target.value)} placeholder="Kilimani" />

@@ -202,7 +202,32 @@ export default function RegisterFlow() {
   // registration does; the person needs to log in again normally.
   const resumedFromLogin = persisted?.resumedFromLogin === true;
 
-  const [stepIndex, setStepIndex] = useState(persisted?.stepIndex ?? (resumingLoggedInLandlord ? 2 : 0));
+  // Resolve the initial step by KEY, not by the raw saved number.
+  // Saving/restoring a bare array index used to be safe only for as
+  // long as STEPS never changed shape - but this flow has been
+  // through several step-order/step-count changes since (see the BUG
+  // FIX comments throughout this file), and each one silently
+  // reinterpreted anyone's old saved stepIndex against the NEW array,
+  // landing them on a completely different step than the one they
+  // left off at (e.g. jumping straight from payment to "Add your
+  // units", skipping "Your property" entirely, because the old
+  // number that used to mean "units" no longer lines up after a step
+  // was inserted). Matching by key is immune to future reordering:
+  // if the key isn't found (very old session, or the step it names no
+  // longer exists), fall back to the raw index only as a last resort,
+  // then to a safe default.
+  function resolveInitialStepIndex() {
+    if (persisted?.stepKey) {
+      const idx = STEPS.findIndex((s) => s.key === persisted.stepKey);
+      if (idx !== -1) return idx;
+    }
+    if (typeof persisted?.stepIndex === 'number' && persisted.stepIndex >= 0 && persisted.stepIndex < STEPS.length) {
+      return persisted.stepIndex;
+    }
+    return resumingLoggedInLandlord ? 2 : 0;
+  }
+
+  const [stepIndex, setStepIndex] = useState(resolveInitialStepIndex());
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -363,6 +388,7 @@ export default function RegisterFlow() {
   React.useEffect(() => {
     persistProgress({
       stepIndex,
+      stepKey: STEPS[stepIndex]?.key,
       landlordId,
       checkoutRequestId,
       amountDue,

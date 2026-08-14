@@ -72,6 +72,7 @@
 .statistics-panel__county-table-wrap {
   max-height: 360px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--color-border, #e2e2e2);
   border-radius: var(--radius-sm, 6px);
 }
@@ -124,6 +125,7 @@
 .payment-history-panel__scroll {
   max-height: 60vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md, 8px);
 }
@@ -155,6 +157,7 @@
 .chronically-late-units__scroll {
   max-height: 320px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md, 8px);
 }

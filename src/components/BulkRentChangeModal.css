@@ -69,6 +69,7 @@
   padding: 0;
   max-height: 220px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .bulk-rent-modal__unit-row {

@@ -14,8 +14,29 @@
  * @param {Array<Array<string|number>>} rows
  */
 export function downloadCsv(filename, headers, rows) {
+  // BUG FIX: phone numbers (e.g. "+254712345678") were coming out
+  // mangled when the CSV was opened in Excel (admin's "landlord list
+  // download" report showing things like "+14kuhf" in the phone
+  // column). This is a well-known Excel CSV quirk, not a data
+  // problem: Excel auto-detects any cell that's mostly digits and
+  // "helpfully" reinterprets it as a number - a leading "+" can also
+  // get read as the start of a formula. Either way Excel then
+  // reformats/mis-parses it on open (scientific notation, dropped
+  // leading zeros, or a garbled formula result), which is where the
+  // broken text was coming from - the CSV file itself was fine, Excel
+  // was silently "fixing" it. Wrapping phone-number-shaped cells as
+  // ="value" is the standard, Excel-recognized way to force it to
+  // keep treating the cell as literal text instead of a number/
+  // formula, so it round-trips exactly as stored.
+  const looksLikePhoneNumber = (str) => /^\+?\d[\d\s-]{6,}$/.test(str.trim());
+
   const escapeCell = (cell) => {
     const str = String(cell ?? '');
+
+    if (looksLikePhoneNumber(str)) {
+      return `="${str.replace(/"/g, '""')}"`;
+    }
+
     // Quote any cell containing a comma, quote, or newline, doubling
     // internal quotes - standard CSV escaping so names/notes with
     // commas in them don't silently corrupt the columns.

@@ -121,16 +121,33 @@ export default function LandlordEditModal({ landlordId, landlordName, token, onC
               </>} />
             )}
 
+            {landlord?.baName && (
+              <InfoTip text={<>Original signup referred by <strong>{landlord.baName}</strong>{landlord.baCode ? ` (${landlord.baCode})` : ''}.</>} />
+            )}
+
             {properties.length > 1 && (
               <label className="landlord-edit-modal__field">
                 <span>Which apartment/estate?</span>
                 <select value={selectedPropertyId} onChange={(e) => handlePropertyPick(e.target.value)}>
                   {properties.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <option key={p.id} value={p.id}>
+                      {p.name}{p.baName ? ` — BA: ${p.baName}${p.baCode ? ` (${p.baCode})` : ''}` : ''}
+                    </option>
                   ))}
                 </select>
               </label>
             )}
+
+            {(() => {
+              const selected = properties.find((p) => p.id === selectedPropertyId);
+              // DIRECT REQUEST: each property is its own entity with its
+              // own, independent BA attribution - shown here separately
+              // from the landlord's original-signup BA above, never
+              // merged into one value.
+              return selected?.baName ? (
+                <InfoTip text={<>This property was added via <strong>{selected.baName}</strong>{selected.baCode ? ` (${selected.baCode})` : ''}'s referral code.</>} />
+              ) : null;
+            })()}
 
             <label className="landlord-edit-modal__field">
               <span>Estate / property name</span>

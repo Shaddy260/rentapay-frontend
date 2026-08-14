@@ -17,6 +17,7 @@
   max-width: 460px;
   max-height: 90vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .landlord-edit-modal__header {
