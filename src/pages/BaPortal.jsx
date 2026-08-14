@@ -15,7 +15,7 @@ import { api, ApiError } from '../api/client.js';
 import ProfilePhotoUpload from '../components/ProfilePhotoUpload.jsx';
 import './Settings.css';
 import './BaPortal.css';
-import TapToReveal from '../components/TapToReveal.jsx';
+import InfoTip from '../components/InfoTip.jsx';
 
 /**
  * Build spec Phase 3 - BA Portal: Login, Redirect, Shell.
@@ -85,10 +85,10 @@ function OnboardedLandlordsPanel({ token }) {
   return (
     <section className="ba-claim-panel">
       <h2>My Onboarded Landlords</h2>
-      <p className="ba-claim-panel__intro">
+      <InfoTip text={<>
         Every landlord who signed up using your referral link or code is listed here automatically, the moment
         they complete registration — no need to log them yourself.
-      </p>
+      </>} />
 
       <div className="ba-claim-panel__list-header">
         <div className="ba-claim-filter">
@@ -450,7 +450,7 @@ function BaLeaderboardPanel({ token }) {
   return (
     <section className="ba-leaderboard-panel">
       <h2>Leaderboard</h2>
-      <TapToReveal className="ba-leaderboard-panel__hint">Ranked by qualified landlords onboarded. Opt in from Settings to appear here - your own rank is always shown below.</TapToReveal>
+      <InfoTip text={<>Ranked by qualified landlords onboarded. Opt in from Settings to appear here - your own rank is always shown below.</>} />
 
       <div className="ba-earnings-panel__period-bar">
         {[
@@ -693,9 +693,9 @@ function BaSettingsPanel({ profile, token, onProfileChange }) {
             Email
             <input type="email" value={form.email} disabled readOnly className="ba-settings-form__readonly" />
           </label>
-          <p className="settings-card__hint">
+          <InfoTip text={<>
             To change your phone number or email, contact Support below - we verify identity before updating either one.
-          </p>
+          </>} />
           <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</Button>
         </form>
       </section>
@@ -710,9 +710,9 @@ function BaSettingsPanel({ profile, token, onProfileChange }) {
       <h2 className="settings-cluster-title u-mt-6">Notification preferences</h2>
       <section className="settings-card">
         <h2>Push notifications</h2>
-        <TapToReveal className="settings-card__hint">
+        <InfoTip text={<>
           Get notified on this device when one of your onboarded landlords qualifies for payout.
-        </TapToReveal>
+        </>} />
         {pushState === 'unsupported' && <p className="settings-card__hint">Push notifications aren't supported on this browser.</p>}
         {pushState === 'denied' && <p className="settings-card__hint">Notifications are blocked for this site in your browser settings.</p>}
         {pushState === 'granted' && <p className="settings-card__hint">✅ Push notifications are on for this device.</p>}
@@ -724,9 +724,9 @@ function BaSettingsPanel({ profile, token, onProfileChange }) {
       <h2 className="settings-cluster-title u-mt-6">Leaderboard</h2>
       <section className="settings-card">
         <h2>Show me on the leaderboard</h2>
-        <p className="settings-card__hint">
+        <InfoTip text={<>
           Opting in shows your first name, last initial, and qualified-landlord count to other Brand Ambassadors. Your earnings are never shown.
-        </p>
+        </>} />
         <label className="ba-settings-toggle">
           <input type="checkbox" checked={leaderboardOptIn} disabled={savingOptIn} onChange={handleToggleLeaderboard} />
           <span>{leaderboardOptIn ? 'You are visible on the leaderboard' : 'You are hidden from the leaderboard'}</span>
@@ -746,6 +746,7 @@ export default function BaPortal() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const load = useCallback(() => {
     if (!token) {
@@ -789,6 +790,17 @@ export default function BaPortal() {
       .then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {});
+  }
+
+  function handleCopyReferralCode() {
+    if (!profile?.ba_code) return;
+    navigator.clipboard
+      ?.writeText(profile.ba_code)
+      .then(() => {
+        setCodeCopied(true);
+        setTimeout(() => setCodeCopied(false), 2000);
       })
       .catch(() => {});
   }
@@ -862,7 +874,7 @@ export default function BaPortal() {
           <button type="button" className="portal-topbar__hamburger" aria-label="Menu" onClick={() => setSidebarOpen(true)}>☰</button>
           <div className="portal-topbar__brand-block">
             <div className="portal-topbar__brand"><img className="portal-topbar__brand-logo" src="/logo.png" alt="RentaPay" /> RentaPay</div>
-            <div className="portal-topbar__role-label">Brand Ambassador{profile?.ba_code ? ` · ${profile.ba_code}` : ''}</div>
+            <div className="portal-topbar__role-label">Brand Ambassador</div>
           </div>
         </div>
         <div className="portal-topbar__right">
@@ -927,9 +939,29 @@ export default function BaPortal() {
                   </button>
                 </div>
               </div>
-              <TapToReveal className="ba-referral-card__hint">
+              <InfoTip text={<>
                 Walk the landlord through registering directly on this link - it auto-tags their account to you the moment they sign up.
-              </TapToReveal>
+              </>} />
+            </section>
+
+            {/* Referral code gets its own slot, separate from the
+                referral link card above, with its own copy button -
+                it used to be crammed into the topbar next to the
+                BA's name, which isn't where someone looks for
+                something they need to copy and hand to a landlord. */}
+            <section className="ba-referral-card ba-referral-card--code">
+              <div className="ba-referral-card__label">Your referral code</div>
+              <div className="ba-referral-card__link-row">
+                <code className="ba-referral-card__link">{profile?.ba_code || 'Not assigned yet'}</code>
+                <div className="ba-referral-card__actions">
+                  <button type="button" className="ba-referral-card__btn" onClick={handleCopyReferralCode} disabled={!profile?.ba_code}>
+                    {codeCopied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+              <InfoTip text={<>
+                Landlords can also type this code in manually during registration instead of using the link.
+              </>} />
             </section>
 
             <BaDashboardStats token={token} />
@@ -955,7 +987,7 @@ export default function BaPortal() {
             <Faq audience="brand_ambassador" />
             <section className="settings-card u-mt-6">
               <h2>Still need help?</h2>
-              <p className="settings-card__hint">Chat with an agent, or reach us directly:</p>
+              <InfoTip text={<>Chat with an agent, or reach us directly:</>} />
               <HelpButton role="brand_ambassador" token={token} renderAs="ghost-link" />
             </section>
           </div>

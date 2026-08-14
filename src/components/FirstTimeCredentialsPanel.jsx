@@ -3,7 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Avatar from './Avatar.jsx';
 import './StatisticsPanel.css';
 import Skeleton from './Skeleton.jsx';
-import TapToReveal from './TapToReveal.jsx';
+import InfoTip from './InfoTip.jsx';
 
 const ROLE_LABELS = { tenant: 'Tenants', manager: 'Managers', caretaker: 'Caretakers' };
 
@@ -46,11 +46,11 @@ export default function FirstTimeCredentialsPanel({ token, viewerRole }) {
   return (
     <section className="statistics-panel">
       <h2>First-Time Login Details</h2>
-      <p className="tenant-portal-hint">
+      <InfoTip text={<>
         The temp password and OTP each person was given when their account was created - use this if the email
         with their details never reached them. These are the ORIGINAL values from account creation, not their
         current password.
-      </p>
+      </>} />
 
       {availableRoles.length > 1 && (
         <div className="login-page__toggle" role="tablist" style={{ marginBottom: 16 }}>
@@ -134,9 +134,9 @@ export default function FirstTimeCredentialsPanel({ token, viewerRole }) {
             {selectedPerson.property_name && <p><strong>Property:</strong> {selectedPerson.property_name}</p>}
             {selectedPerson.landlord_name && <p><strong>Landlord:</strong> {selectedPerson.landlord_name}</p>}
             <p><strong>Expires:</strong> {selectedPerson.expires_at ? new Date(selectedPerson.expires_at).toLocaleString() : 'No expiry — verified automatically'}</p>
-            <TapToReveal className="tenant-portal-hint">
+            <InfoTip text={<>
               This picture is pulled live from their profile, so it will always reflect their most recent update - it isn't a snapshot from account creation.
-            </TapToReveal>
+            </>} />
             <button type="button" className="modal-card__close" onClick={() => setSelectedPerson(null)}>Close</button>
           </div>
         </div>

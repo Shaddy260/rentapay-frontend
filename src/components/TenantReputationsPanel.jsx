@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import './StatisticsPanel.css';
 import './TenantReputationsPanel.css';
 import Skeleton from './Skeleton.jsx';
+import InfoTip from './InfoTip.jsx';
 
 function Stars({ average }) {
   if (!average) return <span className="tenant-reputations-panel__no-rating">Not yet rated</span>;
@@ -43,9 +44,9 @@ export default function TenantReputationsPanel({ token }) {
   return (
     <div className="statistics-panel__county-table-wrap">
       <h3>Tenant Reputations</h3>
-      <p className="tenant-reputations-panel__intro">
+      <InfoTip text={<>
         Scores are portable - they follow a tenant by email across every landlord who has rated them on RentaPay, not just ratings you've given.
-      </p>
+      </>} />
       <table className="statistics-panel__county-table">
         <thead>
           <tr>

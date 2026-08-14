@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import './PendingPaymentConfirmationsCard.css';
+import InfoTip from './InfoTip.jsx';
 
 /**
  * Collapsed/summary-state dashboard card (spec: "Pending Payment
@@ -51,9 +52,9 @@ export default function PendingPaymentConfirmationsCard({ token, onOpen }) {
         </h3>
         <span className="ppc-summary-card__link">View all →</span>
       </div>
-      <p className="tenant-portal-hint">
+      <InfoTip text={<>
         Tenants who paid rent directly via Paybill/Till submit proof here for you to confirm or reject. Confirming updates their balance and payment history immediately.
-      </p>
+      </>} />
     </section>
   );
 }

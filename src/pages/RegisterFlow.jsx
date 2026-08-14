@@ -17,126 +17,81 @@ import './RegisterFlow.css';
 // NOTE: 50 (not the blueprint's stated 150) per direct instruction.
 
 /**
- * DIRECT REQUEST (reordered flow): email verification is now its own
- * step, between "Your details" and Payment - not shown alongside the
- * M-Pesa pending screen. Nothing about payment starts until this step
- * calls onVerified(). A landlord who mistyped their email can fix it
- * right here (editEmail) instead of being stuck waiting on a code that
- * can never arrive.
+ * DIRECT REQUEST: email verification now happens INLINE on the same
+ * "Your details" page, right under the email field - exactly like a
+ * tenant confirms their email on the same page before submitting via
+ * the onboarding link (see TenantOnboarding.jsx's emailOtpStatus
+ * pattern, mirrored here). No landlord account exists yet at this
+ * point - the OTP is sent/verified against the raw email address
+ * (see requestLandlordEmailVerification / confirmLandlordEmailVerification
+ * on the backend), and registerLandlord() itself is blocked, both here
+ * and server-side, until it's done. Submitting now goes straight from
+ * "Your details" to the Payment step - there's no separate
+ * "Verify email" page anymore.
  */
-function VerifyEmailStep({ landlordId, email, onEmailCorrected, onVerified }) {
+function useLandlordEmailVerification(email) {
+  // 'idle' | 'sending' | 'sent' | 'verifying' | 'verified'
+  const [status, setStatus] = useState('idle');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [resendMessage, setResendMessage] = useState('');
-  const [editingEmail, setEditingEmail] = useState(false);
-  const [emailDraft, setEmailDraft] = useState(email);
-  const [emailError, setEmailError] = useState('');
-  const [emailBusy, setEmailBusy] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
 
-  async function submit(e) {
-    e.preventDefault();
-    setError('');
-    setBusy(true);
-    try {
-      await api.verifyLandlordEmailOTP({ landlordId, otp: code.trim() });
-      onVerified();
-    } catch (err) {
-      setError(err.message || 'Invalid code.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function resend() {
-    setError('');
-    setResendMessage('');
-    setBusy(true);
-    try {
-      await api.resendLandlordEmailOTP({ landlordId });
-      setResendMessage('A new code has been sent to your email.');
-    } catch (err) {
-      setError(err.message || 'Failed to resend code.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function saveCorrectedEmail(e) {
-    e.preventDefault();
-    setEmailError('');
-    setEmailBusy(true);
-    try {
-      const res = await api.updateLandlordRegistrationEmail({ landlordId, email: emailDraft.trim() });
-      onEmailCorrected(res.email || emailDraft.trim());
-      setEditingEmail(false);
+  // Editing the email after it was sent/verified invalidates that
+  // verification - it only ever proved ownership of the exact address
+  // it was sent to, not whatever's typed in now.
+  function resetOnEmailChange() {
+    if (status !== 'idle') {
+      setStatus('idle');
       setCode('');
-      setResendMessage('A new code has been sent to your corrected email.');
-    } catch (err) {
-      setEmailError(Array.isArray(err.details) ? err.details.join(' ') : (err.details || err.message));
-    } finally {
-      setEmailBusy(false);
+      setError('');
+      setVerifiedEmail('');
+      setVerificationToken('');
     }
   }
 
-  return (
-    <div className="register-page__section-divider u-text-left">
-      <h2>Verify your email</h2>
+  async function send() {
+    setError('');
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      setError('Enter a valid email address first.');
+      return;
+    }
+    setStatus('sending');
+    try {
+      await api.sendLandlordRegistrationEmailOtp({ email });
+      setStatus('sent');
+    } catch (err) {
+      setError(err.message || 'Failed to send verification code.');
+      setStatus('idle');
+    }
+  }
 
-      {editingEmail ? (
-        <form onSubmit={saveCorrectedEmail} className="u-mt-4">
-          <div className="form-field">
-            <label className="form-field__label" htmlFor="correctedEmail">Email</label>
-            <input
-              id="correctedEmail"
-              type="email"
-              required
-              value={emailDraft}
-              onChange={(e) => setEmailDraft(e.target.value)}
-              placeholder="jane@example.com"
-            />
-          </div>
-          {emailError && <p className="api-error-banner" role="alert">{emailError}</p>}
-          <div className="u-mt-3" style={{ display: 'flex', gap: '10px' }}>
-            <Button type="submit" variant="secondary" loading={emailBusy}>Save & resend code</Button>
-            <button type="button" className="ghost-link" onClick={() => { setEditingEmail(false); setEmailDraft(email); setEmailError(''); }} disabled={emailBusy}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      ) : (
-        <>
-          <p className="register-page__intro u-mt-1">
-            We sent a 6-digit code to <strong>{email}</strong>.{' '}
-            <button type="button" className="ghost-link" onClick={() => setEditingEmail(true)}>
-              Wrong email? Correct it
-            </button>
-          </p>
-          <form onSubmit={submit} className="u-mt-4">
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="Enter 6-digit code"
-              maxLength={6}
-              inputMode="numeric"
-            />
-            {error && <p className="api-error-banner" role="alert">{error}</p>}
-            {resendMessage && <p className="register-page__intro u-mt-1">{resendMessage}</p>}
-            <div className="u-mt-3" style={{ display: 'flex', gap: '10px' }}>
-              <Button type="submit" variant="secondary" loading={busy}>Verify email</Button>
-              <button type="button" className="ghost-link" onClick={resend} disabled={busy}>Resend code</button>
-            </div>
-          </form>
-        </>
-      )}
-    </div>
-  );
+  async function verify() {
+    setError('');
+    if (!code.trim()) {
+      setError('Enter the code sent to your email.');
+      return;
+    }
+    setStatus('verifying');
+    try {
+      const res = await api.verifyLandlordRegistrationEmailOtp({ email, otp: code.trim() });
+      setStatus('verified');
+      setVerifiedEmail(email);
+      setVerificationToken(res.emailVerification);
+    } catch (err) {
+      setError(err.message || 'Failed to verify code.');
+      setStatus('sent');
+    }
+  }
+
+  const isVerified = status === 'verified' && verifiedEmail === email;
+
+  return { status, code, setCode, error, isVerified, verificationToken, send, verify, resetOnEmailChange };
 }
 import { loadPricingSettings, getCachedPricingSettings, previewCost } from '../utils/pricing.js';
 
 const STEPS = [
-  { key: 'details', title: 'Your details', subtitle: 'Name, phone, plan' },
-  { key: 'verify-email', title: 'Verify email', subtitle: 'Confirm it\u2019s really you' },
+  { key: 'details', title: 'Your details', subtitle: 'Name, phone, plan & email' },
   { key: 'payment', title: 'M-Pesa payment', subtitle: 'Activate subscription' },
   { key: 'property', title: 'Your property', subtitle: 'Estate & location' },
   { key: 'method', title: 'Payment method', subtitle: 'How rent reaches you' },
@@ -247,7 +202,7 @@ export default function RegisterFlow() {
   // registration does; the person needs to log in again normally.
   const resumedFromLogin = persisted?.resumedFromLogin === true;
 
-  const [stepIndex, setStepIndex] = useState(persisted?.stepIndex ?? (resumingLoggedInLandlord ? 3 : 0));
+  const [stepIndex, setStepIndex] = useState(persisted?.stepIndex ?? (resumingLoggedInLandlord ? 2 : 0));
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -434,7 +389,7 @@ export default function RegisterFlow() {
   // coming back later) now actually has a chance of unsticking things
   // instead of just re-displaying the same dead end.
   useEffect(() => {
-    if (stepIndex !== 2 || !landlordId) return;
+    if (stepIndex !== 1 || !landlordId) return;
     let cancelled = false;
     (async () => {
       try {
@@ -485,8 +440,13 @@ export default function RegisterFlow() {
     ? previewCost(Number(form.unitsCount), Number(form.periodMonths))
     : { rate: getCachedPricingSettings().baseRatePerUnitPerMonth, discount: 0, total: 0 };
 
+  // Inline email verification, right on this same page - see
+  // useLandlordEmailVerification above.
+  const emailVerify = useLandlordEmailVerification(form.email);
+
   function updateForm(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+    if (field === 'email') emailVerify.resetOnEmailChange();
   }
 
   // -----------------------------------------------------------------
@@ -545,6 +505,12 @@ export default function RegisterFlow() {
       setError('No such referral code exists — please check with your BA or leave this field blank.');
       return;
     }
+    // DIRECT REQUEST: block submission (same as the tenant onboarding
+    // flow) until the email has been verified right here on this page.
+    if (!emailVerify.isVerified) {
+      setError('Please verify your email address before submitting.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.registerLandlord({
@@ -557,13 +523,14 @@ export default function RegisterFlow() {
         unitsCount: Number(form.unitsCount),
         periodMonths: Number(form.periodMonths),
         refCode: referralCode.trim() || undefined,
+        emailVerification: emailVerify.verificationToken,
       });
       setLandlordId(res.landlordId);
       setAmountDue(res.amountDue);
-      // DIRECT REQUEST (reordered flow): "Submit" now lands
-      // automatically on the Verify-your-email step - payment doesn't
-      // start until email verification succeeds (see the Payment-step
-      // effect that calls initiateLandlordPayment below).
+      // DIRECT REQUEST (same-page verification): email is already
+      // confirmed by the time this call succeeds, so "Submit" now
+      // lands straight on the Payment step - no separate
+      // "Verify your email" page in between anymore.
       setStepIndex(1);
     } catch (err) {
       // err.details is an ARRAY only for the password-strength
@@ -659,7 +626,7 @@ export default function RegisterFlow() {
   // automatically, without the person needing to know to click
   // anything first.
   useEffect(() => {
-    if (stepIndex !== 2 || !checkoutRequestId || manualSubmitted) return;
+    if (stepIndex !== 1 || !checkoutRequestId || manualSubmitted) return;
     handlePaymentConfirmed();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex, checkoutRequestId]);
@@ -669,7 +636,7 @@ export default function RegisterFlow() {
   // verified, never before. paymentInitiated guards against firing a
   // second STK prompt on a refresh.
   useEffect(() => {
-    if (stepIndex !== 2 || !landlordId || paymentInitiated) return;
+    if (stepIndex !== 1 || !landlordId || paymentInitiated) return;
     let cancelled = false;
     (async () => {
       setPaymentInitiating(true);
@@ -829,7 +796,7 @@ export default function RegisterFlow() {
     if (tokenFromPoll) {
       sessionStorage.setItem('rentapay_token', tokenFromPoll);
       sessionStorage.setItem('rentapay_role', 'landlord');
-      setStepIndex(3);
+      setStepIndex(2);
       return;
     }
 
@@ -862,7 +829,7 @@ export default function RegisterFlow() {
       console.warn('Auto-login after payment confirmation failed, continuing without a token:', loginErr.message);
     }
 
-    setStepIndex(3);
+    setStepIndex(2);
   }
 
   // -----------------------------------------------------------------
@@ -958,7 +925,7 @@ export default function RegisterFlow() {
       }
       setLoading(false);
     }
-    setStepIndex(4);
+    setStepIndex(3);
   }
 
   // -----------------------------------------------------------------
@@ -983,7 +950,7 @@ export default function RegisterFlow() {
         setLoading(false);
       }
     }
-    setStepIndex(5);
+    setStepIndex(4);
   }
 
   // -----------------------------------------------------------------
@@ -1236,7 +1203,7 @@ export default function RegisterFlow() {
     }
     // No token (e.g. testing wizard UI in isolation without ever
     // having logged in) - nothing to call, just show the done screen.
-    setStepIndex(6);
+    setStepIndex(5);
   }
 
   const totalExpectedRent = units.reduce((sum, u) => sum + u.rentAmount, 0);
@@ -1293,7 +1260,7 @@ export default function RegisterFlow() {
                         No such referral code exists — please check with your BA or leave this field blank.
                       </p>
                     ) : (
-                      <p className="form-field__hint">Were you referred by a RentaPay Brand Ambassador? Enter their code here.</p>
+                      <InfoTip text={<>Were you referred by a RentaPay Brand Ambassador? Enter their code here.</>} />
                     )}
                   </div>
                   <div className="form-field">
@@ -1307,6 +1274,55 @@ export default function RegisterFlow() {
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="email">Email</label>
                     <input id="email" type="email" required value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="jane@example.com" />
+                  </div>
+                  {/* DIRECT REQUEST: verification box right under the
+                      email field, same page - send a code, enter it,
+                      only then is the email considered verified.
+                      Submission is blocked (both here and server-side
+                      in registerLandlord) until it is. */}
+                  <div className="form-field form-field--full">
+                    <div className="tenant-onboarding-email-verify">
+                      {emailVerify.isVerified ? (
+                        <p className="tenant-onboarding-email-verify__done">✓ Email verified</p>
+                      ) : (
+                        <>
+                          {(emailVerify.status === 'idle' || emailVerify.status === 'sending') && (
+                            <button
+                              type="button"
+                              className="tenant-onboarding-email-verify__btn"
+                              onClick={emailVerify.send}
+                              disabled={emailVerify.status === 'sending' || !form.email}
+                            >
+                              {emailVerify.status === 'sending' ? 'Sending code…' : 'Verify email'}
+                            </button>
+                          )}
+                          {(emailVerify.status === 'sent' || emailVerify.status === 'verifying') && (
+                            <div className="tenant-onboarding-email-verify__code-row">
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={6}
+                                placeholder="6-digit code"
+                                value={emailVerify.code}
+                                onChange={(e) => emailVerify.setCode(e.target.value.replace(/\D/g, ''))}
+                              />
+                              <button
+                                type="button"
+                                className="tenant-onboarding-email-verify__btn"
+                                onClick={emailVerify.verify}
+                                disabled={emailVerify.status === 'verifying'}
+                              >
+                                {emailVerify.status === 'verifying' ? 'Verifying…' : 'Confirm code'}
+                              </button>
+                              <button type="button" className="tenant-onboarding-email-verify__resend" onClick={emailVerify.send} disabled={emailVerify.status === 'verifying'}>
+                                Resend code
+                              </button>
+                            </div>
+                          )}
+                          {emailVerify.error && <p className="api-error-banner" role="alert">{emailVerify.error}</p>}
+                        </>
+                      )}
+                    </div>
                   </div>
                   <div className="form-field">
                     <label className="form-field__label" htmlFor="gender">I am a (optional)<InfoTip text="Just so the portal addresses you correctly - never shown to tenants." /></label>
@@ -1356,26 +1372,19 @@ export default function RegisterFlow() {
                 </div>
 
                 <div className="register-page__actions">
-                  <Button type="submit" variant="mpesa" loading={loading}>
+                  <Button type="submit" variant="mpesa" loading={loading} disabled={!emailVerify.isVerified}>
                     Submit
                   </Button>
+                  {!emailVerify.isVerified && (
+                    <p className="form-field__hint u-mt-1">Verify your email above to continue.</p>
+                  )}
                 </div>
               </form>
             </>
           )}
 
-          {/* STEP 1: Verify email (must succeed before Payment) */}
+          {/* STEP 1: M-Pesa payment pending (email already verified inline on the details page above) */}
           {stepIndex === 1 && (
-            <VerifyEmailStep
-              landlordId={landlordId}
-              email={form.email}
-              onEmailCorrected={(newEmail) => updateForm('email', newEmail)}
-              onVerified={() => setStepIndex(2)}
-            />
-          )}
-
-          {/* STEP 2: M-Pesa payment pending */}
-          {stepIndex === 2 && (
             <div className="mpesa-pending">
               {paymentInitiating ? (
                 <>
@@ -1427,10 +1436,10 @@ export default function RegisterFlow() {
                       {showManualPayment ? 'Hide' : 'Show'}
                     </button>
                   </div>
-                  <p className="register-page__intro u-mt-1">
+                  <InfoTip text={<>
                     If the M-Pesa prompt fails, gets cancelled, or never arrives - or you'd simply rather pay this way -
                     send the amount yourself and enter the confirmation details below.
-                  </p>
+                  </>} />
                   {showManualPayment && (
                     <form onSubmit={handleSubmitManualPayment} className="u-mt-4 u-text-left">
                       <PaymentDetailsCard amount={amountDue} note="Enter the M-Pesa confirmation details below - your account will be activated once an admin verifies it (usually within a few minutes)." />
@@ -1463,8 +1472,8 @@ export default function RegisterFlow() {
             </div>
           )}
 
-          {/* STEP 3: Setup Wizard Step 1 — Property */}
-          {stepIndex === 3 && (
+          {/* STEP 2: Setup Wizard Step 1 — Property */}
+          {stepIndex === 2 && (
             <>
               <span className="success-badge">✓ Payment confirmed</span>
               <h1>Tell us about your property</h1>
@@ -1545,11 +1554,11 @@ export default function RegisterFlow() {
                     onChange={(e) => setProperty((p) => ({ ...p, mapsLink: e.target.value }))}
                     placeholder="https://maps.app.goo.gl/…"
                   />
-                  <p className="form-field__hint">
+                  <InfoTip text={<>
                     Open Google Maps, find this property, tap Share, then paste the link here.
                     Prospective tenants browsing vacant units will be able to tap it to see exactly where
                     this property is.
-                  </p>
+                  </>} />
                 </div>
 
                 {/* DIRECT REQUEST: the caretaker question used to live
@@ -1568,8 +1577,8 @@ export default function RegisterFlow() {
             </>
           )}
 
-          {/* STEP 4: Setup Wizard Step 2 — Payment method */}
-          {stepIndex === 4 && (
+          {/* STEP 3: Setup Wizard Step 2 — Payment method */}
+          {stepIndex === 3 && (
             <>
               <h1>How will rent reach you?</h1>
               <p className="register-page__intro">Setup Wizard — Step 2 of 4</p>
@@ -1618,8 +1627,8 @@ export default function RegisterFlow() {
             </>
           )}
 
-          {/* STEP 5: Setup Wizard Step 3 — Units (signature ledger element) */}
-          {stepIndex === 5 && (
+          {/* STEP 4: Setup Wizard Step 3 — Units (signature ledger element) */}
+          {stepIndex === 4 && (
             <>
               <h1>Add your units</h1>
               <p className="register-page__intro">
@@ -1738,15 +1747,15 @@ export default function RegisterFlow() {
                   Continue with {units.length} unit{units.length === 1 ? '' : 's'}
                 </Button>
               </div>
-              <p className="register-page__intro u-mt-3">
+              <InfoTip text={<>
                 Need to add water, garbage, or other extra charges per unit? You can do that anytime after
                 setup from each unit's page on your dashboard.
-              </p>
+              </>} />
             </>
           )}
 
-          {/* STEP 6: Setup Wizard Step 4 — Done */}
-          {stepIndex === 6 && (
+          {/* STEP 5: Setup Wizard Step 4 — Done */}
+          {stepIndex === 5 && (
             <div className="mpesa-pending">
               <div className="mpesa-pending__icon">🎉</div>
               <h2>Your dashboard is ready</h2>

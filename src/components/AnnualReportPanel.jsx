@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api, ApiError } from '../api/client.js';
 import './AnnualReportPanel.css';
-import TapToReveal from './TapToReveal.jsx';
+import InfoTip from './InfoTip.jsx';
 
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = [currentYear, currentYear - 1, currentYear - 2];
@@ -84,9 +84,9 @@ export default function AnnualReportPanel({ token, propertyId, isCaretaker = fal
           </button>
         )}
       </div>
-      <TapToReveal className="tenant-portal-hint">
+      <InfoTip text={<>
         The P&L report includes expected vs. collected rent, expenses, and net income per month — opens directly in Excel or Google Sheets.
-      </TapToReveal>
+      </>} />
 
       {showTaxForm && !isCaretaker && (
         <div className="annual-report-panel__tax-form">
@@ -99,9 +99,9 @@ export default function AnnualReportPanel({ token, propertyId, isCaretaker = fal
           <button className="ghost-link" onClick={handleTaxSummary} disabled={downloading !== ''}>
             {downloading === 'tax' ? 'Preparing…' : `⬇ Tax summary (${year})`}
           </button>
-          <p className="tenant-portal-hint">
+          <InfoTip text={<>
             Reports gross rent collected and logged expenses only - confirm the actual filing figure and rate with KRA or your accountant.
-          </p>
+          </>} />
         </div>
       )}
 

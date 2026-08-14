@@ -1046,9 +1046,9 @@ export default function Settings() {
             Who tenants see as the contact, per property
             <InfoTip text="Controls which phone number a tenant is routed to for that property - your own, or a property manager's. Change it any time." />
           </h2>
-          <p className="settings-card__hint">
+          <InfoTip text={<>
             If unset, tenants will see <strong>you (the landlord)</strong> as their contact.
-          </p>
+          </>} />
           <ul className="settings-manager-list">
             {properties.map((p) => (
               <li key={p.id} className="settings-manager-row">

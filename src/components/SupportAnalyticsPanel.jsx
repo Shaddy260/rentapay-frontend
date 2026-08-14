@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 import './SupportAnalyticsPanel.css';
+import InfoTip from './InfoTip.jsx';
 
 const ROLE_LABELS = { tenant: 'Tenant', landlord: 'Landlord', manager: 'Manager', caretaker: 'Caretaker', admin: 'Admin' };
 const REASON_LABELS = {
@@ -39,7 +40,7 @@ export default function SupportAnalyticsPanel({ token }) {
   return (
     <div className="support-analytics">
       <h2>Support Analytics</h2>
-      <p className="support-analytics__subtitle">How often the AI support chat hands off to a live agent call.</p>
+      <InfoTip text={<>How often the AI support chat hands off to a live agent call.</>} />
 
       <div className="support-analytics__counts">
         <div className="support-analytics__count-card">

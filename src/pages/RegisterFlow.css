@@ -555,3 +555,59 @@
   font-size: var(--text-base);
   margin: 0;
 }
+
+/* Inline email verification box under the email field on the
+   "Your details" step - same visual pattern as
+   TenantOnboarding.css's .tenant-onboarding-email-verify (styles
+   duplicated here since RegisterFlow doesn't import that stylesheet). */
+.tenant-onboarding-email-verify {
+  margin-top: -0.4rem;
+}
+
+.tenant-onboarding-email-verify__btn {
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #2563eb;
+  background: #eef4ff;
+  color: #2563eb;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tenant-onboarding-email-verify__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.tenant-onboarding-email-verify__code-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tenant-onboarding-email-verify__code-row input {
+  width: 110px;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+}
+
+.tenant-onboarding-email-verify__resend {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tenant-onboarding-email-verify__done {
+  color: #15803d;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin: 0;
+}

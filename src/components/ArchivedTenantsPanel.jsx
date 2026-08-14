@@ -4,7 +4,7 @@ import Button from './Button.jsx';
 import { useToast } from './Toast.jsx';
 import './StatisticsPanel.css';
 import Skeleton from './Skeleton.jsx';
-import TapToReveal from './TapToReveal.jsx';
+import InfoTip from './InfoTip.jsx';
 
 // Direct request: "we should have in menu a UI for payment histories
 // and details of archived and deleted tenants... with a UI to restore
@@ -76,9 +76,9 @@ export default function ArchivedTenantsPanel({ token }) {
   return (
     <section className="statistics-panel">
       <h2>Archived Tenants</h2>
-      <TapToReveal className="tenant-portal-hint">
+      <InfoTip text={<>
         Tenants removed from a unit land here, along with their full payment history - nothing is deleted when a tenant is removed, only archived.
-      </TapToReveal>
+      </>} />
       {archived === null && <Skeleton rows={4} />}
       {archived && archived.length === 0 && <p className="tenant-portal-hint">No archived tenants.</p>}
       {archived && archived.length > 0 && (

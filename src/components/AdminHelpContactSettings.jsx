@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api/client.js';
 import Button from './Button.jsx';
 import './AdminHelpContactSettings.css';
+import InfoTip from './InfoTip.jsx';
 
 // Item 3: Admin > Settings > "Help & Contact Details" - support
 // MULTIPLE call/WhatsApp numbers (add/edit/remove individually),
@@ -124,11 +125,11 @@ export default function AdminHelpContactSettings({ token }) {
   return (
     <div className="admin-help-contacts">
       <h2>Help &amp; Contact Details</h2>
-      <p className="admin-help-contacts__intro">
+      <InfoTip text={<>
         These numbers and this email show up in the Help modal on every portal (including the logged-out login
         screen) and in the manual-payment "call customer care" message. You can add as many call and WhatsApp
         numbers as you need — e.g. a primary line and a backup — not just one of each.
-      </p>
+      </>} />
 
       {error && <div className="admin-banner admin-banner--error">{error}</div>}
       {notice && <div className="admin-banner admin-banner--ok">{notice}</div>}

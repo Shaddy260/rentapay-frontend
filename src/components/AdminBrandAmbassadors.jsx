@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import InfoTip from './InfoTip.jsx';
 import AdminBaPayoutRules from './AdminBaPayoutRules.jsx';
 import AdminBaPayoutQualificationReport from './AdminBaPayoutQualificationReport.jsx';
 import { buildWaMeLink } from '../utils/whatsapp.js';
@@ -217,12 +218,12 @@ export default function AdminBrandAmbassadors({ token }) {
           "Pending Applications" below for you to approve or reject. */}
       <div className="admin-ba__link-card">
         <p className="admin-ba__link-card-title">Onboard a new Brand Ambassador</p>
-        <p className="admin-ba__meta">
+        <InfoTip text={<>
           Generate a link and send it to the person you want to onboard as a BA. They'll fill in their own details
           and submit — you approve or reject it from Pending Applications below. The link expires 24 hours after
           it's generated; after that (or once you generate a new one) the old one stops working and whoever has it
           is told to request a fresh one.
-        </p>
+        </>} />
         {linkError && <p className="admin-ba__error">{linkError}</p>}
         {!baLink ? (
           <p className="admin-ba__meta">Loading…</p>

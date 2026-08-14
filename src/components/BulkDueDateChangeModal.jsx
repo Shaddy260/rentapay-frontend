@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { api } from '../api/client.js';
 import Button from './Button.jsx';
 import './BulkRentChangeModal.css';
-import TapToReveal from './TapToReveal.jsx';
 
 // DIRECT REQUEST: setting the rent due date "one by one" per unit is
 // hectic for a landlord/manager with hundreds of units. Mirrors
@@ -131,9 +130,9 @@ export default function BulkDueDateChangeModal({ token, properties, onClose, onD
               onChange={(e) => setDueDay(e.target.value)}
             />
 
-            <TapToReveal className="bulk-rent-modal__hint">
+            <p className="bulk-rent-modal__hint">
               Applies to every selected unit that isn&rsquo;t already set to this day. Every affected tenant is notified individually, same as a single due-date change.
-            </TapToReveal>
+            </p>
             <div className="modal-actions">
               <button type="button" className="ghost-link" onClick={onClose}>Cancel</button>
               <Button type="submit" variant="primary" loading={busy}>Apply</Button>

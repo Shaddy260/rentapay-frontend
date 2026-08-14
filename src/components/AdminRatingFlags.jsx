@@ -4,6 +4,7 @@ import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import CommentReveal from './CommentReveal.jsx';
 import './AdminRatingFlags.css';
+import InfoTip from './InfoTip.jsx';
 
 const TABLE_LABEL = {
   landlord_ratings: 'Landlord rating',
@@ -57,10 +58,10 @@ export default function AdminRatingFlags({ token }) {
   return (
     <div className="admin-rating-flags">
       <h2>Rating Flags</h2>
-      <p className="admin-rating-flags__intro">
+      <InfoTip text={<>
         Ratings a landlord has disputed as bad-faith. A flagged rating is excluded from that landlord's aggregate while
         pending — resolve it as upheld (counts again) or removed (stays excluded).
-      </p>
+      </>} />
 
       <div className="admin-rating-flags__filter">
         {['flagged', 'upheld', 'removed'].map((s) => (

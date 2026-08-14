@@ -3,7 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import './AdminBaPayoutRules.css';
-import TapToReveal from './TapToReveal.jsx';
+import InfoTip from './InfoTip.jsx';
 
 /**
  * Consolidated Change Instructions - Section E (percentage commission,
@@ -120,13 +120,13 @@ export default function AdminBaPayoutRules({ token }) {
 
   return (
     <div className="admin-ba-rules">
-      <p className="admin-ba-rules__intro">
+      <InfoTip text={<>
         BAs earn a percentage of what each qualifying landlord actually pays RentaPay, recurring on every payment
         cycle for as long as that landlord stays subscribed — not a one-off amount. This rate applies to every BA by
         default; pick a specific BA below to give them a custom override instead. Setting a new rate never
         overwrites the current one — it's recorded as of a chosen effective date, so past rates (and exactly which
         payments they applied to) are always preserved.
-      </p>
+      </>} />
 
       <div className="admin-ba-rules__scope">
         <label htmlFor="ba-rules-scope">Editing:</label>
@@ -147,10 +147,10 @@ export default function AdminBaPayoutRules({ token }) {
       ) : (
         <>
           {isOverride && !current && (
-            <TapToReveal className="admin-ba-rules__note">
+            <p className="admin-ba-rules__note">
               This BA has no custom rate yet — currently using the global default. Set one below to give them a
               custom rate.
-            </TapToReveal>
+            </p>
           )}
 
           <section className="admin-ba-rules__card">

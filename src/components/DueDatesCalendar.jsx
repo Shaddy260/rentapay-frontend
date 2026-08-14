@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import './DueDatesCalendar.css';
 import Skeleton from './Skeleton.jsx';
+import InfoTip from './InfoTip.jsx';
 
 // Direct request: "a calendar/timeline view of rent due dates - you
 // have per-unit due days and a payments-this-month figure, but no
@@ -36,7 +37,7 @@ export default function DueDatesCalendar({ token }) {
 
   return (
     <div className="due-dates-calendar">
-      <p className="due-dates-calendar__intro">Every active tenant's rent due day this month, at a glance.</p>
+      <InfoTip text={<>Every active tenant's rent due day this month, at a glance.</>} />
       {grouped.map(([day, tenants]) => (
         <div key={day} className={`due-dates-calendar__day ${day === todayDay ? 'due-dates-calendar__day--today' : ''}`}>
           <div className="due-dates-calendar__day-label">

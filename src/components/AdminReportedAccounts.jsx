@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import './AdminReportedAccounts.css';
+import InfoTip from './InfoTip.jsx';
 
 const ACCOUNT_LABEL = { landlord: 'Landlord', manager: 'Manager', tenant: 'Tenant' };
 
@@ -111,11 +112,11 @@ export default function AdminReportedAccounts({ token }) {
   return (
     <div className="admin-reported-accounts">
       <h2>Reported Accounts</h2>
-      <p className="admin-reported-accounts__intro">
+      <InfoTip text={<>
         Content reported from the Community board, and every account currently warned, temporarily
         suspended, or suspended indefinitely. A suspended account can't log in or reset their
         password.
-      </p>
+      </>} />
 
       <div className="admin-reported-accounts__filter">
         {[

@@ -40,7 +40,7 @@ import { initPushSubscription } from '../utils/push.js';
 import { useSharedPoll } from '../utils/sharedPoll.js';
 import './AdminDashboard.css';
 import Skeleton from '../components/Skeleton.jsx';
-import TapToReveal from '../components/TapToReveal.jsx';
+import InfoTip from '../components/InfoTip.jsx';
 
 /**
  * Blueprint section 13: Super Admin Panel. The platform owner's view -
@@ -1246,9 +1246,9 @@ export default function AdminDashboard() {
                 </button>
               )}
             </div>
-            <TapToReveal className="admin-section__hint">
+            <InfoTip text={<>
               Landlords who started creating an account but haven't finished the setup wizard yet, and which step they stopped at.
-            </TapToReveal>
+            </>} />
             {incompleteSignups.length === 0 && <p className="admin-section__hint">No incomplete signups right now.</p>}
             {incompleteSignups.length > 0 && (
               <div className="admin-table-wrapper">

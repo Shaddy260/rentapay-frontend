@@ -65,6 +65,7 @@ import { openWhatsAppReminder } from '../utils/whatsapp.js';
 import '../components/Countdown.css';
 import '../components/SubscriptionLockGate.css';
 import './Dashboard.css';
+import InfoTip from '../components/InfoTip.jsx';
 
 // How many tiles to preview per status group on the "All" overview page
 // before handing off to that status's own dedicated page (spec section 2).
@@ -566,9 +567,9 @@ export default function Dashboard() {
                 ? "All access to this apartment is locked until it's renewed - its dashboard, units, and payments are unavailable until then."
                 : "All access to RentaPay is locked until you renew - your dashboard, units, messages, and everything else are unavailable until then."}
           </p>
-          <p className="subscription-lock-gate__note">
+          <InfoTip text={<>
             Everything is saved and waiting exactly as you left it, and your tenants' portals keep working normally in the meantime.
-          </p>
+          </>} />
 
           {otherProperties.length > 0 && (
             <div className="subscription-lock-gate__switcher">

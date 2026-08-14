@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
+import InfoTip from './InfoTip.jsx';
 import './AdminLoyaltyDiscounts.css';
+import InfoTip from './InfoTip.jsx';
 
 /**
  * Detects landlords whose subscription has run for consecutive
@@ -155,11 +157,11 @@ export default function AdminLoyaltyDiscounts({ token }) {
 
   return (
     <div className="admin-loyalty">
-      <p className="admin-loyalty__intro">
+      <InfoTip text={<>
         Landlords who've paid for consecutive subscription periods without a gap show up below once they hit the
         threshold. Select who to reward, set a discount %, and it's applied automatically on that landlord's next
         subscription charge — no need to remember or re-apply it later.
-      </p>
+      </>} />
 
       <section className="admin-loyalty__card">
         <h3>Consecutive-subscription candidates</h3>
@@ -327,10 +329,10 @@ export default function AdminLoyaltyDiscounts({ token }) {
             {historyOpen ? 'Refresh' : 'Show history'}
           </Button>
         </div>
-        <p className="admin-loyalty__meta">
+        <InfoTip text={<>
           Every grant this landlord base has ever received — active, consumed, revoked, or lapsed unused — including
           which payment consumed it and whether the reminder popup is currently snoozed.
-        </p>
+        </>} />
 
         {historyOpen && (
           <>

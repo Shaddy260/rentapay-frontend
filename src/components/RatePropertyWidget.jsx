@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, ApiError } from '../api/client.js';
 import './RateLandlordWidget.css';
+import InfoTip from './InfoTip.jsx';
 
 /**
  * FEATURE (direct request): a PROPERTY reputation, sitting beside the
@@ -52,9 +53,9 @@ export default function RatePropertyWidget({ token }) {
   return (
     <div className="rate-landlord-widget">
       <h3>Rate This Property</h3>
-      <p className="rate-landlord-widget__intro">
+      <InfoTip text={<>
         Your rating is combined anonymously with other current tenants' - it's never shown as a single review tied to you.
-      </p>
+      </>} />
 
       {reputation && reputation.totalRatings > 0 && (
         <p className="rate-landlord-widget__aggregate">

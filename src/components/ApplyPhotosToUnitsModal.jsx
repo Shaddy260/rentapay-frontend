@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import './ApplyPhotosToUnitsModal.css';
+import InfoTip from './InfoTip.jsx';
 
 // FEATURE (direct request: "most units look similar... a way for him
 // to choose whether it should be similar to other units... a popup
@@ -51,9 +52,9 @@ export default function ApplyPhotosToUnitsModal({ unitId, propertyId, token, onC
     <div className="apply-photos-modal__backdrop" onClick={onClose}>
       <div className="apply-photos-modal" onClick={(e) => e.stopPropagation()}>
         <h3>Use these photos for other units too?</h3>
-        <p className="apply-photos-modal__hint">
+        <InfoTip text={<>
           Only units in this same property are shown - photos don't carry across properties.
-        </p>
+        </>} />
 
         {siblings === null && <p>Loading units…</p>}
 

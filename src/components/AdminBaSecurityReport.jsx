@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Skeleton from './Skeleton.jsx';
 import './AdminBaSecurityReport.css';
-import TapToReveal from './TapToReveal.jsx';
+import InfoTip from './InfoTip.jsx';
 
 function dateOnly(iso) {
   return iso ? iso.slice(0, 10) : '';
@@ -55,7 +55,7 @@ export default function AdminBaSecurityReport({ token, onReview }) {
 
       <div className="admin-ba-security__section">
         <h3>Rapid-fire onboarding ({report.rapidFireOnboarding.length})</h3>
-        <TapToReveal className="admin-ba-security__hint">Landlords onboarded unusually close together in time by one Brand Ambassador — a rough proxy for signups logged without an actual field visit.</TapToReveal>
+        <InfoTip text={<>Landlords onboarded unusually close together in time by one Brand Ambassador — a rough proxy for signups logged without an actual field visit.</>} />
         {report.rapidFireOnboarding.length === 0 && <p className="admin-ba-security__empty">None found.</p>}
         <ul className="admin-ba-security__cards">
           {report.rapidFireOnboarding.map((r) => (
@@ -71,7 +71,7 @@ export default function AdminBaSecurityReport({ token, onReview }) {
 
       <div className="admin-ba-security__section">
         <h3>Disputed attributions ({report.disputedAttributions.length})</h3>
-        <TapToReveal className="admin-ba-security__hint">The linked landlord has disputed this Brand Ambassador's attribution — internal review only, never shown to the landlord.</TapToReveal>
+        <InfoTip text={<>The linked landlord has disputed this Brand Ambassador's attribution — internal review only, never shown to the landlord.</>} />
         {report.disputedAttributions.length === 0 && <p className="admin-ba-security__empty">None found.</p>}
         <ul className="admin-ba-security__cards">
           {report.disputedAttributions.map((d) => (

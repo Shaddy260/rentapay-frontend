@@ -4,6 +4,7 @@ import Button from './Button.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import './PendingPaymentConfirmations.css';
 import Skeleton from './Skeleton.jsx';
+import InfoTip from './InfoTip.jsx';
 
 /**
  * "Landlords manual payment confirmations" - direct request: admin
@@ -119,10 +120,10 @@ export default function LandlordManualPaymentConfirmations({ token }) {
           )}
         </h2>
       </div>
-      <p className="tenant-portal-hint">
+      <InfoTip text={<>
         Subscription payments landlords, managers, or caretakers submitted manually (Paybill 400200, Acc 1341657388) after not
         receiving or trusting the M-Pesa popup.
-      </p>
+      </>} />
 
       <div className="ppc-status-tabs">
         {['pending', 'confirmed', 'rejected', 'all'].map((s) => (

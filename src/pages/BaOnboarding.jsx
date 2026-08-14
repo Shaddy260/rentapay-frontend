@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api, ApiError } from '../api/client.js';
 import Button from '../components/Button.jsx';
 import '../pages/TenantOnboarding.css';
+import InfoTip from '../components/InfoTip.jsx';
 
 const EMPTY_FORM = { fullName: '', phone: '', email: '', nationalId: '', termsAccepted: false };
 
@@ -154,9 +155,9 @@ export default function BaOnboarding() {
           <div className="tenant-onboarding-done">
             <div className="tenant-onboarding-done__icon" aria-hidden="true">⏰</div>
             <p>{expiredMessage}</p>
-            <p className="tenant-onboarding-field-hint">
+            <InfoTip text={<>
               Ask the RentaPay admin who invited you for a fresh link — the current one only stays valid for 24 hours.
-            </p>
+            </>} />
           </div>
         )}
 

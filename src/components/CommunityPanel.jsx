@@ -4,7 +4,7 @@ import { api } from '../api/client.js';
 import './CommunityPanel.css';
 import Skeleton from './Skeleton.jsx';
 import PhotoLightbox from './PhotoLightbox.jsx';
-import TapToReveal from './TapToReveal.jsx';
+import InfoTip from './InfoTip.jsx';
 
 // Best-effort, UI-only decode of the JWT payload (id/role) so the
 // panel can tell "is this my own post" apart from "someone else's" -
@@ -227,14 +227,14 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
       </div>
 
       {kind === 'board' && (
-        <TapToReveal className="community-panel__hint">
+        <InfoTip text={<>
           Day-to-day building life - a good plumber, a lost pet, borrowing a tool, carpooling. Not for rent or maintenance issues.
-        </TapToReveal>
+        </>} />
       )}
       {kind === 'marketplace' && (
-        <TapToReveal className="community-panel__hint">
+        <InfoTip text={<>
           Selling or giving away furniture when you move out, splitting a bulk delivery, recommending someone you trust. Peer-to-peer - not handled by your landlord.
-        </TapToReveal>
+        </>} />
       )}
 
       {error && <p className="community-panel__error">{error}</p>}

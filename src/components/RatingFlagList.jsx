@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import CommentReveal from './CommentReveal.jsx';
 import './RatingFlagList.css';
+import InfoTip from './InfoTip.jsx';
 
 function Stars({ value }) {
   return (
@@ -84,10 +85,10 @@ export default function RatingFlagList({ token, table, title, canFlag = true, pr
   return (
     <div className="rating-flag-list">
       <h4>{title || 'Individual ratings'}</h4>
-      <p className="rating-flag-list__intro">
+      <InfoTip text={<>
         Shown here (and only here) so you can recognize and dispute a specific rating — never anywhere a tenant's name
         is attached.
-      </p>
+      </>} />
       {notice && <p className="rating-flag-list__notice">{notice}</p>}
       <ul className="rating-flag-list__items">
         {ratings.map((r) => (

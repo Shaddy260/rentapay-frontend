@@ -140,9 +140,9 @@ export default function TenantSettings() {
 
       <section className="settings-card">
         <h2>Phone, email &amp; emergency contact</h2>
-        <p className="settings-card__hint">
+        <InfoTip text={<>
           Your phone, secondary phone, email, and emergency contact are edited from the Contact &amp; Notice tab in your portal.
-        </p>
+        </>} />
         <Button variant="ghost" onClick={() => navigate('/portal?tab=contact')}>Go to contact details</Button>
       </section>
 
@@ -153,9 +153,9 @@ export default function TenantSettings() {
           Push, SMS &amp; email
           <InfoTip text="Per-channel toggles for payment reminders, maintenance updates, and announcements are planned but not available yet." />
         </h2>
-        <p className="settings-card__hint">
+        <InfoTip text={<>
           Choosing exactly which notifications you get, and over which channel, isn't available yet - it's on the way.
-        </p>
+        </>} />
       </section>
 
       <h2 className="settings-cluster-title u-mt-6">Data &amp; account</h2>
@@ -174,9 +174,9 @@ export default function TenantSettings() {
 
       <section className="settings-card">
         <h2>Delete my account</h2>
-        <p className="settings-card__hint">
+        <InfoTip text={<>
           This sends a request to the RentaPay team to close your account and remove your data. It isn't instant - someone will follow up with you to confirm.
-        </p>
+        </>} />
         {deletionRequested ? (
           <p className="settings-card__hint" style={{ color: 'var(--color-primary-dark)' }}>
             Your request has been sent. The RentaPay team will follow up with you.

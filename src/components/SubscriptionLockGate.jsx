@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import Button from './Button.jsx';
 import './SubscriptionLockGate.css';
+import InfoTip from './InfoTip.jsx';
 
 // FIX (direct request: "everything else including notifications
 // worked perfectly...they shouldn't be able to access anything at
@@ -76,9 +77,9 @@ export default function SubscriptionLockGate({ children }) {
             ? "The landlord's RentaPay subscription has ended. All access is locked, including yours, until it's renewed - contact them to renew it."
             : "All access to RentaPay is locked until you renew - your dashboard, units, messages, and everything else are unavailable until then."}
         </p>
-        <p className="subscription-lock-gate__note">
+        <InfoTip text={<>
           Everything is saved and waiting exactly as you left it, and your tenants' portals keep working normally in the meantime - this only blocks your own dashboard access.
-        </p>
+        </>} />
         <p className="subscription-lock-gate__help">
           Having trouble renewing? Reach out to <a href="mailto:support@rentapay.co.ke">support@rentapay.co.ke</a> and we'll help you sort it out.
         </p>

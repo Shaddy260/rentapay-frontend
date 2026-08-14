@@ -4,6 +4,7 @@ import './TenantReputationsPanel.css';
 import './MyReputationPanel.css';
 import Skeleton from './Skeleton.jsx';
 import RatingFlagList from './RatingFlagList.jsx';
+import InfoTip from './InfoTip.jsx';
 
 function BigStars({ average }) {
   if (!average) return null;
@@ -55,10 +56,10 @@ export default function MyOwnRatingPanel({ token, viewerRole, roleLevel }) {
         </p>
       ) : (
         <>
-          <p className="my-reputation-panel__intro">
+          <InfoTip text={<>
             Built from every rating a tenant has left for you - shown only as an aggregate, never as a single review tied
             back to one tenant.
-          </p>
+          </>} />
           <div className="my-reputation-panel__summary">
             <BigStars average={reputation.averageRating} />
             <span className="my-reputation-panel__score">{reputation.averageRating} / 5</span>

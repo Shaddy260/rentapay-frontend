@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client.js';
 import Avatar from './Avatar.jsx';
 import './StatisticsPanel.css';
 import Skeleton from './Skeleton.jsx';
+import InfoTip from './InfoTip.jsx';
 
 const ROLE_LABELS = { landlord: 'Landlords', tenant: 'Tenants', manager: 'Managers', caretaker: 'Caretakers' };
 const FIRST_LOGIN_ROLES = ['tenant', 'manager', 'caretaker'];
@@ -108,11 +109,11 @@ export default function AdminCredentialsPanel({ token }) {
   return (
     <section className="statistics-panel">
       <h2>Platform Login &amp; Password-Reset Codes</h2>
-      <p className="tenant-portal-hint">
+      <InfoTip text={<>
         {isFirstLogin
           ? "Every temp password and OTP issued at account creation, across every landlord on the platform - kept in separate lists per role, just like each landlord's own portal does. Landlords aren't listed here since they set their own password at signup, so there's no first-time credential to recover for them."
           : 'Every password-reset (forgot-password) OTP requested platform-wide, including by landlords themselves this time. Each code disappears automatically the moment it expires - anything shown here is still live.'}
-      </p>
+      </>} />
 
       <div className="login-page__toggle u-mb-2" role="tablist">
         <button type="button" role="tab" aria-selected={isFirstLogin} className={isFirstLogin ? 'is-active' : ''} onClick={() => setCategory('first-login')}>
@@ -231,7 +232,7 @@ export default function AdminCredentialsPanel({ token }) {
             {selectedPerson.landlord_name && <p><strong>Landlord:</strong> {selectedPerson.landlord_name}</p>}
             <p><strong>{isFirstLogin ? 'Created' : 'Requested'}:</strong> {new Date(selectedPerson.created_at || selectedPerson.requested_at).toLocaleString()}</p>
             <p><strong>Expires:</strong> {selectedPerson.expires_at ? new Date(selectedPerson.expires_at).toLocaleString() : 'No expiry — verified automatically'}</p>
-            <p className="tenant-portal-hint">This picture is pulled live from their profile, so it always reflects their most recent update.</p>
+            <InfoTip text={<>This picture is pulled live from their profile, so it always reflects their most recent update.</>} />
             <button type="button" className="modal-card__close" onClick={() => setSelectedPerson(null)}>Close</button>
           </div>
         </div>

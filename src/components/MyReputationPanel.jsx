@@ -4,6 +4,7 @@ import './TenantReputationsPanel.css';
 import './MyReputationPanel.css';
 import Skeleton from './Skeleton.jsx';
 import CommentReveal from './CommentReveal.jsx';
+import InfoTip from './InfoTip.jsx';
 
 function BigStars({ average }) {
   if (!average) return null;
@@ -175,10 +176,10 @@ export default function MyReputationPanel({ token, tenantId }) {
   return (
     <div className="my-reputation-panel">
       <h3>My Tenancy Reputation</h3>
-      <p className="my-reputation-panel__intro">
+      <InfoTip text={<>
         This is portable - it's built from every rating any landlord has left for you on RentaPay, and it's the same summary
         a new landlord will see if they add you using this email address.
-      </p>
+      </>} />
 
       <div className="my-reputation-panel__summary">
         <BigStars average={reputation.averageRating} />

@@ -4,7 +4,7 @@ import { KENYA_COUNTIES } from '../constants/kenyaCounties.js';
 import { KENYA_CONSTITUENCIES } from '../constants/kenyaConstituencies.js';
 import './LandlordEditModal.css';
 import Skeleton from './Skeleton.jsx';
-import TapToReveal from './TapToReveal.jsx';
+import InfoTip from './InfoTip.jsx';
 
 // FIX ("I edited the unit count for a landlord and even the name of
 // the estate but the changes didn't apply anywhere"): every portal
@@ -116,9 +116,9 @@ export default function LandlordEditModal({ landlordId, landlordName, token, onC
         ) : (
           <>
             {properties.length === 0 && (
-              <TapToReveal className="landlord-edit-modal__hint">
+              <InfoTip text={<>
                 This landlord has no separate properties yet - these fields edit their account directly.
-              </TapToReveal>
+              </>} />
             )}
 
             {properties.length > 1 && (

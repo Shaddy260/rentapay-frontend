@@ -4,6 +4,7 @@ import MiniDonutChart from './MiniDonutChart.jsx';
 import MiniLineChart from './MiniLineChart.jsx';
 import { api, ApiError } from '../api/client.js';
 import './StatisticsPanel.css';
+import InfoTip from './InfoTip.jsx';
 
 /**
  * Platform-wide "Financial Statistics" for the admin portal (was
@@ -158,10 +159,10 @@ export default function AdminStatistics({ token }) {
         </>
       ) : null}
 
-      <p className="unit-detail-hint">
+      <InfoTip text={<>
         Note: "profit margin" isn't shown here since RentaPay doesn't track platform costs (hosting, SMS,
         staff, etc) anywhere in the system - revenue per active landlord is the closest honest proxy available.
-      </p>
+      </>} />
     </section>
   );
 }

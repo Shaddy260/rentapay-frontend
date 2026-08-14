@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
+import InfoTip from './InfoTip.jsx';
 import './AdminSubscriptionPricing.css';
+import InfoTip from './InfoTip.jsx';
 
 /**
  * Lets an admin change the subscription fee landlords pay: the base
@@ -115,12 +117,12 @@ export default function AdminSubscriptionPricing({ token }) {
 
   return (
     <div className="admin-sub-pricing">
-      <p className="admin-sub-pricing__intro">
+      <InfoTip text={<>
         This is the fee every landlord pays: a base rate per unit per month, discounted for longer commitment
         periods. It applies everywhere a subscription is charged — signup, adding a property, adding units
         mid-period, and renewals. Saving never overwrites the current rate — it schedules a new one from a chosen
         effective date, so past rates are always kept for reference.
-      </p>
+      </>} />
 
       {loadError && <p className="admin-sub-pricing__error">{loadError}</p>}
 
@@ -184,10 +186,10 @@ export default function AdminSubscriptionPricing({ token }) {
             </div>
 
             <h4 className="admin-sub-pricing__tiers-heading">Discount tiers for longer commitments</h4>
-            <p className="admin-sub-pricing__meta">
+            <InfoTip text={<>
               A landlord subscribing for at least this many months gets this % off the base rate. The highest tier
               they qualify for applies.
-            </p>
+            </>} />
             <div className="admin-sub-pricing__tiers">
               {tiers.map((tier, i) => (
                 <div className="admin-sub-pricing__tier-row" key={i}>

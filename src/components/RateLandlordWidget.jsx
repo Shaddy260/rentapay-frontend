@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, ApiError } from '../api/client.js';
 import './RateLandlordWidget.css';
+import InfoTip from './InfoTip.jsx';
 
 /** Reusable star-picker + submit form, shared by the landlord block and each staff block below. */
 function StarRateForm({ ratingValue, setRatingValue, comment, setComment, submitting, submitError, onCancel, onSubmit }) {
@@ -152,9 +153,9 @@ export default function RateLandlordWidget({ token }) {
     <>
       <div className="rate-landlord-widget">
         <h3>Rate My Landlord</h3>
-        <p className="rate-landlord-widget__intro">
+        <InfoTip text={<>
           Your rating is combined anonymously with other tenants' - it's never shown as a single review tied to you.
-        </p>
+        </>} />
 
         {reputation && reputation.totalRatings > 0 && (
           <p className="rate-landlord-widget__aggregate">

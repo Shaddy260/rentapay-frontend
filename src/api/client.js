@@ -292,6 +292,11 @@ export { onQueueChange, listQueuedActions, queuedActionCount } from '../utils/of
 
 export const api = {
   registerLandlord: (payload) => request('/auth/landlord/register', { method: 'POST', body: payload }),
+  // DIRECT REQUEST: verify email on the same page as details, before
+  // the account exists - see requestLandlordEmailVerification /
+  // confirmLandlordEmailVerification on the backend.
+  sendLandlordRegistrationEmailOtp: (payload) => request('/auth/landlord/send-registration-email-otp', { method: 'POST', body: payload }),
+  verifyLandlordRegistrationEmailOtp: (payload) => request('/auth/landlord/verify-registration-email-otp', { method: 'POST', body: payload }),
   verifyOTP: (payload) => request('/auth/verify-otp', { method: 'POST', body: payload }),
   resendOTP: (payload) => request('/auth/resend-otp', { method: 'POST', body: payload }),
   verifyLandlordEmailOTP: (payload) => request('/auth/verify-landlord-email', { method: 'POST', body: payload }),
@@ -1091,6 +1096,7 @@ export const api = {
 
   // Phase 19 - Qualification Job Dry-Run Mode.
   runQualificationDryRun: (token) => request('/brand-ambassadors/qualification/dry-run', { method: 'POST', token }),
+  runQualificationNow: (token) => request('/brand-ambassadors/qualification/run-now', { method: 'POST', token }),
   downloadQualificationDryRunCsv: (token) => downloadBaFile('/brand-ambassadors/qualification/dry-run.csv', {}, token, 'ba-qualification-dry-run.csv'),
 
   // Phase 17 - Downloadable Earnings Statement (Per BA, Per Period).

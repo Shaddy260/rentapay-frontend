@@ -7,6 +7,7 @@ import { useToast } from './Toast.jsx';
 import './PendingPaymentConfirmations.css';
 import './StatisticsPanel.css';
 import Skeleton from './Skeleton.jsx';
+import InfoTip from './InfoTip.jsx';
 
 // Landlord/property-manager side of the manual Paybill payment
 // confirmation flow (see TenantPortal.jsx's PaybillModal for the
@@ -264,9 +265,9 @@ export default function PendingPaymentConfirmations({ token, canConfirmReject = 
       <div className="tenant-section__header-row">
         <h2>Pending Payment Confirmations</h2>
       </div>
-      <p className="tenant-portal-hint">
+      <InfoTip text={<>
         Tenants who paid rent directly via Paybill/Till submit proof here for you to confirm or reject. Confirming updates their balance and payment history immediately.
-      </p>
+      </>} />
 
       <div className="ppc-status-tabs">
         {['pending', 'confirmed', 'rejected'].map((s) => (

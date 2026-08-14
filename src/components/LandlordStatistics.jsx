@@ -6,6 +6,7 @@ import AnnualReportPanel from './AnnualReportPanel.jsx';
 import PendingRentChangesPanel from './PendingRentChangesPanel.jsx';
 import { api, ApiError } from '../api/client.js';
 import './StatisticsPanel.css';
+import InfoTip from './InfoTip.jsx';
 
 /**
  * A percentage-based stat card that also shows the raw counts behind
@@ -218,7 +219,7 @@ export default function LandlordStatistics({ token, propertyId, isCaretaker = fa
       {chronicallyLateUnits.length > 0 && (
         <div className="statistics-panel__chart-block">
           <h3>Chronically late units</h3>
-          <p className="tenant-portal-hint">Units with 2 or more late payments in the last 6 months, worst first.</p>
+          <InfoTip text={<>Units with 2 or more late payments in the last 6 months, worst first.</>} />
           <div className="chronically-late-units__scroll payments-table-wrap">
             <table className="payments-table">
               <thead><tr><th>Unit</th><th>Late payments</th><th>Most recent late payment</th></tr></thead>

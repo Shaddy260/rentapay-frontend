@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { HELP_EMAIL, HELP_WHATSAPP, HELP_CALL } from './HelpButton.jsx';
 import './Faq.css';
+import InfoTip from './InfoTip.jsx';
 
 // FAQ content, grouped by section. Written from each audience's point
 // of view rather than one generic list, since a tenant, landlord, and
@@ -149,7 +150,7 @@ export default function Faq({ audience = 'tenant' }) {
   return (
     <section className="faq-panel">
       <h2>Frequently Asked Questions</h2>
-      <p className="faq-panel__intro">How RentaPay works, how to get set up, and how access &amp; security work.</p>
+      <InfoTip text={<>How RentaPay works, how to get set up, and how access &amp; security work.</>} />
 
       {sections.map((section) => (
         <div key={section.section} className="faq-panel__section">
