@@ -4,7 +4,6 @@ import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import InfoTip from './InfoTip.jsx';
 import './AdminSubscriptionPricing.css';
-import InfoTip from './InfoTip.jsx';
 
 /**
  * Lets an admin change the subscription fee landlords pay: the base
