@@ -183,30 +183,3 @@
   background: rgba(0, 0, 0, 0.06);
   color: #444;
 }
-
-/* Item 3 clarification: never automatic delete-for-all - landlord/
-   manager/caretaker get an explicit choice every time. */
-.announcement-bell__delete-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 10px;
-  background: #f8f8f8;
-  border-radius: 8px;
-}
-
-.announcement-bell__delete-menu button {
-  text-align: left;
-  background: var(--color-surface-raised);
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.announcement-bell__delete-menu-danger {
-  color: #b3261e;
-  border-color: #f3c6c3 !important;
-}

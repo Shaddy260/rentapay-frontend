@@ -557,35 +557,9 @@
 
 /* Modals - .modal-overlay itself now lives only in global.css
    (z-index: 1000); see the matching note in TenantPortal.css for why
-   the duplicate, lower z-index: 100 version here was removed. */
-.modal-card {
-  background: var(--color-surface-raised);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  max-width: 420px;
-  width: 100%;
-  box-shadow: var(--shadow-lg);
-}
-
-.modal-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-4);
-}
-
-.modal-card__header h3 {
-  font-size: var(--text-lg);
-}
-
-.modal-card__close {
-  background: transparent;
-  border: none;
-  font-size: 1.4rem;
-  color: var(--color-ink-soft);
-  cursor: pointer;
-  line-height: 1;
-}
+   the duplicate, lower z-index: 100 version here was removed.
+   .modal-card / .modal-card__header / .modal-card__close now live
+   only in global.css too - see the matching note there. */
 
 .modal-form {
   display: flex;

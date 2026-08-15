@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
+import { buildWaMeLink } from '../utils/whatsapp.js';
 import './AdminBaPayouts.css';
 
 /**
@@ -72,6 +73,21 @@ function PendingTab({ token }) {
 
   const [awaiting, setAwaiting] = useState(null);
   const [awaitingError, setAwaitingError] = useState('');
+  const [copiedBaId, setCopiedBaId] = useState('');
+
+  async function copySubmissionLink(ba) {
+    if (!ba.submissionLink) return;
+    try {
+      await navigator.clipboard.writeText(ba.submissionLink);
+      setCopiedBaId(ba.baId);
+      setTimeout(() => setCopiedBaId(''), 2000);
+    } catch {
+      // Soft failure - same pattern as the BA onboarding link copy on
+      // AdminBrandAmbassadors: clipboard permissions/non-secure context
+      // can fail, but the link itself is still available to share.
+      setAwaitingError('Could not copy automatically - try again or share via WhatsApp instead.');
+    }
+  }
 
   const loadPending = useCallback(() => {
     setError('');
@@ -137,14 +153,47 @@ function PendingTab({ token }) {
       {awaiting && awaiting.length > 0 && (
         <div className="admin-ba-payouts__awaiting">
           <strong>{awaiting.length}</strong> BA{awaiting.length === 1 ? '' : 's'} with earnings this cycle haven't
-          submitted payment details yet (no one-time link submitted):{' '}
-          {awaiting.map((b, i) => (
-            <span key={b.baId}>
-              {i > 0 && ', '}
-              {b.baName}
-              {b.baCode ? ` (${b.baCode})` : ''} — {fmtKes(b.estimatedAmountOwed)}
-            </span>
-          ))}
+          submitted payment details yet (no one-time link submitted):
+          <ul className="admin-ba-payouts__awaiting-list">
+            {awaiting.map((b) => (
+              <li key={b.baId} className="admin-ba-payouts__awaiting-item">
+                <span>
+                  {b.baName}
+                  {b.baCode ? ` (${b.baCode})` : ''} — {fmtKes(b.estimatedAmountOwed)}
+                </span>
+                {b.submissionLink ? (
+                  <span className="admin-ba-payouts__awaiting-actions">
+                    <Button
+                      variant="ghost"
+                      onClick={() => copySubmissionLink(b)}
+                    >
+                      {copiedBaId === b.baId ? 'Copied!' : 'Copy submission link'}
+                    </Button>
+                    {b.phone && (
+                      <a
+                        href={buildWaMeLink(
+                          b.phone,
+                          `Hi ${b.baName}, please submit your M-Pesa payment details for RentaPay here: ${b.submissionLink}`
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="admin-ba-payouts__awaiting-whatsapp"
+                      >
+                        Share via WhatsApp
+                      </a>
+                    )}
+                  </span>
+                ) : (
+                  // Defensive fallback - every BA gets a submission token
+                  // at approval, so this shouldn't happen in practice,
+                  // but avoids showing a dead/missing action if it does.
+                  <span className="admin-ba-payouts__awaiting-actions admin-ba-payouts__awaiting-actions--muted">
+                    No submission link on file for this BA.
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -222,6 +271,14 @@ function CompletedTab({ token }) {
   const [error, setError] = useState('');
   const [editLinkNotice, setEditLinkNotice] = useState('');
   const [editLinkBusyKey, setEditLinkBusyKey] = useState('');
+  // FIX: previously the generated edit link was only ever shown as
+  // raw text inside a notice paragraph - copied silently to the
+  // clipboard with no visible confirmation and no way to send it
+  // straight to the BA. Now kept as structured state so the UI can
+  // render actual Copy/WhatsApp actions, per payoutKey so multiple
+  // cards' links don't clobber each other.
+  const [generatedLinks, setGeneratedLinks] = useState({}); // payoutKey -> { link, expiresAt, baPhone, baName }
+  const [copiedEditLinkKey, setCopiedEditLinkKey] = useState('');
 
   useEffect(() => {
     api
@@ -245,21 +302,37 @@ function CompletedTab({ token }) {
     load(selectedPeriod || undefined);
   }, [load, selectedPeriod]);
 
-  async function handleGenerateEditLink(baId, payoutKey) {
+  async function handleGenerateEditLink(card) {
     setEditLinkNotice('');
-    setEditLinkBusyKey(payoutKey);
+    setEditLinkBusyKey(card.payoutKey);
     try {
-      const res = await api.generateBaPayoutEditLink(baId, token);
-      setEditLinkNotice(`Edit link generated (expires ${fmtDate(res.expiresAt)}, valid 24 hours): ${res.link}`);
+      const res = await api.generateBaPayoutEditLink(card.baId, token);
       try {
         await navigator.clipboard.writeText(res.link);
       } catch {
-        // clipboard permissions can fail silently - the link is still shown above.
+        // clipboard permissions can fail silently - the link is still
+        // shown as an explicit Copy button below either way.
       }
+      setGeneratedLinks((prev) => ({
+        ...prev,
+        [card.payoutKey]: { link: res.link, expiresAt: res.expiresAt, baPhone: card.baPhone, baName: card.baName },
+      }));
     } catch (err) {
       setEditLinkNotice(err instanceof ApiError ? err.message : 'Failed to generate an edit link.');
     } finally {
       setEditLinkBusyKey('');
+    }
+  }
+
+  async function copyEditLink(payoutKey) {
+    const entry = generatedLinks[payoutKey];
+    if (!entry) return;
+    try {
+      await navigator.clipboard.writeText(entry.link);
+      setCopiedEditLinkKey(payoutKey);
+      setTimeout(() => setCopiedEditLinkKey(''), 2000);
+    } catch {
+      setEditLinkNotice('Could not copy automatically - select and copy the link shown below instead.');
     }
   }
 
@@ -306,13 +379,37 @@ function CompletedTab({ token }) {
                   <div className="admin-ba-payouts__lock-note">
                     🔒 Locked. Won't return to Pending. Corrections only via a 24-hour admin edit link.
                   </div>
-                  <Button
-                    variant="ghost"
-                    disabled={editLinkBusyKey === card.payoutKey}
-                    onClick={() => handleGenerateEditLink(card.baId, card.payoutKey)}
-                  >
-                    {editLinkBusyKey === card.payoutKey ? 'Generating…' : 'Generate 24-hour edit link'}
-                  </Button>
+                  {generatedLinks[card.payoutKey] ? (
+                    <div className="admin-ba-payouts__edit-link-actions">
+                      <span className="admin-ba-payouts__edit-link-expiry">
+                        Edit link expires {fmtDate(generatedLinks[card.payoutKey].expiresAt)} (valid 24 hours)
+                      </span>
+                      <Button variant="ghost" onClick={() => copyEditLink(card.payoutKey)}>
+                        {copiedEditLinkKey === card.payoutKey ? 'Copied!' : 'Copy edit link'}
+                      </Button>
+                      {generatedLinks[card.payoutKey].baPhone && (
+                        <a
+                          href={buildWaMeLink(
+                            generatedLinks[card.payoutKey].baPhone,
+                            `Hi ${card.baName}, use this link to correct your RentaPay payout details (valid 24 hours): ${generatedLinks[card.payoutKey].link}`
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="admin-ba-payouts__awaiting-whatsapp"
+                        >
+                          Share via WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      disabled={editLinkBusyKey === card.payoutKey}
+                      onClick={() => handleGenerateEditLink(card)}
+                    >
+                      {editLinkBusyKey === card.payoutKey ? 'Generating…' : 'Generate 24-hour edit link'}
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

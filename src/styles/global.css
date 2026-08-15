@@ -149,6 +149,50 @@ body:has(.subscription-lock-gate) {
   box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,0.2));
 }
 
+/* FIX (direct request): the "Reward selected" modal (and any other
+   modal built on ModalShell.jsx / the plain .modal-card markup used
+   across the app) opened with no visible card behind it - content
+   floated directly over the dark .modal-overlay. Root cause: .modal-card
+   was only ever defined inside TenantPortal.css and UnitDetail.css
+   (duplicated, identically, in both), so any page that doesn't import
+   one of those two stylesheets - AdminDashboard among them - rendered
+   the class with zero background/padding/border-radius/shadow. Same
+   class of bug as the .modal-overlay z-index issue noted above; fixed
+   the same way, by keeping exactly one definition here in global.css
+   and removing the page-scoped duplicates. */
+.modal-card {
+  background: var(--color-surface-raised, #fff);
+  border-radius: var(--radius-lg, 14px);
+  padding: var(--space-5, 20px);
+  max-width: 420px;
+  width: 100%;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,0.2));
+}
+
+.modal-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4, 16px);
+}
+
+.modal-card__header h3 {
+  font-size: var(--text-lg, 1.125rem);
+  margin: 0;
+}
+
+.modal-card__close {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  color: var(--color-ink-soft, #666);
+  cursor: pointer;
+  line-height: 1;
+}
+
 /* =====================================================================
    FIX (direct request): on a phone, every list/table on the platform
    (tenants, payments, complaints, admin lists - anything that's a

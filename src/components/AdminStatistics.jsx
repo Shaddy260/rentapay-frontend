@@ -5,6 +5,26 @@ import MiniLineChart from './MiniLineChart.jsx';
 import { api, ApiError } from '../api/client.js';
 import './StatisticsPanel.css';
 import InfoTip from './InfoTip.jsx';
+import Button from './Button.jsx';
+
+// Direct request: "under landlords & tenants by county we should have
+// a download UI". The full 47-county breakdown is already loaded
+// client-side for the table, so this builds the CSV from that same
+// data rather than round-tripping to the server for it.
+function downloadCountyBreakdownCsv(countyBreakdown) {
+  const header = ['County', 'Landlords', 'Tenants'];
+  const rows = countyBreakdown.map((row) => [row.county, row.landlords, row.tenants]);
+  const csv = [header, ...rows]
+    .map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `landlords-tenants-by-county-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 /**
  * Platform-wide "Financial Statistics" for the admin portal (was
@@ -138,7 +158,16 @@ export default function AdminStatistics({ token }) {
           </div>
 
           <div className="statistics-panel__chart-block">
-            <h3>Landlords &amp; tenants by county (all 47 counties)</h3>
+            <div className="statistics-panel__county-header">
+              <h3>Landlords &amp; tenants by county (all 47 counties)</h3>
+              <Button
+                variant="ghost"
+                className="statistics-panel__county-download"
+                onClick={() => downloadCountyBreakdownCsv(growth.countyBreakdown)}
+              >
+                Download CSV
+              </Button>
+            </div>
             <div className="statistics-panel__county-table-wrap">
               <table className="statistics-panel__county-table">
                 <thead>

@@ -69,6 +69,23 @@
   color: var(--color-ink);
 }
 
+.statistics-panel__county-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.statistics-panel__county-header h3 {
+  margin: 0;
+}
+
+.statistics-panel__county-download {
+  flex-shrink: 0;
+}
+
 .statistics-panel__county-table-wrap {
   max-height: 360px;
   overflow-y: auto;

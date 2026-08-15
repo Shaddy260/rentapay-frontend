@@ -306,6 +306,11 @@
   color: var(--color-mpesa-dark, #2D7D27);
 }
 
+.ba-reward-confirm__next-card--failed {
+  border-color: var(--color-error, #B3261E);
+  color: var(--color-error, #B3261E);
+}
+
 .ba-reward-confirm__success {
   font-weight: 600;
   color: var(--color-primary, #0F3D3E);

@@ -33,27 +33,14 @@ import './AnnouncementBell.css';
 // FIX (direct request: "remove delete for me / delete for all - tapping
 // a single message should just delete it (for that user only, never for
 // anyone else), and add a 'Read all' that clears the whole list the same
-// way, again only for that one user"): this used to show a per-item ×
-// button with a "delete for me" / "delete for everyone" menu, and
-// separately a "Mark all read" button that only flipped a read flag,
-// leaving old messages sitting in the list forever. There is now a
-// single tap-to-delete behavior everywhere in this bell, and "Read all"
-// clears the whole list - both always self-only scope (this viewer's
-// own inbox), for every role, including landlord/manager/caretaker.
-//
-// FIX (direct request: "Community Inbox - clear vs delete behavior":
-// every role can clear their OWN inbox copy, but only landlord/
-// caretaker/manager should be able to delete an announcement for
-// everyone): plain tap-to-delete above still only ever removes an item
-// from this one viewer's own inbox, for every role - that part is
-// unchanged. For landlord/manager only, an announcement item (never a
-// notification - those are already per-recipient rows with no
-// "everyone" to delete for) also gets a small "Delete for everyone"
-// action next to the normal delete, calling the backend's existing
-// scope='all' path. A tenant never sees or can trigger that option -
-// the backend already enforces this server-side too (forces scope to
-// 'self' for any tenant regardless of what's sent), so this is
-// defense in depth, not the only guard.
+// way, again only for that one user"): tapping any item deletes it
+// immediately, self-only scope (this viewer's own inbox), for every
+// role. "Read all" clears the whole list the same way. A later change
+// briefly added a landlord/manager-only "delete for everyone" choice
+// on top of this - that's been removed again per direct request
+// ("delete for everyone should be dropped...no need for those delete
+// uis"), so this is back to being the only behavior: one tap, gone,
+// for that viewer, no menu, ever.
 // FIX (direct request: "notification sound only plays on the page
 // that has the bell, and in-app notifications don't pop, whether
 // logged in or not"): merging the old NotificationsBell into this
@@ -72,6 +59,14 @@ import './AnnouncementBell.css';
 // delivery for individual events is handled separately by the
 // existing web-push subscription (see push.js/sw.js) - that part
 // already worked and is untouched.
+// FIX (direct request: "delete for everyone should be dropped...
+// infact when one taps and it reads it disappears...no need for those
+// delete uis"): the "delete for me / delete for everyone" choice
+// (added for landlord/manager on their own announcements) is removed
+// again - tapping ANY item, for every role, now just deletes it for
+// that one viewer immediately, no menu, no choice, ever. The backend's
+// scope='all' path still exists (harmless, unused) but nothing in
+// this UI can reach it any more.
 export default function AnnouncementBell({ token, role, propertyId }) {
   const [announcements, setAnnouncements] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -79,7 +74,6 @@ export default function AnnouncementBell({ token, role, propertyId }) {
   const [open, setOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [clearingAll, setClearingAll] = useState(false);
-  const [menuItemId, setMenuItemId] = useState(null); // announcement id whose "delete for everyone?" menu is open (landlord/manager only)
   const [toastQueue, setToastQueue] = useState([]);
   const containerRef = useRef(null);
   const seenIdsRef = useRef(null); // null until the first load completes, so the whole existing inbox is never "discovered" as new on first render
@@ -87,10 +81,6 @@ export default function AnnouncementBell({ token, role, propertyId }) {
   useEffect(() => {
     ensureNotificationPermission();
   }, []);
-
-  // Only landlord/manager (the latter also covers caretakers) ever get
-  // the "delete for everyone" choice on an announcement.
-  const canDeleteForEveryone = role === 'landlord' || role === 'manager';
 
   function load() {
     if (!token) return;
@@ -160,17 +150,16 @@ export default function AnnouncementBell({ token, role, propertyId }) {
     setOpen((v) => !v);
   }
 
-  // Tapping an item deletes it, always scoped to this one viewer only
-  // (announcements use the existing 'self' hide-scope; notifications
-  // are already per-recipient rows, so deleting one can never touch
-  // anyone else's inbox). Either way, it disappears from the list and
-  // won't be seen again by this user - true for every role.
-  function deleteItem(item, scope) {
+  // Tapping an item deletes it immediately, always scoped to this one
+  // viewer only (announcements use the existing 'self' hide-scope;
+  // notifications are already per-recipient rows, so deleting one can
+  // never touch anyone else's inbox) - no menu, no choice, same
+  // behavior for every role.
+  function deleteItem(item) {
     setDeletingId(item.id);
-    setMenuItemId(null);
     const wasUnread = !item.isRead;
     const request = item.feed === 'announcement'
-      ? api.deleteAnnouncement(item.id, scope, token)
+      ? api.deleteAnnouncement(item.id, 'self', token)
       : api.deleteNotification(item.id, token);
 
     request
@@ -186,20 +175,6 @@ export default function AnnouncementBell({ token, role, propertyId }) {
       .finally(() => setDeletingId(null));
   }
 
-  // Notifications, and announcements for anyone who isn't landlord/
-  // manager, have exactly one option - delete for me - so a plain tap
-  // does it immediately, same as before. Landlord/manager tapping an
-  // announcement instead opens the "delete for me / delete for
-  // everyone" choice below, since that's the only case with a second
-  // option worth asking about.
-  function handleItemClick(item) {
-    if (item.feed === 'announcement' && canDeleteForEveryone) {
-      setMenuItemId((id) => (id === item.id ? null : item.id));
-      return;
-    }
-    deleteItem(item, 'self');
-  }
-
   // "Read all" clears the whole combined inbox at once, for this viewer
   // only - same self-only scoping as a single-item tap, just applied to
   // everything currently loaded. Announcements have no bulk-delete
@@ -208,7 +183,6 @@ export default function AnnouncementBell({ token, role, propertyId }) {
   // already have a single bulk delete-all call.
   function handleReadAll() {
     setClearingAll(true);
-    setMenuItemId(null);
     const announcementIds = announcements.map((a) => a.id);
     Promise.allSettled([
       api.deleteAllNotifications(token, propertyId),
@@ -264,7 +238,8 @@ export default function AnnouncementBell({ token, role, propertyId }) {
                       <li
                         key={`n-${n.id}`}
                         className={`announcement-bell__item ${item.isRead ? '' : 'announcement-bell__item--unread'}`}
-                        onClick={() => handleItemClick(item)}
+                        aria-disabled={deletingId === n.id}
+                        onClick={() => { if (deletingId !== n.id) deleteItem(item); }}
                       >
                         <div className="announcement-bell__item-top">
                           <span className="announcement-bell__sender announcement-bell__sender--system">
@@ -283,7 +258,7 @@ export default function AnnouncementBell({ token, role, propertyId }) {
                       key={`a-${a.id}`}
                       className={`announcement-bell__item ${item.isRead ? '' : 'announcement-bell__item--unread'}`}
                       aria-disabled={deletingId === a.id}
-                      onClick={() => { if (deletingId !== a.id) handleItemClick(item); }}
+                      onClick={() => { if (deletingId !== a.id) deleteItem(item); }}
                     >
                       <div className="announcement-bell__item-top">
                         <span className={`announcement-bell__sender announcement-bell__sender--${a.sender_role || 'system'}`}>
@@ -292,20 +267,6 @@ export default function AnnouncementBell({ token, role, propertyId }) {
                       </div>
                       <p>{a.message}</p>
                       <span className="announcement-bell__time">{new Date(a.created_at).toLocaleString()}</span>
-                      {/* Landlord/manager only: tapping the item above opens this
-                          choice instead of deleting immediately. Every other role
-                          (including tenant) never sees this - a plain tap already
-                          deleted the item before we get here. */}
-                      {canDeleteForEveryone && menuItemId === a.id && (
-                        <div className="announcement-bell__delete-menu" onClick={(e) => e.stopPropagation()}>
-                          <button type="button" onClick={() => deleteItem(item, 'self')} disabled={deletingId === a.id}>
-                            Delete for me
-                          </button>
-                          <button type="button" className="announcement-bell__delete-menu-danger" onClick={() => deleteItem(item, 'all')} disabled={deletingId === a.id}>
-                            Delete for everyone
-                          </button>
-                        </div>
-                      )}
                     </li>
                   );
                 })}

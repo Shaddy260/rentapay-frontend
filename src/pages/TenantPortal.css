@@ -397,30 +397,11 @@
    the CSS cascade depending on stylesheet load order and put modals
    BELOW other fixed page elements, letting taps "pass through" to
    whatever was actually on top. Keeping one definition removes that
-   risk everywhere at once. */
-.modal-card {
-  background: var(--color-surface-raised);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  max-width: 420px;
-  width: 100%;
-  box-shadow: var(--shadow-lg);
-}
-
-.modal-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-4);
-}
-
-.modal-card__close {
-  background: transparent;
-  border: none;
-  font-size: 1.4rem;
-  color: var(--color-ink-soft);
-  cursor: pointer;
-}
+   risk everywhere at once.
+   .modal-card / .modal-card__header / .modal-card__close now live
+   only in global.css too, for the same reason - this file's copy was
+   invisible-when-unstyled on any page that doesn't import this
+   stylesheet (see the matching note in global.css). */
 
 .modal-form {
   display: flex;

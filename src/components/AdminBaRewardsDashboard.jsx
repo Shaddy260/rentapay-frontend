@@ -293,8 +293,11 @@ function RewardConfirmModal({ token, selectedBas, onClose, onDone }) {
           <p className="ba-reward-confirm__success">Reward confirmed for {selectedBas.length} Brand Ambassador{selectedBas.length === 1 ? '' : 's'}.</p>
           <div className="ba-reward-confirm__next-cards">
             {result.whatHappensNext.map((item) => (
-              <span key={item.key} className="ba-reward-confirm__next-card ba-reward-confirm__next-card--done">
-                ✅ {item.label}
+              <span
+                key={item.key}
+                className={`ba-reward-confirm__next-card${item.done ? ' ba-reward-confirm__next-card--done' : ' ba-reward-confirm__next-card--failed'}`}
+              >
+                {item.done ? '✅' : '⚠️'} {item.label}
               </span>
             ))}
           </div>

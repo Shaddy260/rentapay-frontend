@@ -7,6 +7,7 @@ import Button from '../components/Button.jsx';
 import MiniBarChart from '../components/MiniBarChart.jsx';
 import MiniLineChart from '../components/MiniLineChart.jsx';
 import HelpButton from '../components/HelpButton.jsx';
+import AnnouncementBell from '../components/AnnouncementBell.jsx';
 import Faq from '../components/Faq.jsx';
 import { openWhatsAppReminder } from '../utils/whatsapp.js';
 import { HELP_WHATSAPP } from '../components/HelpButton.jsx';
@@ -1003,6 +1004,27 @@ export default function BaPortal() {
         <div className="portal-topbar__right">
           {profile && (
             <>
+              {/* FIX (direct request: "there's no announcement bell like
+                  in other portals... push notifications are not
+                  reaching them"): every other non-admin portal
+                  (Dashboard.jsx, TenantPortal.jsx) has this bell in the
+                  topbar - the BA Portal never mounted it at all. Two
+                  concrete effects, both now fixed: (1) a BA had no
+                  header bell showing merged announcements+notifications
+                  with live unread count, unlike everyone else; (2) this
+                  component is also the ONLY place that calls
+                  ensureNotificationPermission() and plays the chime/
+                  in-app toast/background browser notification for a
+                  newly-arrived item (see AnnouncementBell.jsx) - with
+                  it never mounted, a BA was never even prompted for
+                  notification permission, so push had no channel to
+                  land on. A real backend bug compounded this (see
+                  notifications.controller.js recipientFor - a BA's
+                  individual notifications were being looked up under
+                  the wrong recipient_type and could never be found);
+                  that's fixed separately, this just gives BAs the same
+                  delivery surface every other role already has. */}
+              <AnnouncementBell token={token} role="brand_ambassador" />
               <AccountMenu
                 name={profile.full_name}
                 photoUrl={profile.photo_url}

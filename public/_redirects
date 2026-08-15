@@ -17,3 +17,4 @@
 # was silently making /verify/:paymentId (the receipt QR code
 # destination, item 2.1) and /onboard/:token fragile on a cold load -
 # same underlying cause, now fixed for all of them at once.
+/*  /index.html  200

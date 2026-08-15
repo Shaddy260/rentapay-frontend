@@ -41,6 +41,66 @@
   margin-bottom: 14px;
 }
 
+/* FIX: previously this banner only listed BA names/amounts with no
+   way to actually send them their one-time submission link - admin
+   had to go find the link elsewhere manually. Each row now carries
+   its own Copy/WhatsApp actions, same pattern as the BA onboarding
+   link on the Brand Ambassadors screen. */
+.admin-ba-payouts__awaiting-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-ba-payouts__awaiting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(230, 160, 0, 0.25);
+}
+
+.admin-ba-payouts__awaiting-item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.admin-ba-payouts__awaiting-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-payouts__awaiting-actions--muted {
+  color: var(--color-muted, #888);
+  font-style: italic;
+}
+
+.admin-ba-payouts__awaiting-whatsapp {
+  font-weight: 600;
+  text-decoration: underline;
+  color: #8a5a00;
+}
+
+.admin-ba-payouts__edit-link-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.admin-ba-payouts__edit-link-expiry {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--color-muted, #888);
+}
+
 .admin-ba-payouts__toolbar {
   display: flex;
   align-items: center;
