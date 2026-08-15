@@ -1,12 +1,8 @@
 .landing {
-  /* Gold accent palette, scoped to the landing page only - layered on
-     top of the existing brand tokens so the rest of the app (login,
-     dashboards, etc.) is untouched. */
-  --gold: #C9A24B;
-  --gold-light: #E8CE8B;
-  --gold-dark: #8F7226;
-  --gold-soft-bg: rgba(201, 162, 75, 0.12);
-
+  /* REDESIGN (Premium Redesign Plan, Phase 7 consistency pass): the
+     gold tokens moved to the shared tokens.css :root (see there) so
+     signup/login can reference the same source instead of duplicating
+     these hex values - no longer redeclared locally here. */
   min-height: 100vh;
   background: var(--color-surface);
   color: var(--color-ink);
@@ -44,23 +40,6 @@
   vertical-align: middle;
 }
 
-.landing__nav-links {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-}
-
-.landing__nav-link {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-ink-soft);
-  text-decoration: none;
-}
-
-.landing__nav-link:hover {
-  color: var(--color-primary);
-}
-
 .landing__nav-actions {
   display: flex;
   align-items: center;
@@ -76,23 +55,6 @@
 
 .landing__nav-login:hover {
   color: var(--color-primary);
-}
-
-.landing__nav-cta {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--color-primary-dark);
-  background: linear-gradient(135deg, var(--gold-light), var(--gold));
-  padding: 0.55rem 1.15rem;
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  box-shadow: 0 2px 10px rgba(201, 162, 75, 0.35);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.landing__nav-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
 }
 
 /* ---------------------------------------------------------------
@@ -200,6 +162,58 @@
     linear-gradient(180deg, rgba(20, 30, 22, 0.55) 0%, rgba(20, 30, 22, 0.72) 55%, rgba(20, 30, 22, 0.88) 100%);
 }
 
+/* REDESIGN (Premium Redesign Plan, Phase 2): segmented pill toggle
+   near the top of the hero, switching between the landlord and home-
+   seeker content variants. Landlord is selected by default. */
+.landing__audience-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(201, 162, 75, 0.4);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: var(--space-5);
+}
+
+.landing__audience-toggle-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.landing__audience-toggle-btn:hover {
+  color: #fff;
+}
+
+.landing__audience-toggle-btn--active {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold) 60%, var(--gold-dark));
+  color: var(--color-primary-dark);
+  box-shadow: 0 4px 14px rgba(201, 162, 75, 0.4);
+}
+
+.landing__audience-toggle-btn--active:hover {
+  color: var(--color-primary-dark);
+}
+
+@media (max-width: 480px) {
+  .landing__audience-toggle {
+    flex-direction: column;
+    width: 100%;
+  }
+  .landing__audience-toggle-btn {
+    width: 100%;
+  }
+}
+
 .landing__eyebrow {
   display: inline-block;
   font-size: var(--text-xs);
@@ -231,25 +245,6 @@
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.85);
   margin: 0 0 var(--space-3) 0;
-}
-
-.landing__hero-sub--gold {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: var(--text-base);
-  font-weight: 600;
-  color: var(--gold-light);
-  background: rgba(201, 162, 75, 0.12);
-  border: 1px solid rgba(201, 162, 75, 0.35);
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  margin: 0 0 var(--space-6) 0;
-}
-
-.landing__hero-sub--gold::before {
-  content: '📍';
-  font-size: 0.95em;
 }
 
 .landing__hero-actions {
@@ -479,10 +474,16 @@
   margin: 0 auto;
   padding: var(--space-6);
   display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.landing__footer-top {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .landing__footer-brand {
@@ -493,6 +494,7 @@
 .landing__footer-links {
   display: flex;
   gap: var(--space-5);
+  flex-wrap: wrap;
 }
 
 .landing__footer-links a {
@@ -518,9 +520,6 @@
 }
 
 @media (max-width: 560px) {
-  .landing__nav-links {
-    display: none;
-  }
   .landing__nav-actions {
     gap: var(--space-3);
   }

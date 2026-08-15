@@ -839,8 +839,6 @@ export const api = {
 
   // DIRECT REQUEST: RentaPay itself can be reviewed - by logged-in
   // users AND anonymous visitors. Token is optional here.
-  getPlatformReviews: (limit) => request(`/reviews${limit ? `?limit=${limit}` : ''}`),
-  submitPlatformReview: (payload, token) => request('/reviews', { method: 'POST', body: payload, token }),
 
   listPendingRentChanges: (token, propertyId) => {
     const qs = propertyId && propertyId !== 'unassigned' ? `?propertyId=${encodeURIComponent(propertyId)}` : '';
@@ -986,20 +984,31 @@ export const api = {
   submitBaOnboarding: (payload) => request('/brand-ambassadors/apply', { method: 'POST', body: payload }),
   validateBaOnboardingLink: (onboardingToken) => request(`/brand-ambassadors/onboarding-link/validate?token=${encodeURIComponent(onboardingToken || '')}`),
 
-  // BA Monthly Payment Details & Payout Workflow - Phase 2 public
-  // submission form (/ba-payout-submit?token=...).
-  validateBaPayoutLink: (token) => request(`/brand-ambassadors/payout-link/validate?token=${encodeURIComponent(token || '')}`),
+  // BA Payout Submission - BUILD SPEC PHASE 10: one-time, single-use
+  // submission (/ba-payout-submit?token=...) plus a separate 24h
+  // admin-issued edit link (/ba-payout-submit?edit=...). No
+  // resubmission endpoint exists anywhere in this API surface.
+  validateBaPayoutLink: (token, editToken) =>
+    request(
+      `/brand-ambassadors/payout-link/validate?${token ? `token=${encodeURIComponent(token)}` : `edit=${encodeURIComponent(editToken || '')}`}`
+    ),
   submitBaPayoutDetails: (payload) => request('/brand-ambassadors/payout-link/submit', { method: 'POST', body: payload }),
-  getMyBaPayoutSubmission: (token, email) =>
-    request(`/brand-ambassadors/payout-link/my-submission?token=${encodeURIComponent(token || '')}&email=${encodeURIComponent(email || '')}`),
+  editBaPayoutDetails: (payload) => request('/brand-ambassadors/payout-link/edit-submit', { method: 'POST', body: payload }),
+  getMyBaPayoutSubmission: (params) => {
+    const q = new URLSearchParams(params).toString();
+    return request(`/brand-ambassadors/payout-link/my-submission?${q}`);
+  },
   getBaPayoutLinkCurrent: (token) => request('/brand-ambassadors/payout-link/current', { token }),
   getBaPendingPayments: (token) => request('/brand-ambassadors/payout-link/pending', { token }),
   getBaAwaitingPaymentDetails: (token) => request('/brand-ambassadors/payout-link/awaiting-details', { token }),
-  markBaPaymentsPaid: (submissionIds, token) =>
-    request('/brand-ambassadors/payout-link/mark-paid', { method: 'POST', body: { submissionIds }, token }),
+  markBaPaymentsPaid: (payoutKeys, token) =>
+    request('/brand-ambassadors/payout-link/mark-paid', { method: 'POST', body: { payoutKeys }, token }),
   getBaCompletedPeriods: (token) => request('/brand-ambassadors/payout-link/completed-periods', { token }),
   getBaCompletedPayments: (periodKey, token) =>
     request(`/brand-ambassadors/payout-link/completed${periodKey ? `?periodKey=${encodeURIComponent(periodKey)}` : ''}`, { token }),
+  getBaPaymentHistory: (token) => request('/brand-ambassadors/payout-link/history', { token }),
+  generateBaPayoutEditLink: (baId, token) =>
+    request(`/brand-ambassadors/${baId}/payout-link/generate-edit-link`, { method: 'POST', token }),
   downloadBaCompletedPayoutPdf: (periodKey, token) =>
     downloadBaFile(
       '/brand-ambassadors/payout-link/completed/pdf',
@@ -1076,6 +1085,23 @@ export const api = {
   updateGlobalBaPayoutRule: (payload, token) => request('/brand-ambassadors/payout-rules/global', { method: 'PATCH', body: payload, token }),
   setBaPayoutOverride: (baId, payload, token) => request(`/brand-ambassadors/${baId}/payout-rule-override`, { method: 'PATCH', body: payload, token }),
   getBaPayoutRuleHistory: (baId, token) => request(`/brand-ambassadors/payout-rules/history${baId ? `?baId=${encodeURIComponent(baId)}` : ''}`, { token }),
+
+  // PREMIUM REDESIGN PLAN - PHASE 8: Admin BA Performance & Rewards
+  // Dashboard - leaderboard ranked by net revenue contribution,
+  // single/bulk time-bound custom-commission rewards, reward history,
+  // and the branded PDF export of a reward batch.
+  getBaRewardsLeaderboard: (token) => request('/brand-ambassadors/rewards/leaderboard', { token }),
+  rewardBrandAmbassadors: (payload, token) => request('/brand-ambassadors/rewards', { method: 'POST', body: payload, token }),
+  getBaRewardHistory: (token) => request('/brand-ambassadors/rewards/history', { token }),
+  downloadBaRewardPdf: (batchId, token) => downloadBaFile(`/brand-ambassadors/rewards/${batchId}/pdf`, {}, token, `ba-reward-report-${batchId.slice(0, 8)}.pdf`),
+  sendBaChallengeBroadcast: (token) => request('/brand-ambassadors/rewards/challenge-broadcast', { method: 'POST', token }),
+
+  // PREMIUM REDESIGN PLAN - PHASE 9: Admin Financial Overview &
+  // Expense Tracking. Scoped to one month at a time.
+  getAdminFinancialOverview: (month, token) => request(`/admin/financial-overview${month ? `?month=${encodeURIComponent(month)}` : ''}`, { token }),
+  addAdminExpense: (payload, token) => request('/admin/financial-overview/expenses', { method: 'POST', body: payload, token }),
+  stopAdminExpense: (id, fromMonth, token) => request(`/admin/financial-overview/expenses/${id}/stop`, { method: 'POST', body: { fromMonth }, token }),
+  deleteAdminExpense: (id, token) => request(`/admin/financial-overview/expenses/${id}`, { method: 'DELETE', token }),
 
   // SECTION E - the logged-in BA's own recurring commission earnings
   // (one row per completed landlord subscription payment). Optional

@@ -1,10 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeroPhotoBackground from '../components/HeroPhotoBackground.jsx';
-import PlatformReviews from '../components/PlatformReviews.jsx';
 import InstallAppBanner from '../components/InstallAppBanner.jsx';
 import DownloadAppSection from '../components/DownloadAppSection.jsx';
 import './Landing.css';
+
+// REDESIGN (Premium Redesign Plan, Phase 2): the hero's headline,
+// subtext, and single CTA all swap together based on the audience
+// toggle - everything else on the page (how-it-works, testimonials,
+// footer) stays static, no page duplication. Landlord is the default
+// selection.
+const HERO_CONTENT = {
+  landlord: {
+    eyebrow: '✦ Premium property management, built for Kenya',
+    headline: 'Management made simple.',
+    sub: 'Easily manage your properties and tenants, take M-Pesa payments, and monitor every unit in real time — all from one place, on any phone.',
+    ctaLabel: 'Get started',
+    ctaTo: '/register',
+  },
+  seeker: {
+    eyebrow: '✦ Find your next home, hassle-free',
+    headline: 'Find your next home.',
+    sub: 'Browse vacant units by county and constituency, and reach out directly on WhatsApp — completely free, no account needed.',
+    ctaLabel: 'Browse listings',
+    ctaTo: '/find-a-house',
+  },
+};
 
 /**
  * FEATURE (direct request: "landing page"). Previously `/` redirected
@@ -16,18 +37,21 @@ import './Landing.css';
  * in, or browse listings with no account at all.
  */
 export default function Landing() {
+  // REDESIGN (Premium Redesign Plan, Phase 2): two-audience hero toggle.
+  const [audience, setAudience] = useState('landlord');
+  const hero = HERO_CONTENT[audience];
+
   return (
     <div className="landing">
+      {/* REDESIGN (Premium Redesign Plan, Phase 1): nav simplified to
+          just Logo | Login - the "Get started" CTA and the browse/
+          resources links were competing with the hero's own CTA, and
+          the APK download pill moved down into the footer as a proper
+          card (see DownloadAppSection below). */}
       <header className="landing__nav">
         <div className="landing__nav-brand">RentaPay</div>
-        <nav className="landing__nav-links">
-          <Link to="/find-a-house" className="landing__nav-link">Browse listings</Link>
-          <Link to="/resources" className="landing__nav-link">Resources</Link>
-        </nav>
         <div className="landing__nav-actions">
-          <DownloadAppSection />
           <Link to="/login" className="landing__nav-login">Log in</Link>
-          <Link to="/register" className="landing__nav-cta">Get started</Link>
         </div>
       </header>
 
@@ -38,20 +62,37 @@ export default function Landing() {
 
         <div className="landing__hero-inner">
           <div className="landing__hero-content">
-            <span className="landing__eyebrow">✦ Premium property management, built for Kenya</span>
-            <h1>Management made simple.</h1>
-            <p className="landing__hero-sub">
-              Easily manage your properties and tenants, take M-Pesa payments,
-              and monitor every unit in real time — all from one place, on any
-              phone.
-            </p>
-            <p className="landing__hero-sub landing__hero-sub--gold">
-              Searching for a home? Discover vacant units in your preferred
-              location in seconds.
-            </p>
+            {/* REDESIGN (Premium Redesign Plan, Phase 2): segmented
+                pill toggle near the top of the hero. Toggling only
+                swaps the headline/subtext/CTA below - the rotating
+                photo background, blobs, and rest of the page are
+                untouched. */}
+            <div className="landing__audience-toggle" role="tablist" aria-label="I am a...">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={audience === 'landlord'}
+                className={`landing__audience-toggle-btn${audience === 'landlord' ? ' landing__audience-toggle-btn--active' : ''}`}
+                onClick={() => setAudience('landlord')}
+              >
+                I&apos;m a Landlord
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={audience === 'seeker'}
+                className={`landing__audience-toggle-btn${audience === 'seeker' ? ' landing__audience-toggle-btn--active' : ''}`}
+                onClick={() => setAudience('seeker')}
+              >
+                I&apos;m looking for a home
+              </button>
+            </div>
+
+            <span className="landing__eyebrow">{hero.eyebrow}</span>
+            <h1>{hero.headline}</h1>
+            <p className="landing__hero-sub">{hero.sub}</p>
             <div className="landing__hero-actions">
-              <Link to="/register" className="landing__btn landing__btn--primary">Get started</Link>
-              <Link to="/find-a-house" className="landing__btn landing__btn--secondary">Browse listings</Link>
+              <Link to={hero.ctaTo} className="landing__btn landing__btn--primary">{hero.ctaLabel}</Link>
             </div>
           </div>
         </div>
@@ -124,19 +165,16 @@ export default function Landing() {
         <Link to="/register" className="landing__btn landing__btn--primary">Get started</Link>
       </section>
 
-      {/* FEATURE (direct request: "Download RentaPay App" button on the
-          landing page, serving a real APK). Separate, additional path
-          from InstallAppBanner above - that one triggers the browser's
-          native PWA install prompt; this one is a plain static-file
-          download of the signed TWA-wrapped APK for people who want the
-          app directly, since there's no Play Store listing yet.
-          FIX (direct request): moved into the top nav next to Log in /
-          Get started as a small pill - see DownloadAppSection.jsx. */}
-
-      <PlatformReviews />
+      {/* REDESIGN (Premium Redesign Plan, Phase 3): testimonials
+          section removed entirely - no replacement, the final-cta and
+          footer sections simply close the gap. See DownloadAppSection
+          below for the footer's "Download the app" card. */}
 
       <footer className="landing__footer">
-        <div className="landing__footer-brand">RentaPay</div>
+        <div className="landing__footer-top">
+          <div className="landing__footer-brand">RentaPay</div>
+          <DownloadAppSection />
+        </div>
         <div className="landing__footer-links">
           <Link to="/terms">Terms of Service</Link>
           <Link to="/privacy">Privacy Policy</Link>

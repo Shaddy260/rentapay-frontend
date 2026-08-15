@@ -3,7 +3,14 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  background: var(--color-surface);
+  /* REDESIGN (Premium Redesign Plan, Phase 6): layout/fields stay
+     exactly as they were (not condensed into a centered card like
+     signup) - only the palette changes. The page surface is now the
+     same soft cream (#F8E1C7) used on signup instead of the
+     token-driven --color-surface, which used to render this page
+     as a heavy solid-dark-green background in dark mode. Dark green
+     stays confined to the hero panel (accent/header) below. */
+  background: var(--color-signup-surface, #F8E1C7);
 }
 
 .login-page__hero {
@@ -76,7 +83,12 @@
 }
 
 .login-page__hero-title {
-  font-family: var(--font-body);
+  /* REDESIGN (Premium Redesign Plan, Phase 7 consistency pass):
+     serif display font on headings, matching the landing page's
+     "Management made simple" and signup's <h1> - this was still on
+     the sans body font, the one heading in the funnel that didn't
+     match the shared type scale. */
+  font-family: var(--font-display);
   font-size: clamp(2rem, 3vw, var(--text-3xl));
   line-height: 1.1;
   margin: 0 0 var(--space-4) 0;
@@ -160,7 +172,9 @@
 }
 
 .login-page__panel h1 {
-  font-family: var(--font-body);
+  /* REDESIGN (Premium Redesign Plan, Phase 7 consistency pass):
+     same serif display font as the landing hero and signup's <h1>. */
+  font-family: var(--font-display);
   font-size: var(--text-2xl);
   margin-bottom: var(--space-2);
   letter-spacing: -0.01em;
@@ -180,6 +194,28 @@
 .login-page__panel form .form-field:nth-of-type(1) { animation: login-fade-up 0.5s ease forwards; animation-delay: 0.2s; opacity: 0; }
 .login-page__panel form .form-field:nth-of-type(2) { animation: login-fade-up 0.5s ease forwards; animation-delay: 0.28s; opacity: 0; }
 .login-page__panel form button[type='submit'] { animation: login-fade-up 0.5s ease forwards; animation-delay: 0.36s; opacity: 0; }
+
+/* REDESIGN (Premium Redesign Plan, Phase 6 + shared design
+   principles: "same button radius, shadow, and input field styling
+   on every page"): match signup's field thickness/spacing exactly. */
+.login-page__panel .form-field {
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.login-page__panel .form-field input,
+.login-page__panel .form-field select {
+  padding: 1.5rem 1.15rem;
+  font-size: 1.05rem;
+}
+
+.login-page__panel .login-page__input-icon-wrap input {
+  padding-left: 2.6rem !important;
+}
+
+.login-page__panel .login-page__input-icon {
+  font-size: 1.05rem;
+}
 
 .login-page__oauth {
   display: flex;
@@ -673,4 +709,20 @@
 
 .login-page__register-btn:hover {
   background: var(--color-primary-tint, rgba(15, 61, 62, 0.08));
+}
+
+/* REDESIGN (Premium Redesign Plan, Phase 6): the one primary action
+   on this screen ("Log in") now carries the same gold treatment as
+   signup's submit button, instead of the plain solid-green
+   variant="primary" default - matching button style/shadow/radius
+   across signup and login per the shared design principles. */
+.login-page__submit-row .btn--primary {
+  background: linear-gradient(135deg, var(--gold-light, #E8CE8B), var(--gold, #C9A24B) 60%, var(--gold-dark, #8F7226)) !important;
+  color: #2b2210 !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(201, 162, 75, 0.4);
+}
+
+.login-page__submit-row .btn--primary:not(:disabled):hover {
+  filter: brightness(1.05);
 }

@@ -19,6 +19,8 @@ import SupportAnalyticsPanel from '../components/SupportAnalyticsPanel.jsx';
 import AdminRatingFlags from '../components/AdminRatingFlags.jsx';
 import AdminReportedAccounts from '../components/AdminReportedAccounts.jsx';
 import AdminBrandAmbassadors from '../components/AdminBrandAmbassadors.jsx';
+import AdminBaRewardsDashboard from '../components/AdminBaRewardsDashboard.jsx';
+import AdminFinancialOverview from '../components/AdminFinancialOverview.jsx';
 import AdminBaPayoutReview from '../components/AdminBaPayoutReview.jsx';
 import AdminBaQualificationDryRun from '../components/AdminBaQualificationDryRun.jsx';
 import AdminBaReconciliation from '../components/AdminBaReconciliation.jsx';
@@ -605,6 +607,7 @@ export default function AdminDashboard() {
               { key: 'overview', label: 'Overview', icon: '📊', onClick: () => setActiveTab('overview') },
               { key: 'statistics', label: 'Financial Statistics', icon: '📈', onClick: () => setActiveTab('statistics') },
               { key: 'revenue-dashboard', label: 'Revenue Dashboard', icon: '💰', onClick: () => setActiveTab('revenue-dashboard') },
+              { key: 'financial-overview', label: 'Financial Overview', icon: '🧾', onClick: () => setActiveTab('financial-overview') },
             ],
           },
           {
@@ -623,6 +626,7 @@ export default function AdminDashboard() {
             group: 'Brand Ambassadors',
             items: [
               { key: 'brand-ambassadors', label: 'Brand Ambassadors', icon: '🤝', onClick: () => setActiveTab('brand-ambassadors') },
+              { key: 'ba-rewards', label: 'BA Rewards & Leaderboard', icon: '🏆', onClick: () => setActiveTab('ba-rewards') },
               { key: 'ba-payout-review', label: 'Payout Run', icon: '💵', onClick: () => setActiveTab('ba-payout-review') },
               { key: 'ba-reconciliation', label: 'BA Reconciliation', icon: '🔍', onClick: () => setActiveTab('ba-reconciliation') },
               { key: 'ba-security-report', label: 'BA Security Report', icon: '🛡️', onClick: () => setActiveTab('ba-security-report') },
@@ -816,6 +820,8 @@ export default function AdminDashboard() {
         {activeTab === 'subscription-pricing' && <AdminSubscriptionPricing token={token} />}
         {activeTab === 'loyalty-discounts' && <AdminLoyaltyDiscounts token={token} />}
         {activeTab === 'brand-ambassadors' && <AdminBrandAmbassadors token={token} />}
+        {activeTab === 'ba-rewards' && <AdminBaRewardsDashboard token={token} />}
+        {activeTab === 'financial-overview' && <AdminFinancialOverview token={token} />}
         {activeTab === 'ba-payout-review' && (
           <>
             <AdminBaQualificationDryRun token={token} />

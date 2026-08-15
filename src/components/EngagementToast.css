@@ -65,11 +65,23 @@
   color: var(--color-text);
 }
 
+@media (max-width: 720px) {
+  /* REDESIGN (Premium Redesign Plan, Phase 4): this toast is mounted
+     globally (see App.jsx), so on mobile it can appear over the
+     dashboard/tenant-portal BottomNav (see BottomNav.css, same
+     breakpoint) - previously it sat at the viewport's bottom edge and
+     covered the nav bar's left-most item. Lifted above the bar using
+     the same clearance approach as SupportChatWidget. */
+  .engagement-toast {
+    bottom: 78px;
+  }
+}
+
 @media (max-width: 480px) {
   .engagement-toast {
     left: var(--space-3);
     right: var(--space-3);
-    bottom: var(--space-3);
+    bottom: 78px;
     max-width: none;
   }
 }

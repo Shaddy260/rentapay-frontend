@@ -470,6 +470,30 @@ export default function RegisterFlow() {
   // useLandlordEmailVerification above.
   const emailVerify = useLandlordEmailVerification(form.email);
 
+  // REDESIGN (Premium Redesign Plan, Phase 5): the verify-email button
+  // only appears once a valid, complete email address is entered -
+  // no button (and nothing to be disabled) while the field is still
+  // empty or obviously incomplete.
+  const emailLooksComplete = /^\S+@\S+\.\S+$/.test(form.email.trim());
+
+  // REDESIGN (Premium Redesign Plan, Phase 5): submit button is
+  // disabled/muted until every required field on this step is
+  // actually valid, not just email verification - matches the same
+  // checks doHandleSubmitDetails enforces server-side/on submit.
+  const detailsStepValid = Boolean(
+    form.fullName.trim() &&
+      form.phone.trim() &&
+      form.whatsappNumber.trim() &&
+      emailVerify.isVerified &&
+      form.password &&
+      form.password.length >= 6 &&
+      form.unitsCount &&
+      Number(form.unitsCount) >= 1 &&
+      form.periodMonths &&
+      Number(form.periodMonths) >= 1 &&
+      !(!referralFromLink && referralCode.trim() && referralNotFound)
+  );
+
   function updateForm(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
     if (field === 'email') emailVerify.resetOnEmailChange();
@@ -1248,162 +1272,192 @@ export default function RegisterFlow() {
           {error && <div className="api-error-banner">{error}</div>}
 
           {/* STEP 0: Registration details */}
+          {/* REDESIGN (Premium Redesign Plan, Phase 5): card-based
+              layout on a soft cream surface (see .register-page in
+              RegisterFlow.css), fields grouped into Personal info /
+              Contact / Account / Plan sections with dividers, "I am
+              a" relabelled to "Gender", instructional copy removed,
+              verify-email only rendered once the email looks
+              complete, pricing summary restyled as a receipt-style
+              card, and the submit button is full-width/gold/disabled
+              until the whole step is valid. */}
           {stepIndex === 0 && (
             <>
-              <h1>Let's get you set up</h1>
-              <p className="register-page__intro">
-                Tell us about you and how many units you're managing. We'll calculate your subscription cost instantly.
-              </p>
+              <h1>Let&apos;s get you set up</h1>
               {referredByName && (
                 <div className="register-page__referral-banner">
                   Referred by <strong>{referredByName}</strong>
                 </div>
               )}
-              <form onSubmit={handleSubmitDetails}>
-                <div className="register-page__form-grid">
-                  <div className="form-field form-field--full">
-                    <label className="form-field__label" htmlFor="fullName">Full name</label>
-                    <input id="fullName" required value={form.fullName} onChange={(e) => updateForm('fullName', e.target.value)} placeholder="Jane Wanjiru" />
-                  </div>
-                  <div className="form-field form-field--full">
-                    <label className="form-field__label" htmlFor="referralCode">Referral code (optional)</label>
-                    <input
-                      id="referralCode"
-                      value={referralCode}
-                      onChange={(e) => !referralFromLink && setReferralCode(e.target.value.toUpperCase())}
-                      placeholder="e.g. JASRAH-4KLT7"
-                      disabled={referralFromLink}
-                      readOnly={referralFromLink}
-                      aria-invalid={referralNotFound || undefined}
-                      className={referralNotFound ? 'form-field__input--error' : undefined}
-                    />
-                    {referralFromLink ? (
-                      <p className="form-field__hint">
-                        Applied from your referral link{referredByName ? ` — referred by ${referredByName}` : ''}. This can&apos;t be changed.
-                      </p>
-                    ) : referralNotFound ? (
-                      <p className="form-field__error">
-                        No such referral code exists — please check with your BA or leave this field blank.
-                      </p>
-                    ) : (
-                      <InfoTip text={<>Were you referred by a RentaPay Brand Ambassador? Enter their code here.</>} />
-                    )}
-                  </div>
-                  <div className="form-field">
-                    <label className="form-field__label" htmlFor="phone">Phone number</label>
-                    <input id="phone" required value={form.phone} onChange={(e) => updateForm('phone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
-                  </div>
-                  <div className="form-field">
-                    <label className="form-field__label" htmlFor="whatsappNumber">WhatsApp number<InfoTip text="Shown publicly on free vacant-unit listings so tenants can reach you on WhatsApp. Can be different from your login phone." /></label>
-                    <input id="whatsappNumber" required value={form.whatsappNumber} onChange={(e) => updateForm('whatsappNumber', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
-                  </div>
-                  <div className="form-field">
-                    <label className="form-field__label" htmlFor="email">Email</label>
-                    <input id="email" type="email" required value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="jane@example.com" />
-                  </div>
-                  {/* DIRECT REQUEST: verification box right under the
-                      email field, same page - send a code, enter it,
-                      only then is the email considered verified.
-                      Submission is blocked (both here and server-side
-                      in registerLandlord) until it is. */}
-                  <div className="form-field form-field--full">
-                    <div className="tenant-onboarding-email-verify">
-                      {emailVerify.isVerified ? (
-                        <p className="tenant-onboarding-email-verify__done">✓ Email verified</p>
+              <form onSubmit={handleSubmitDetails} className="register-form">
+                <div className="register-form-section">
+                  <h2 className="register-form-section__title">Personal info</h2>
+                  <div className="register-page__form-grid">
+                    <div className="form-field form-field--full">
+                      <label className="form-field__label" htmlFor="fullName">Full name</label>
+                      <input id="fullName" required value={form.fullName} onChange={(e) => updateForm('fullName', e.target.value)} placeholder="Jane Wanjiru" />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="referralCode">Referral code (optional)</label>
+                      <input
+                        id="referralCode"
+                        value={referralCode}
+                        onChange={(e) => !referralFromLink && setReferralCode(e.target.value.toUpperCase())}
+                        placeholder="e.g. JASRAH-4KLT7"
+                        disabled={referralFromLink}
+                        readOnly={referralFromLink}
+                        aria-invalid={referralNotFound || undefined}
+                        className={referralNotFound ? 'form-field__input--error' : undefined}
+                      />
+                      {referralFromLink ? (
+                        <p className="form-field__hint">
+                          Applied from your referral link{referredByName ? ` — referred by ${referredByName}` : ''}. This can&apos;t be changed.
+                        </p>
+                      ) : referralNotFound ? (
+                        <p className="form-field__error">
+                          No such referral code exists — please check with your BA or leave this field blank.
+                        </p>
                       ) : (
-                        <>
-                          {(emailVerify.status === 'idle' || emailVerify.status === 'sending') && (
-                            <button
-                              type="button"
-                              className="tenant-onboarding-email-verify__btn"
-                              onClick={emailVerify.send}
-                              disabled={emailVerify.status === 'sending' || !form.email}
-                            >
-                              {emailVerify.status === 'sending' ? 'Sending code…' : 'Verify email'}
-                            </button>
-                          )}
-                          {(emailVerify.status === 'sent' || emailVerify.status === 'verifying') && (
-                            <div className="tenant-onboarding-email-verify__code-row">
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={6}
-                                placeholder="6-digit code"
-                                value={emailVerify.code}
-                                onChange={(e) => emailVerify.setCode(e.target.value.replace(/\D/g, ''))}
-                              />
-                              <button
-                                type="button"
-                                className="tenant-onboarding-email-verify__btn"
-                                onClick={emailVerify.verify}
-                                disabled={emailVerify.status === 'verifying'}
-                              >
-                                {emailVerify.status === 'verifying' ? 'Verifying…' : 'Confirm code'}
-                              </button>
-                              <button type="button" className="tenant-onboarding-email-verify__resend" onClick={emailVerify.send} disabled={emailVerify.status === 'verifying'}>
-                                Resend code
-                              </button>
-                            </div>
-                          )}
-                          {emailVerify.error && <p className="api-error-banner" role="alert">{emailVerify.error}</p>}
-                        </>
+                        <InfoTip text={<>Were you referred by a RentaPay Brand Ambassador? Enter their code here.</>} />
                       )}
                     </div>
-                  </div>
-                  <div className="form-field">
-                    <label className="form-field__label" htmlFor="gender">I am a (optional)<InfoTip text="Just so the portal addresses you correctly - never shown to tenants." /></label>
-                    <select id="gender" value={form.gender} onChange={(e) => updateForm('gender', e.target.value)}>
-                      <option value="">Prefer not to say</option>
-                      <option value="male">Landlord (male)</option>
-                      <option value="female">Landlady (female)</option>
-                    </select>
-                  </div>
-                  <div className="form-field">
-                    <label className="form-field__label" htmlFor="password">Password<InfoTip text="Can't be your phone number or your name." /></label>
-                    <PasswordInput id="password" required value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="At least 6 characters" />
-                  </div>
-                  <div className="form-field">
-                    <label className="form-field__label" htmlFor="unitsCount">Number of units</label>
-                    <input id="unitsCount" type="number" min="1" required value={form.unitsCount} onChange={(e) => updateForm('unitsCount', e.target.value)} />
-                  </div>
-                  <div className="form-field">
-                    <label className="form-field__label" htmlFor="periodMonths">Subscription period (months)<InfoTip text="Any length you want - discounts apply automatically at 3, 6, and 12 months." /></label>
-                    <input
-                      id="periodMonths"
-                      type="number"
-                      min="1"
-                      step="1"
-                      required
-                      value={form.periodMonths}
-                      onChange={(e) => updateForm('periodMonths', e.target.value)}
-                    />
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="gender">Gender<InfoTip text="Just so the portal addresses you correctly - never shown to tenants." /></label>
+                      <select id="gender" value={form.gender} onChange={(e) => updateForm('gender', e.target.value)}>
+                        <option value="">Prefer not to say</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                <div className="cost-summary">
-                  <div className="cost-summary__row">
-                    <span>KES {cost.rate.toFixed(2)} / unit / month</span>
-                    <span>{form.unitsCount} units × {form.periodMonths} mo</span>
-                  </div>
-                  {cost.discount > 0 && (
-                    <div className="cost-summary__row">
-                      <span>Discount applied</span>
-                      <span>{Math.round(cost.discount * 100)}% off</span>
+                <div className="register-form-section">
+                  <h2 className="register-form-section__title">Contact</h2>
+                  <div className="register-page__form-grid">
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="phone">Phone number</label>
+                      <input id="phone" required value={form.phone} onChange={(e) => updateForm('phone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
                     </div>
-                  )}
-                  <div className="cost-summary__row cost-summary__row--total">
-                    <span>Total due today</span>
-                    <span className="cost-summary__total-value">KES {cost.total.toLocaleString()}</span>
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="whatsappNumber">WhatsApp number<InfoTip text="Shown publicly on free vacant-unit listings so tenants can reach you on WhatsApp. Can be different from your login phone." /></label>
+                      <input id="whatsappNumber" required value={form.whatsappNumber} onChange={(e) => updateForm('whatsappNumber', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
+                    </div>
+                    <div className="form-field form-field--full">
+                      <label className="form-field__label" htmlFor="email">Email</label>
+                      <input id="email" type="email" required value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="jane@example.com" />
+                    </div>
+                    {/* DIRECT REQUEST: verification box right under the
+                        email field, same page - send a code, enter it,
+                        only then is the email considered verified.
+                        Submission is blocked (both here and server-side
+                        in registerLandlord) until it is.
+                        REDESIGN (Phase 5): only rendered once the
+                        email address actually looks complete, with a
+                        small fade-in, instead of always showing a
+                        disabled button. */}
+                    {emailLooksComplete && (
+                      <div className="form-field form-field--full register-form__email-verify-wrap">
+                        <div className="tenant-onboarding-email-verify">
+                          {emailVerify.isVerified ? (
+                            <p className="tenant-onboarding-email-verify__done">✓ Email verified</p>
+                          ) : (
+                            <>
+                              {(emailVerify.status === 'idle' || emailVerify.status === 'sending') && (
+                                <button
+                                  type="button"
+                                  className="tenant-onboarding-email-verify__btn"
+                                  onClick={emailVerify.send}
+                                  disabled={emailVerify.status === 'sending'}
+                                >
+                                  {emailVerify.status === 'sending' ? 'Sending code…' : 'Verify email'}
+                                </button>
+                              )}
+                              {(emailVerify.status === 'sent' || emailVerify.status === 'verifying') && (
+                                <div className="tenant-onboarding-email-verify__code-row">
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    placeholder="6-digit code"
+                                    value={emailVerify.code}
+                                    onChange={(e) => emailVerify.setCode(e.target.value.replace(/\D/g, ''))}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="tenant-onboarding-email-verify__btn"
+                                    onClick={emailVerify.verify}
+                                    disabled={emailVerify.status === 'verifying'}
+                                  >
+                                    {emailVerify.status === 'verifying' ? 'Verifying…' : 'Confirm code'}
+                                  </button>
+                                  <button type="button" className="tenant-onboarding-email-verify__resend" onClick={emailVerify.send} disabled={emailVerify.status === 'verifying'}>
+                                    Resend code
+                                  </button>
+                                </div>
+                              )}
+                              {emailVerify.error && <p className="api-error-banner" role="alert">{emailVerify.error}</p>}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="register-form-section">
+                  <h2 className="register-form-section__title">Account</h2>
+                  <div className="register-page__form-grid">
+                    <div className="form-field form-field--full">
+                      <label className="form-field__label" htmlFor="password">Password<InfoTip text="Can't be your phone number or your name." /></label>
+                      <PasswordInput id="password" required value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="At least 6 characters" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="register-form-section">
+                  <h2 className="register-form-section__title">Plan</h2>
+                  <div className="register-page__form-grid">
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="unitsCount">Number of units</label>
+                      <input id="unitsCount" type="number" min="1" required value={form.unitsCount} onChange={(e) => updateForm('unitsCount', e.target.value)} />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="periodMonths">Subscription period (months)<InfoTip text="Any length you want - discounts apply automatically at 3, 6, and 12 months." /></label>
+                      <input
+                        id="periodMonths"
+                        type="number"
+                        min="1"
+                        step="1"
+                        required
+                        value={form.periodMonths}
+                        onChange={(e) => updateForm('periodMonths', e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="cost-summary cost-summary--receipt">
+                    <div className="cost-summary__row">
+                      <span>KES {cost.rate.toFixed(2)} / unit / month</span>
+                      <span>{form.unitsCount} units × {form.periodMonths} mo</span>
+                    </div>
+                    {cost.discount > 0 && (
+                      <div className="cost-summary__row">
+                        <span>Discount applied</span>
+                        <span>{Math.round(cost.discount * 100)}% off</span>
+                      </div>
+                    )}
+                    <div className="cost-summary__row cost-summary__row--total">
+                      <span>Total due today</span>
+                      <span className="cost-summary__total-value">KES {cost.total.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
 
                 <div className="register-page__actions">
-                  <Button type="submit" variant="mpesa" loading={loading} disabled={!emailVerify.isVerified}>
+                  <Button type="submit" variant="mpesa" loading={loading} disabled={!detailsStepValid} className="register-form__submit">
                     Submit
                   </Button>
-                  {!emailVerify.isVerified && (
-                    <p className="form-field__hint u-mt-1">Verify your email above to continue.</p>
-                  )}
                 </div>
               </form>
             </>
@@ -1467,7 +1521,7 @@ export default function RegisterFlow() {
                     send the amount yourself and enter the confirmation details below.
                   </>} />
                   {showManualPayment && (
-                    <form onSubmit={handleSubmitManualPayment} className="u-mt-4 u-text-left">
+                    <form onSubmit={handleSubmitManualPayment} className="u-mt-4 u-text-left register-page__fields">
                       <PaymentDetailsCard amount={amountDue} note="Enter the M-Pesa confirmation details below - your account will be activated once an admin verifies it (usually within a few minutes)." />
                       {manualError && <div className="api-error-banner" role="alert">{manualError}</div>}
                       <div className="form-field">
@@ -1504,7 +1558,7 @@ export default function RegisterFlow() {
               <span className="success-badge">✓ Payment confirmed</span>
               <h1>Tell us about your property</h1>
               <p className="register-page__intro">Setup Wizard — Step 1 of 4</p>
-              <form onSubmit={handlePropertySubmit}>
+              <form onSubmit={handlePropertySubmit} className="register-page__fields">
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="estateName">Estate name</label>
                   <input id="estateName" required value={property.estateName} onChange={(e) => setProperty((p) => ({ ...p, estateName: e.target.value }))} placeholder="Sunrise Apartments" />
@@ -1608,7 +1662,7 @@ export default function RegisterFlow() {
             <>
               <h1>How will rent reach you?</h1>
               <p className="register-page__intro">Setup Wizard — Step 2 of 4</p>
-              <form onSubmit={handlePaymentMethodSubmit}>
+              <form onSubmit={handlePaymentMethodSubmit} className="register-page__fields">
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="method">Method</label>
                   <select id="method" value={paymentMethod.method} onChange={(e) => setPaymentMethod((p) => ({ ...p, method: e.target.value }))}>

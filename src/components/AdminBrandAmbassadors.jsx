@@ -6,8 +6,7 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import InfoTip from './InfoTip.jsx';
 import AdminBaPayoutRules from './AdminBaPayoutRules.jsx';
 import AdminBaPayoutQualificationReport from './AdminBaPayoutQualificationReport.jsx';
-import AdminBaPendingPayments from './AdminBaPendingPayments.jsx';
-import AdminBaCompletedPayments from './AdminBaCompletedPayments.jsx';
+import AdminBaPayouts from './AdminBaPayouts.jsx';
 import { buildWaMeLink } from '../utils/whatsapp.js';
 import './AdminBrandAmbassadors.css';
 import './TenantOnboardingPanel.css';
@@ -20,7 +19,7 @@ import './TenantOnboardingPanel.css';
  * from AdminDashboard.jsx's tab switch.
  */
 export default function AdminBrandAmbassadors({ token }) {
-  const [view, setView] = useState('applications'); // 'applications' | 'roster' | 'payout-rules' | 'payout-qualification-report' | 'pending-payments' | 'completed-payments'
+  const [view, setView] = useState('applications'); // 'applications' | 'roster' | 'payout-rules' | 'payout-qualification-report' | 'payouts'
   const [applications, setApplications] = useState(null);
   const [roster, setRoster] = useState(null);
   const [rosterStatus, setRosterStatus] = useState('');
@@ -289,17 +288,10 @@ export default function AdminBrandAmbassadors({ token }) {
         </button>
         <button
           type="button"
-          className={`admin-ba__filter-btn${view === 'pending-payments' ? ' admin-ba__filter-btn--active' : ''}`}
-          onClick={() => setView('pending-payments')}
+          className={`admin-ba__filter-btn${view === 'payouts' ? ' admin-ba__filter-btn--active' : ''}`}
+          onClick={() => setView('payouts')}
         >
-          Pending Payments
-        </button>
-        <button
-          type="button"
-          className={`admin-ba__filter-btn${view === 'completed-payments' ? ' admin-ba__filter-btn--active' : ''}`}
-          onClick={() => setView('completed-payments')}
-        >
-          Completed
+          Payouts
         </button>
       </div>
 
@@ -449,9 +441,7 @@ export default function AdminBrandAmbassadors({ token }) {
 
       {view === 'payout-qualification-report' && <AdminBaPayoutQualificationReport token={token} />}
 
-      {view === 'pending-payments' && <AdminBaPendingPayments token={token} />}
-
-      {view === 'completed-payments' && <AdminBaCompletedPayments token={token} />}
+      {view === 'payouts' && <AdminBaPayouts token={token} />}
 
       <ConfirmDialog
         open={!!pendingSuspend}

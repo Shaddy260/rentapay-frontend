@@ -33,6 +33,19 @@
   --color-error-bg: #FBEAE9;
   --color-success-bg: #EAF4E8;
 
+  /* REDESIGN (Premium Redesign Plan, Phase 7 consistency pass):
+     the gold accent used for primary CTAs on landing, signup, and
+     login was previously only defined as a local custom property
+     scoped to .landing, so signup/login carried the same values as
+     hardcoded hex duplicates instead of a shared source. Promoted
+     here so all three (and the cream #F8E1C7 signup/login surface)
+     read from one definition. */
+  --gold: #C9A24B;
+  --gold-light: #E8CE8B;
+  --gold-dark: #8F7226;
+  --gold-soft-bg: rgba(201, 162, 75, 0.12);
+  --color-signup-surface: #F8E1C7;
+
   /* Type */
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'Inter', -apple-system, sans-serif;

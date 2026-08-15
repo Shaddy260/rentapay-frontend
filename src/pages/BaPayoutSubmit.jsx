@@ -8,24 +8,29 @@ import InfoTip from '../components/InfoTip.jsx';
 const EMPTY_FORM = { name: '', email: '', mpesaNumber: '' };
 
 /**
- * BA Monthly Payment Details & Payout Workflow - Phase 2.
+ * BUILD SPEC PHASE 10 - Fix: BA Payout Submission Overwrite Bug.
  *
- * The public, token-carrying link admin shares each month
- * (/ba-payout-submit?token=...). Unlike /become-a-ba this token does
- * NOT rotate every 24h - per the build plan it stays valid for the
- * whole calendar month it belongs to, and simply stops matching once
- * the month rolls over and a new cycle's token takes its place (see
- * Phase 1's validateSubmissionToken). No email OTP step here - this
- * form matches the BA by their existing account email, it isn't
- * creating a new identity the way /become-a-ba is.
+ * Two distinct entry points into this same page:
+ *   /ba-payout-submit?token=...   - the ONE-TIME submission link,
+ *      issued once at BA account approval. Non-expiring but
+ *      single-use: the moment it's used successfully, it's dead. If
+ *      it's used a second time (old tab, bookmark, browser back), the
+ *      server rejects it with a clear duplicate error - there is NO
+ *      resubmission UI here at all.
+ *   /ba-payout-submit?edit=...    - a separate, admin-issued 24h edit
+ *      link, the ONLY way to change details after the one-time
+ *      submission. Skips the M-Pesa/name lookup-and-prefill dance -
+ *      the edit link already identifies the BA.
  */
 export default function BaPayoutSubmit() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
+  const editToken = searchParams.get('edit') || '';
+  const isEditMode = !!editToken && !token;
 
-  const [step, setStep] = useState('checking'); // checking | expired | form | done
+  const [step, setStep] = useState('checking'); // checking | expired | duplicate | form | done
   const [expiredMessage, setExpiredMessage] = useState('');
-  const [periodKey, setPeriodKey] = useState('');
+  const [baName, setBaName] = useState('');
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -33,58 +38,79 @@ export default function BaPayoutSubmit() {
   const [doneMessage, setDoneMessage] = useState('');
   const [submittedSummary, setSubmittedSummary] = useState(null);
 
-  // "see/edit their submission again later in the same month" -
-  // lookup-by-email state, kept separate from the main form's
-  // submitting/error state so the two flows don't stomp each other.
-  const [lookupEmail, setLookupEmail] = useState('');
-  const [lookupStatus, setLookupStatus] = useState('idle'); // idle | loading | found | not-found | error
-  const [lookupError, setLookupError] = useState('');
-
   useEffect(() => {
     let cancelled = false;
     api
-      .validateBaPayoutLink(token)
+      .validateBaPayoutLink(isEditMode ? null : token, isEditMode ? editToken : null)
       .then((res) => {
         if (cancelled) return;
-        setPeriodKey(res.periodKey || '');
+        setBaName(res.baName || '');
         setStep('form');
+        // Pre-fill the edit form with whatever's currently on file, so
+        // the BA only has to change what's wrong.
+        if (isEditMode) {
+          api
+            .getMyBaPayoutSubmission({ editToken })
+            .then((lookup) => {
+              if (cancelled || !lookup.found) return;
+              setForm({
+                name: lookup.submission.submittedName || '',
+                email: lookup.submission.submittedEmail || '',
+                mpesaNumber: lookup.submission.mpesaNumber || '',
+              });
+            })
+            .catch(() => {});
+        }
       })
       .catch((err) => {
         if (cancelled) return;
+        const isDuplicate = err instanceof ApiError && err.raw?.duplicateSubmission;
         setExpiredMessage(
           err instanceof ApiError
             ? err.message
-            : 'This payment details link is no longer active. Please ask RentaPay for the current link.'
+            : 'This link is no longer valid. Please contact RentaPay.'
         );
-        setStep('expired');
+        setStep(isDuplicate ? 'duplicate' : 'expired');
       });
     return () => { cancelled = true; };
-  }, [token]);
+  }, [token, editToken, isEditMode]);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  const canSubmit = form.name.trim() && form.email.trim() && form.mpesaNumber.trim() && !submitting;
+  const canSubmit = form.name.trim() && form.mpesaNumber.trim() && (isEditMode || form.email.trim()) && !submitting;
 
   async function handleSubmit(e) {
     e.preventDefault();
     setSubmitting(true);
     setSubmitError('');
     try {
-      const res = await api.submitBaPayoutDetails({
-        token,
-        name: form.name.trim(),
-        email: form.email.trim(),
-        mpesaNumber: form.mpesaNumber.trim(),
-      });
-      setDoneMessage(res.message || 'Your payment details have been received. Thank you!');
+      const res = isEditMode
+        ? await api.editBaPayoutDetails({
+            editToken,
+            name: form.name.trim(),
+            email: form.email.trim() || undefined,
+            mpesaNumber: form.mpesaNumber.trim(),
+          })
+        : await api.submitBaPayoutDetails({
+            token,
+            name: form.name.trim(),
+            email: form.email.trim(),
+            mpesaNumber: form.mpesaNumber.trim(),
+          });
+      setDoneMessage(res.message || 'Your payment details have been saved. Thank you!');
       setSubmittedSummary(res.submission || null);
       setStep('done');
     } catch (err) {
       if (err instanceof ApiError && err.raw?.linkExpired) {
         setExpiredMessage(err.message);
-        setStep('expired');
+        setStep(err.raw?.duplicateSubmission ? 'duplicate' : 'expired');
+        return;
+      }
+      if (err instanceof ApiError && err.raw?.duplicateSubmission) {
+        setExpiredMessage(err.message);
+        setStep('duplicate');
         return;
       }
       setSubmitError(err instanceof ApiError ? err.message : 'Failed to submit. Please try again.');
@@ -93,44 +119,10 @@ export default function BaPayoutSubmit() {
     }
   }
 
-  // Lets a BA who already submitted this month re-open the
-  // confirmation view and see (and then edit + resubmit) what's on
-  // file, without having to remember whether they already did this.
-  async function handleLookup(e) {
-    e.preventDefault();
-    setLookupError('');
-    if (!lookupEmail.trim()) {
-      setLookupError('Enter the email address you submitted with.');
-      return;
-    }
-    setLookupStatus('loading');
-    try {
-      const res = await api.getMyBaPayoutSubmission(token, lookupEmail.trim());
-      if (res.found) {
-        setForm({
-          name: res.submission.submittedName,
-          email: res.submission.submittedEmail,
-          mpesaNumber: res.submission.mpesaNumber,
-        });
-        setLookupStatus('found');
-      } else {
-        setLookupStatus('not-found');
-      }
-    } catch (err) {
-      if (err instanceof ApiError && err.raw?.linkExpired) {
-        setExpiredMessage(err.message);
-        setStep('expired');
-        return;
-      }
-      setLookupStatus('error');
-      setLookupError(err instanceof ApiError ? err.message : 'Failed to look up your submission.');
-    }
-  }
-
   return (
     <div className="tenant-onboarding-page">
       <div className="tenant-onboarding-card">
-        <h1>RentaPay Brand Ambassador Payout — Payment Details{periodKey ? ` (${periodKey})` : ''}</h1>
+        <h1>RentaPay Brand Ambassador Payout — Payment Details{baName ? ` for ${baName}` : ''}</h1>
 
         {step === 'checking' && <p className="tenant-onboarding-instruction">Checking your link…</p>}
 
@@ -139,41 +131,54 @@ export default function BaPayoutSubmit() {
             <div className="tenant-onboarding-done__icon" aria-hidden="true">⏰</div>
             <p>{expiredMessage}</p>
             <InfoTip text={<>
-              This link is only valid for the calendar month it was shared for. Ask RentaPay for the current
-              month's link.
+              {isEditMode
+                ? 'Correction links are valid for 24 hours from when RentaPay generates them. Ask admin for a fresh one.'
+                : 'Ask RentaPay for a new link.'}
+            </>} />
+          </div>
+        )}
+
+        {step === 'duplicate' && (
+          <div className="tenant-onboarding-done">
+            <div className="tenant-onboarding-done__icon" aria-hidden="true">🔒</div>
+            <p>{expiredMessage}</p>
+            <InfoTip text={<>
+              Each Brand Ambassador can only submit payment details once. If something needs to change, ask
+              RentaPay admin for a correction (edit) link — it's the only way to update details already on file.
             </>} />
           </div>
         )}
 
         {step === 'form' && (
-          <>
-            <form onSubmit={handleSubmit} className="tenant-onboarding-form">
-              <p className="tenant-onboarding-instruction">
-                Enter the M-Pesa number, name, and account email we should pay this month's commission to.
-                Double-check these — errors here mean you won't get paid.
-              </p>
+          <form onSubmit={handleSubmit} className="tenant-onboarding-form">
+            <p className="tenant-onboarding-instruction">
+              {isEditMode
+                ? "Update the M-Pesa number, name, or account email we should pay your commission to. This correction link can only be used once."
+                : "Enter the M-Pesa number, name, and account email we should pay your commission to. Double-check these — errors here mean you won't get paid. You can only submit this once, so please make sure everything is correct before you continue."}
+            </p>
 
-              {submitError && <p className="tenant-onboarding-error">{submitError}</p>}
+            {submitError && <p className="tenant-onboarding-error">{submitError}</p>}
 
-              <label>
-                M-Pesa number
-                <input
-                  required
-                  value={form.mpesaNumber}
-                  onChange={(e) => update('mpesaNumber', e.target.value)}
-                  placeholder="e.g. 0712345678"
-                />
-                <span className="tenant-onboarding-field-hint">The number to be paid — double-check it's correct.</span>
-              </label>
-              <label>
-                Name on M-Pesa
-                <input
-                  required
-                  value={form.name}
-                  onChange={(e) => update('name', e.target.value)}
-                  placeholder="Name registered on that M-Pesa number"
-                />
-              </label>
+            <label>
+              M-Pesa number
+              <input
+                required
+                value={form.mpesaNumber}
+                onChange={(e) => update('mpesaNumber', e.target.value)}
+                placeholder="e.g. 0712345678"
+              />
+              <span className="tenant-onboarding-field-hint">The number to be paid — double-check it's correct.</span>
+            </label>
+            <label>
+              Name on M-Pesa
+              <input
+                required
+                value={form.name}
+                onChange={(e) => update('name', e.target.value)}
+                placeholder="Name registered on that M-Pesa number"
+              />
+            </label>
+            {!isEditMode && (
               <label>
                 Account email
                 <input
@@ -187,32 +192,12 @@ export default function BaPayoutSubmit() {
                   We match this to your existing Brand Ambassador account — it must match exactly.
                 </span>
               </label>
+            )}
 
-              <Button type="submit" variant="primary" loading={submitting} disabled={!canSubmit}>
-                Submit payment details
-              </Button>
-            </form>
-
-            <div className="tenant-onboarding-email-verify" style={{ marginTop: '1.5rem' }}>
-              <p className="tenant-onboarding-instruction">Already submitted this month and want to check or edit it?</p>
-              <form onSubmit={handleLookup} className="tenant-onboarding-email-verify__code-row">
-                <input
-                  type="email"
-                  placeholder="Your account email"
-                  value={lookupEmail}
-                  onChange={(e) => setLookupEmail(e.target.value)}
-                />
-                <button type="submit" className="tenant-onboarding-email-verify__btn" disabled={lookupStatus === 'loading'}>
-                  {lookupStatus === 'loading' ? 'Looking up…' : 'Look up my submission'}
-                </button>
-              </form>
-              {lookupStatus === 'found' && (
-                <p className="tenant-onboarding-email-verify__done">✓ Found it — loaded into the form above. Edit and resubmit if anything's wrong.</p>
-              )}
-              {lookupStatus === 'not-found' && <p className="tenant-onboarding-field-hint">No submission found yet for that email this month.</p>}
-              {lookupError && <p className="tenant-onboarding-error">{lookupError}</p>}
-            </div>
-          </>
+            <Button type="submit" variant="primary" loading={submitting} disabled={!canSubmit}>
+              {isEditMode ? 'Save corrected details' : 'Submit payment details'}
+            </Button>
+          </form>
         )}
 
         {step === 'done' && (
@@ -224,10 +209,12 @@ export default function BaPayoutSubmit() {
                 {submittedSummary.mpesaNumber} — {submittedSummary.submittedName} ({submittedSummary.submittedEmail})
               </p>
             )}
-            <InfoTip text={<>
-              Submitted the wrong details? Come back to this same link any time this month to resubmit — your
-              latest submission replaces the earlier one.
-            </>} />
+            {!isEditMode && (
+              <InfoTip text={<>
+                This link has now been used and can't be submitted again. If anything needs correcting later,
+                ask RentaPay admin for a correction link.
+              </>} />
+            )}
           </div>
         )}
       </div>

@@ -1,0 +1,232 @@
+.admin-financial-overview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.admin-financial-overview__title {
+  font-family: var(--font-display, serif);
+  margin: 0;
+}
+
+.admin-financial-overview__month-switcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.admin-financial-overview__month-switcher button {
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  background: var(--color-surface-raised, #fff);
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: var(--text-base, 1rem);
+}
+
+.admin-financial-overview__error {
+  color: var(--color-error, #B3261E);
+  margin-bottom: 12px;
+}
+
+.admin-financial-overview__empty {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-financial-overview__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Two top-line stat boxes, above the fold */
+.admin-financial-overview__stat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-financial-overview__stat-card {
+  border-radius: var(--radius-lg, 16px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-financial-overview__stat-card--positive {
+  background: var(--color-success-bg, #EAF4E8);
+}
+
+.admin-financial-overview__stat-card--caution {
+  background: #FBEFE0;
+}
+
+.admin-financial-overview__stat-label {
+  font-size: var(--text-xs, 0.8125rem);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-financial-overview__stat-value {
+  font-size: var(--text-xl, 1.375rem);
+  font-weight: 700;
+  color: var(--color-ink, #1B2421);
+}
+
+/* Full breakdown - dark teal card, same treatment as the reward
+   confirmation card */
+.admin-financial-overview__breakdown {
+  background: var(--color-primary, #0F3D3E);
+  border-radius: var(--radius-lg, 16px);
+  padding: 18px 20px;
+  color: #fff;
+  margin-bottom: 16px;
+}
+
+.admin-financial-overview__breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+  font-size: var(--text-base, 1rem);
+}
+
+.admin-financial-overview__breakdown-row:last-child {
+  border-bottom: none;
+}
+
+.admin-financial-overview__breakdown-row--total {
+  font-weight: 700;
+  font-size: var(--text-xl, 1.375rem);
+  padding-top: 14px;
+}
+
+.admin-financial-overview__negative {
+  color: var(--gold-light, #E8CE8B);
+}
+
+/* Expenses list - light rows */
+.admin-financial-overview__expenses {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-financial-overview__expense-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  border-radius: var(--radius-md, 10px);
+  padding: 10px 14px;
+  background: var(--color-surface-raised, #fff);
+}
+
+.admin-financial-overview__expense-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.admin-financial-overview__expense-pill {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--text-xs, 0.8125rem);
+  background: var(--color-hairline, #DCD5C8);
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-financial-overview__expense-pill--recurring {
+  background: var(--gold-soft-bg, rgba(201, 162, 75, 0.12));
+  color: var(--gold-dark, #8F7226);
+}
+
+.admin-financial-overview__expense-amount {
+  color: #b3261e;
+  font-weight: 600;
+}
+
+.admin-financial-overview__stop-btn {
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  background: transparent;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: var(--text-xs, 0.8125rem);
+  cursor: pointer;
+}
+
+.admin-financial-overview__add-btn {
+  width: 100%;
+  border-style: dashed !important;
+}
+
+/* Add-expense modal */
+.admin-financial-overview__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 61, 62, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.admin-financial-overview__modal {
+  background: var(--color-surface-raised, #fff);
+  border-radius: var(--radius-lg, 16px);
+  padding: 24px;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-financial-overview__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-financial-overview__field input {
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  border-radius: var(--radius-sm, 6px);
+  padding: 10px 12px;
+  font-size: var(--text-base, 1rem);
+}
+
+.admin-financial-overview__recurrence-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-financial-overview__recurrence-toggle button {
+  flex: 1;
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  background: var(--color-surface, #FAF7F2);
+  border-radius: var(--radius-sm, 6px);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.admin-financial-overview__recurrence-toggle button.active {
+  background: var(--color-primary, #0F3D3E);
+  color: #fff;
+  border-color: var(--color-primary, #0F3D3E);
+}
+
+.admin-financial-overview__modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}

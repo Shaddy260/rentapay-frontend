@@ -9,21 +9,25 @@ import './DownloadAppSection.css';
 // listing. Points at /downloads/rentapay.apk, which is not committed to
 // the repo; it's dropped in manually after each `bubblewrap build`.
 //
-// FIX (direct request: was a large card section low on the page,
-// styled like a paywall/subscription card - moved into the top nav as
-// a small pill next to Log in / Get started, and the version string
-// removed entirely (it read from package.json's "version" field,
-// which tracks npm package versioning, not the Android app's release
-// number, and had drifted out of sync - simplest fix is to just not
-// show a version here rather than wire up a second, real source of
-// truth for it).
+// REDESIGN (Premium Redesign Plan, Phase 1): moved out of the top nav
+// entirely (nav is now just Logo | Login, per plan) and into the
+// footer as a proper, well-designed tappable card - not a plain text
+// link - with an icon and clear visual weight consistent with the
+// rest of the premium redesign. Still points straight at the .apk
+// file so tapping it triggers a direct file download, not an external
+// store page.
 const APK_PATH = '/downloads/rentapay.apk';
 
 export default function DownloadAppSection() {
   return (
-    <a href={APK_PATH} download="RentaPay.apk" className="download-app-pill">
-      <span className="download-app-pill__icon" aria-hidden="true">📲</span>
-      <span className="download-app-pill__label">Download App</span>
+    <a href={APK_PATH} download="RentaPay.apk" className="download-app-card">
+      <span className="download-app-card__icon" aria-hidden="true">📲</span>
+      <span className="download-app-card__text">
+        <span className="download-app-card__title">Download the app</span>
+        <span className="download-app-card__subtitle">Get RentaPay for Android</span>
+      </span>
+      <span className="download-app-card__arrow" aria-hidden="true">↓</span>
     </a>
   );
 }
+

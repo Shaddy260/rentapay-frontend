@@ -1,0 +1,189 @@
+.admin-ba-payouts__tabs {
+  display: flex;
+  gap: 6px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 16px;
+  width: fit-content;
+  background: var(--color-ink-tint, #f4f2ee);
+}
+
+.admin-ba-payouts__tab {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: var(--text-sm, 0.9375rem);
+  font-weight: 600;
+  color: var(--color-muted, #888);
+  cursor: pointer;
+}
+
+.admin-ba-payouts__tab--active {
+  background: var(--color-primary-dark, #14332c);
+  color: #fff;
+}
+
+.admin-ba-payouts__instruction {
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-muted, #888);
+  margin-bottom: 12px;
+}
+
+.admin-ba-payouts__awaiting {
+  font-size: var(--text-sm, 0.9375rem);
+  color: #8a5a00;
+  background: rgba(230, 160, 0, 0.08);
+  border: 1px solid rgba(230, 160, 0, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+}
+
+.admin-ba-payouts__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-ba-payouts__period-select {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-payouts__count {
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-muted, #888);
+}
+
+.admin-ba-payouts__notice {
+  color: #2e7d32;
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
+.admin-ba-payouts__error {
+  color: #b3261e;
+  margin-bottom: 12px;
+}
+
+.admin-ba-payouts__empty {
+  color: var(--color-muted, #888);
+  padding: 20px 0;
+}
+
+.admin-ba-payouts__group {
+  margin-bottom: 18px;
+}
+
+.admin-ba-payouts__group-header {
+  margin-bottom: 8px;
+}
+
+.admin-ba-payouts__group-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.admin-ba-payouts__group-count {
+  color: var(--color-muted, #888);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-payouts__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.admin-ba-payouts__card {
+  display: flex;
+  gap: 10px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.admin-ba-payouts__card-select {
+  padding-top: 3px;
+}
+
+.admin-ba-payouts__card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-ba-payouts__card-line1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-payouts__ba-code {
+  color: var(--color-muted, #888);
+  font-size: var(--text-xs, 0.8125rem);
+}
+
+.admin-ba-payouts__period {
+  margin-left: auto;
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-muted, #888);
+}
+
+.admin-ba-payouts__card-line2,
+.admin-ba-payouts__card-line3 {
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-muted, #888);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-ba-payouts__mpesa {
+  font-family: var(--font-mono, monospace);
+}
+
+.admin-ba-payouts__pill {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+}
+
+.admin-ba-payouts__pill--completed {
+  background: rgba(46, 125, 50, 0.12);
+  color: #2e7d32;
+}
+
+.admin-ba-payouts__pill--locked {
+  background: rgba(0, 0, 0, 0.06);
+  color: #666;
+}
+
+.admin-ba-payouts__lock-note {
+  border: 1px solid #E8C98A;
+  background: #FBF3E1;
+  color: #7a5a1c;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: var(--text-xs, 0.8125rem);
+}
+
+.admin-ba-payouts__card--completed,
+.admin-ba-payouts__card--history {
+  align-items: flex-start;
+}

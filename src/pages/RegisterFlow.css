@@ -2,6 +2,10 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 280px 1fr;
+  /* REDESIGN (Premium Redesign Plan, Phase 5): signup/login share a
+     soft cream surface built around #F8E1C7, instead of the plain
+     paper background used elsewhere in the app. */
+  background: var(--color-signup-surface, #F8E1C7);
 }
 
 @media (max-width: 800px) {
@@ -82,16 +86,31 @@
   padding: var(--space-8) var(--space-6);
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 .register-page__panel {
   width: 100%;
   max-width: 480px;
+  /* REDESIGN (Premium Redesign Plan, Phase 5): card-based centered
+     layout instead of a flat, edge-to-edge form sitting directly on
+     the page background. */
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 16px 44px rgba(120, 85, 35, 0.18);
+  padding: var(--space-7, 2.25rem) var(--space-6) var(--space-6);
+  margin: var(--space-4) 0;
 }
 
 .register-page__panel h1 {
+  /* REDESIGN (Premium Redesign Plan, Phase 7 consistency pass): the
+     global h1 default is the sans body font - override with the same
+     serif display font used on the landing hero and login, so the
+     type scale (serif headings / sans body) is actually consistent
+     across landing, signup, and login rather than just on landing. */
+  font-family: var(--font-display);
   font-size: var(--text-2xl);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-5);
 }
 
 .register-page__intro {
@@ -117,6 +136,29 @@
   margin: calc(var(--space-2) * -1) 0 var(--space-4) 0;
 }
 
+/* REDESIGN (Premium Redesign Plan, Phase 5): field groups with
+   spacing/dividers - Personal info / Contact / Account / Plan. */
+.register-form-section {
+  padding-top: var(--space-6);
+  margin-top: var(--space-6);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.register-form-section:first-child {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
+}
+
+.register-form-section__title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+  margin: 0 0 var(--space-4) 0;
+}
+
 .register-page__form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -135,11 +177,78 @@
    grid in UnitDetail.css (.add-charge-form). */
 .register-page__form-grid .form-field {
   min-width: 0;
+  /* REDESIGN (Premium Redesign Plan, Phase 5): consistent breathing
+     room around every field on this page - label/hint text should
+     never crowd or touch a field's own borders. */
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.register-page__form-grid .form-field__label {
+  margin-bottom: 2px;
+}
+
+.register-page__form-grid .form-field__hint,
+.register-page__form-grid .form-field__error {
+  margin-top: var(--space-2);
 }
 
 .register-page__form-grid input,
 .register-page__form-grid select {
   min-width: 0;
+  width: 100%;
+  /* REDESIGN (Premium Redesign Plan, Phase 5): roughly double the
+     previous field thickness (was 0.85rem 1rem) for a more premium,
+     tappable feel - scoped to this page only, the shared FormField.css
+     tokens used elsewhere in the app are untouched. */
+  padding: 1.5rem 1.15rem;
+  font-size: 1.05rem;
+}
+
+/* CONSISTENCY FIX (follow-up to Phase 5): the rules above only ever
+   applied inside a two-column `.register-page__form-grid` wrapper -
+   in practice that meant only Step 0 (the initial registration form)
+   actually got the doubled field height / consistent breathing room.
+   Every later step of this same wizard (manual M-Pesa fallback,
+   property setup, payment method, single-field groups) quietly fell
+   back to the old, thinner default `.form-field` styling used
+   elsewhere in the app, even though it's the same wizard, same panel,
+   same premium redesign. `.register-page__fields` is the same
+   treatment decoupled from the two-column grid mechanics, so it can
+   be applied to ANY field inside the signup wizard - single field or
+   grid group alike - and Step 0's own grid groups already satisfy it
+   too since register-form wraps `.register-page__form-grid` groups
+   with this class as well. Deliberately NOT applied to `.add-unit-row`
+   (the units ledger row) or `.otp-input` - those are compact,
+   table-like elements by design, not standard form fields, and stay
+   at their existing intentional size. */
+.register-page__fields .form-field {
+  min-width: 0;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.register-page__fields .form-field__label {
+  margin-bottom: 2px;
+}
+
+.register-page__fields .form-field__hint,
+.register-page__fields .form-field__error {
+  margin-top: var(--space-2);
+}
+
+.register-page__fields input,
+.register-page__fields select {
+  min-width: 0;
+  width: 100%;
+  padding: 1.5rem 1.15rem;
+  font-size: 1.05rem;
+}
+
+/* A standalone field (not part of a paired two-column group) should
+   still read as a single, comfortably full-width field rather than
+   only occupying half a grid track. */
+.register-page__fields > .form-field {
   width: 100%;
 }
 
@@ -156,6 +265,21 @@
   grid-column: 1 / -1;
 }
 
+/* REDESIGN (Premium Redesign Plan, Phase 5): the verify-email block
+   needs its own breathing room so it doesn't crowd the field above it
+   or the next section (Account/password) right after it, plus a
+   small fade-in since it only renders once the email looks complete. */
+.register-form__email-verify-wrap {
+  margin-top: calc(var(--space-3) * -1);
+  margin-bottom: var(--space-2);
+  animation: register-form-fade-in 0.25s ease;
+}
+
+@keyframes register-form-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .register-page__actions {
   display: flex;
   gap: var(--space-3);
@@ -164,6 +288,30 @@
 
 .register-page__actions .btn--ghost {
   flex: 0 0 110px;
+}
+
+/* REDESIGN (Premium Redesign Plan, Phase 5): full-width, gold submit
+   button with a clearly muted/disabled state - overrides the
+   Button component's variant="mpesa" styling (kept as-is elsewhere
+   for the actual M-Pesa moment) just on this page's submit action. */
+.register-form__submit {
+  width: 100%;
+  background: linear-gradient(135deg, var(--gold-light, #E8CE8B), var(--gold, #C9A24B) 60%, var(--gold-dark, #8F7226)) !important;
+  color: #2b2210 !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(201, 162, 75, 0.4);
+}
+
+.register-form__submit:not(:disabled):hover {
+  filter: brightness(1.05);
+}
+
+.register-form__submit:disabled {
+  background: #e9e2d3 !important;
+  color: #a89f8c !important;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 /* Cost summary card */
@@ -195,6 +343,34 @@
 .cost-summary__total-value {
   font-family: var(--font-body);
   color: var(--color-primary-dark);
+}
+
+/* REDESIGN (Premium Redesign Plan, Phase 5): receipt-style pricing
+   summary - light labels, bold amounts, anchored right above the
+   submit button, dashed divider rows like a physical receipt. */
+.cost-summary--receipt {
+  margin-top: var(--space-2);
+  margin-bottom: 0;
+  background: #FCF6EC;
+  border: 1px dashed var(--gold-dark, #8F7226);
+}
+
+.cost-summary--receipt .cost-summary__row {
+  color: var(--color-ink-soft);
+  font-weight: 500;
+}
+
+.cost-summary--receipt .cost-summary__row span:last-child {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.cost-summary--receipt .cost-summary__row--total {
+  border-top: 1px dashed var(--gold-dark, #8F7226);
+}
+
+.cost-summary--receipt .cost-summary__total-value {
+  font-weight: 800;
 }
 
 /* M-Pesa waiting state */

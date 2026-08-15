@@ -1,38 +1,64 @@
-/* Small pill button sitting in the landing page's top nav, next to
-   Log in / Get started (see .landing__nav-actions in Landing.css).
-   Reuses the landing page's gold/surface tokens so it stays
+/* REDESIGN (Premium Redesign Plan, Phase 1): moved from a small nav
+   pill into a proper footer card - distinct tappable surface with an
+   icon, soft shadow, and clear visual weight, in line with the rest
+   of the premium redesign's card-based language. Reuses the landing
+   page's gold/surface tokens (defined on .landing) so it stays
    consistent wherever it's rendered. */
-.download-app-pill {
+.download-app-card {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-primary-dark);
-  background: var(--gold-soft-bg);
+  gap: var(--space-3);
+  padding: 0.85rem 1.25rem;
+  background: #fff;
   border: 1px solid var(--gold-light);
-  padding: 0.45rem 0.85rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 4px 16px rgba(201, 162, 75, 0.18);
   text-decoration: none;
-  transition: background 0.15s ease, transform 0.15s ease;
-  white-space: nowrap;
+  color: var(--color-primary-dark);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
-.download-app-pill:hover {
-  background: var(--gold-light);
-  transform: translateY(-1px);
+.download-app-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(201, 162, 75, 0.28);
+  background: var(--gold-soft-bg);
 }
 
-.download-app-pill__icon {
-  font-size: 1em;
+.download-app-card__icon {
+  font-size: 1.5rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
-@media (max-width: 640px) {
-  .download-app-pill__label {
-    display: none;
-  }
-  .download-app-pill {
-    padding: 0.45rem 0.6rem;
+.download-app-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  line-height: 1.25;
+}
+
+.download-app-card__title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.download-app-card__subtitle {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-ink-soft);
+}
+
+.download-app-card__arrow {
+  margin-left: var(--space-2);
+  font-size: 1rem;
+  color: var(--gold-dark);
+  flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+  .download-app-card {
+    width: 100%;
+    justify-content: center;
   }
 }
