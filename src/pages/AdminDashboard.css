@@ -338,6 +338,25 @@
   border-color: var(--color-error-bg) !important;
 }
 
+/* SECTION 6 (General Manager spec) — single-button row actions on
+   ManagerAccountDashboard's landlords/BA tables, styled the same as
+   the .admin-table__actions buttons above but without needing the
+   flex wrapper for a lone button. */
+.admin-table__action {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.admin-table__action--danger {
+  color: var(--color-error);
+  border-color: var(--color-error-bg);
+}
+
 .lockdown-active {
   background: #FDECEC;
   border-radius: var(--radius-md);

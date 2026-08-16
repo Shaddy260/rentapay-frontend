@@ -11,9 +11,9 @@ import PortalSidebar from '../components/PortalSidebar.jsx';
 import AdminStatistics from '../components/AdminStatistics.jsx';
 import AdminRevenueDashboard from '../components/AdminRevenueDashboard.jsx';
 import AdminCredentialsPanel from '../components/AdminCredentialsPanel.jsx';
+import GeneralManagersPanel from '../components/GeneralManagersPanel.jsx';
 import AdminChangePasswordPanel from '../components/AdminChangePasswordPanel.jsx';
 import AdminHelpContactSettings from '../components/AdminHelpContactSettings.jsx';
-import AdminSqlPanel from '../components/AdminSqlPanel.jsx';
 import SupportChatWidget from '../components/SupportChatWidget.jsx';
 import SupportAnalyticsPanel from '../components/SupportAnalyticsPanel.jsx';
 import AdminRatingFlags from '../components/AdminRatingFlags.jsx';
@@ -649,7 +649,7 @@ export default function AdminDashboard() {
             group: 'System',
             items: [
               { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
-              { key: 'sql', label: 'SQL', icon: '🗄️', onClick: () => setActiveTab('sql') },
+              { key: 'general-managers', label: 'General Managers', icon: '🧑‍💼', onClick: () => setActiveTab('general-managers') },
               { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
             ],
           },
@@ -814,7 +814,7 @@ export default function AdminDashboard() {
             <AdminCredentialsPanel token={token} />
           </>
         )}
-        {activeTab === 'sql' && <AdminSqlPanel token={token} />}
+        {activeTab === 'general-managers' && <GeneralManagersPanel token={token} />}
         {activeTab === 'rating-flags' && <AdminRatingFlags token={token} />}
         {activeTab === 'reported-accounts' && <AdminReportedAccounts token={token} />}
         {activeTab === 'subscription-pricing' && <AdminSubscriptionPricing token={token} />}

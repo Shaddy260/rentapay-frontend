@@ -23,6 +23,16 @@ import './Login.css';
 function destinationForRole(role) {
   if (role === 'landlord' || role === 'manager') return '/dashboard';
   if (role === 'brand_ambassador') return '/ba-portal';
+  // SECTION 3: General Manager's own dashboard doesn't exist yet
+  // (that's Section 5+ of the sectioned spec) - routes to the
+  // placeholder page so a forced first-login has somewhere real to
+  // land instead of falling through to the tenant /portal.
+  // SECTION 4: unless they haven't set an Operations PIN yet, in
+  // which case onboarding isn't complete - same flag ManagerAccountAccess.jsx
+  // writes to sessionStorage right after login.
+  if (role === 'general_manager') {
+    return sessionStorage.getItem('rentapay_gm_pin_set') === '1' ? '/manager-account/dashboard' : '/manager-account/setup-pin';
+  }
   return '/portal';
 }
 
@@ -75,7 +85,7 @@ export default function ChangePassword() {
         <div className="login-page__panel">
           <div className="login-page__brand">RentaPay</div>
           <h1>Password changed</h1>
-          <p className="login-page__intro">Taking you to your {role === 'landlord' || role === 'manager' ? 'dashboard' : 'portal'}...</p>
+          <p className="login-page__intro">Taking you to your {role === 'landlord' || role === 'manager' || role === 'general_manager' ? 'dashboard' : 'portal'}...</p>
 
         </div>
       </div>

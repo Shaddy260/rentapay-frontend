@@ -229,3 +229,19 @@
   color: var(--accent, #0f3d3e);
   text-decoration: underline;
 }
+
+/* BUILD SPEC PHASE 10 (v2) - BA payout submit/edit OTP step */
+.tenant-onboarding-link-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary, #0a7d3f);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: var(--text-sm, 0.875rem);
+  padding: 4px 0;
+  text-align: center;
+}
+.tenant-onboarding-link-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

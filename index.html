@@ -96,6 +96,18 @@
         if (ADMIN_PATH && ADMIN_PATH.charAt(0) === '/' && window.location.pathname.indexOf(ADMIN_PATH) === 0) {
           document.getElementById('rentapay-manifest-link').setAttribute('href', '/manifest-admin.json');
         }
+        // SECTION 3 (General Manager downloadable app shortcut):
+        // "matching how other account types can download a PWA/APK
+        // shortcut that opens straight to their own login screen,
+        // General Managers get the same." Same mechanism as
+        // ADMIN_PATH above - MANAGER_PATH is written in at build time
+        // by scripts/write-manager-path.js (reads VITE_MANAGER_PATH,
+        // falls back to '/manager-account'), so this can be changed
+        // without touching code, just like the admin path.
+        var MANAGER_PATH = '/manager-account';
+        if (MANAGER_PATH && MANAGER_PATH.charAt(0) === '/' && window.location.pathname.indexOf(MANAGER_PATH) === 0) {
+          document.getElementById('rentapay-manifest-link').setAttribute('href', '/manifest-manager.json');
+        }
       })();
     </script>
     <link rel="icon" href="/favicon.ico" sizes="any" />

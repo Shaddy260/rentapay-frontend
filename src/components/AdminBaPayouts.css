@@ -247,3 +247,36 @@
 .admin-ba-payouts__card--history {
   align-items: flex-start;
 }
+
+/* BUILD SPEC PHASE 10 (v2) - universal correction link panel */
+.admin-ba-payouts__correction-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid #E0E0E0;
+  background: #FAFAFA;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.admin-ba-payouts__correction-panel-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-ba-payouts__correction-panel-text span {
+  font-size: var(--text-xs, 0.8125rem);
+  color: #666;
+}
+
+.admin-ba-payouts__link-text {
+  display: block;
+  word-break: break-all;
+  background: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: var(--text-xs, 0.8125rem);
+}
