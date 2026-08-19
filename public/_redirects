@@ -2,19 +2,17 @@
 /robots.txt   /robots.txt   200
 /favicon.ico  /favicon.ico  200
 
-# FIX (spec item 9.1 - "reputation link is broken"): root cause was
-# here, not in the app. This is a single-page app - every real "page"
-# is a client-side React Router route, not a physical file on the
-# static host. Without a catch-all fallback, a cold/fresh request for
-# a deep link the host doesn't recognize as a file (e.g.
-# /reputation/<token>, opened fresh by a landlord who never loaded the
-# app first) fell through to the host's default behavior, which lands
-# on /login instead of ever reaching index.html/React Router. Adding
-# this wildcard rule - matched only after every specific rule above -
-# makes the host serve index.html (200, not a redirect) for any path
-# it doesn't otherwise recognize, so React Router's own /reputation/:token
-# route (see App.jsx) actually gets a chance to run. This is also what
-# was silently making /verify/:paymentId (the receipt QR code
-# destination, item 2.1) and /onboard/:token fragile on a cold load -
-# same underlying cause, now fixed for all of them at once.
-/*  /index.html  200
+# FIX (spec item 9.1 - "reputation link is broken"): the SPA-fallback
+# problem this used to solve (a cold/fresh request for a client-side
+# route like /reputation/<token>, /verify/:paymentId, or
+# /onboard/:token falling through to a 404/login instead of reaching
+# React Router) is now handled by wrangler.jsonc's own
+# `not_found_handling: "single-page-application"` setting instead.
+#
+# A `/*  /index.html  200` wildcard rule here used to do this job, but
+# now that wrangler.jsonc handles it at the platform level, having
+# BOTH active at once makes Cloudflare reject the whole deploy with
+# "Invalid _redirects configuration: infinite loop detected" (the two
+# fallback mechanisms fight over the same stripped path). Do not
+# re-add a wildcard rule here - if the SPA fallback ever needs
+# adjusting, do it in wrangler.jsonc, not here.
