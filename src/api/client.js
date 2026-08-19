@@ -554,6 +554,12 @@ export const api = {
   cancelVacatingNotice: (token) => request('/tenants/vacating-notice', { method: 'DELETE', token }),
   initiateRentSTKPush: (payload, token) => request('/payments/stk-push', { method: 'POST', body: payload, token }),
   checkRentPaymentStatus: (checkoutRequestId, token) => request(`/payments/rent-status/${checkoutRequestId}`, { token }),
+  // Utility bills (water/electricity) - separate from rent. payload: { invoiceId }
+  initiateUtilityStkPush: (payload, token) => request('/payments/utility-stk-push', { method: 'POST', body: payload, token }),
+  getUtilityInvoices: (token) => request('/tenants/utility-invoices', { token }),
+  getAccountSummary: (token) => request('/tenants/account-summary', { token }),
+  recordManualUtilityPayment: (payload, token) => request('/payments/utility-manual', { method: 'POST', body: payload, token }),
+  listUtilityInvoicesForProperty: (token, propertyId, utilityType) => request(`/payments/utility-manual/open-invoices?propertyId=${encodeURIComponent(propertyId)}&utilityType=${encodeURIComponent(utilityType)}`, { token }),
   checkSubscriptionPaymentStatus: (checkoutRequestId) => request(`/payments/subscription-status/${checkoutRequestId}`),
   submitRegistrationManualPayment: (payload) => request('/payments/subscription-manual/register', { method: 'POST', body: payload }),
   checkRegistrationManualPaymentStatus: (landlordId) => request(`/payments/subscription-manual/register/${landlordId}/status`),
@@ -1249,9 +1255,13 @@ export const api = {
   // and 'manager' roles, which covers caretaker - see
   // utilitySubmetering.routes.js).
   uploadMeterReadingPhoto: (formData, token) => requestMultipart('/upload/meter-reading-photo', { method: 'POST', formData, token }),
-  listUtilityMeters: (token) => request('/utility-submetering/meters', { token }),
+  listUtilityMeters: (token, propertyId) => request(`/utility-submetering/meters${propertyId ? `?propertyId=${propertyId}` : ''}`, { token }),
   createUtilityMeter: (payload, token) => request('/utility-submetering/meters', { method: 'POST', body: payload, token }),
+  bulkCreateUtilityMeters: (payload, token) => request('/utility-submetering/meters/bulk', { method: 'POST', body: payload, token }),
+  updateUtilityMeter: (meterId, payload, token) => request(`/utility-submetering/meters/${meterId}`, { method: 'PATCH', body: payload, token }),
+  deleteUtilityMeter: (meterId, token) => request(`/utility-submetering/meters/${meterId}`, { method: 'DELETE', token }),
   submitUtilityReading: (meterId, payload, token) => request(`/utility-submetering/meters/${meterId}/readings`, { method: 'POST', body: payload, token }),
+  bulkSubmitUtilityReadings: (payload, token) => request('/utility-submetering/readings/bulk', { method: 'POST', body: payload, token }),
   listUtilityReadings: (meterId, token) => request(`/utility-submetering/meters/${meterId}/readings`, { token }),
   correctUtilityReading: (readingId, payload, token) => request(`/utility-submetering/readings/${readingId}`, { method: 'PATCH', body: payload, token }),
   getUtilityReadingCorrections: (readingId, token) => request(`/utility-submetering/readings/${readingId}/corrections`, { token }),

@@ -160,7 +160,7 @@ export default function Settings() {
   // Push even when I set Paybill": nothing used to fetch the
   // landlord's actual saved payment method at all, so the form always
   // rendered its hardcoded default instead of reality.
-  const [paymentMethod, setPaymentMethod] = useState({ method: 'stk', paybillNumber: '', accountNumber: '', tillNumber: '', stkPhoneNumber: '' });
+  const [paymentMethod, setPaymentMethod] = useState({ method: 'stk', paybillNumber: '', accountNumber: '', tillNumber: '', stkPhoneNumber: '', description: '' });
   const [editingPayment, setEditingPayment] = useState(false);
   // Apartment-scoped payment method (fixes "updating this apartment's
   // payment method also changed my other apartments"). '' means "the
@@ -1173,11 +1173,30 @@ export default function Settings() {
                     <input value={paymentMethod.paybillNumber} onChange={(e) => setPaymentMethod((p) => ({ ...p, paybillNumber: e.target.value }))} />
                   </div>
                   <div className="form-field">
-                    <label className="form-field__label">Account number</label>
-                    <input value={paymentMethod.accountNumber} onChange={(e) => setPaymentMethod((p) => ({ ...p, accountNumber: e.target.value }))} />
+                    <label className="form-field__label">
+                      Account number
+                      <InfoTip text="Set this up once. Use {unit} anywhere in the value and it's automatically replaced with each tenant's own unit number - e.g. RENT-{unit} shows tenant A3 'RENT-A3', no need to enter it per unit." />
+                    </label>
+                    <input
+                      value={paymentMethod.accountNumber}
+                      onChange={(e) => setPaymentMethod((p) => ({ ...p, accountNumber: e.target.value }))}
+                      placeholder="e.g. RENT-{unit}"
+                    />
                   </div>
                 </div>
               )}
+              <div className="form-field">
+                <label className="form-field__label">
+                  Description for tenants (optional)
+                  <InfoTip text="Shown to the tenant right where they tap Pay Rent / Pay Water / Pay Electricity - e.g. 'Rent due by the 5th. Water and electricity are billed separately.'" />
+                </label>
+                <textarea
+                  value={paymentMethod.description || ''}
+                  onChange={(e) => setPaymentMethod((p) => ({ ...p, description: e.target.value }))}
+                  placeholder="e.g. Rent is due by the 5th of every month. Water is billed separately."
+                  rows={2}
+                />
+              </div>
               {paymentMethod.method === 'stk' && (
                 <div className="form-field">
                   <label className="form-field__label">STK push phone number<InfoTip text={`The M-Pesa prompt for this ${paymentPropertyId ? 'apartment' : 'account'} goes to this number.`} /></label>
@@ -1232,6 +1251,7 @@ export default function Settings() {
                 {paymentMethod.method === 'stk' && (
                   <>STK Push (M-Pesa prompt straight to the tenant's phone){paymentMethod.stkPhoneNumber && <><br />{paymentMethod.stkPhoneNumber}</>}</>
                 )}
+                {paymentMethod.description && <><br /><em>"{paymentMethod.description}"</em></>}
               </span>
               <div className="settings-manager-row__actions">
                 {!isCaretaker && (

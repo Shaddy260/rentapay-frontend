@@ -913,7 +913,7 @@ export default function Dashboard() {
         <DisputesPanel token={token} role={role} isCaretaker={isCaretaker} />
       ) : activeView === 'utility-meters' ? (
         <main className="dashboard-main">
-          <UtilityMetersPanel token={token} />
+          <UtilityMetersPanel token={token} propertyId={activePropertyId} propertyName={properties.find((p) => p.id === activePropertyId)?.name} />
         </main>
       ) : activeView === 'payment-plans' ? (
         <PaymentPlanRequestsPanel token={token} isCaretaker={isCaretaker} />

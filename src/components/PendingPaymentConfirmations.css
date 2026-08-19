@@ -105,6 +105,35 @@
 .ppc-card__name {
   font-weight: 600;
   color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ppc-card__target-badge {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-surface-alt, #f0f0f0);
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+
+.ppc-card__target-badge--water {
+  background: #e6f4fb;
+  color: #0d6187;
+}
+
+.ppc-card__target-badge--electricity {
+  background: #fff4d9;
+  color: #8a6300;
+}
+
+.ppc-card__target-badge--rent {
+  background: #eef0ff;
+  color: #3a3fb0;
 }
 
 .ppc-card__unit {

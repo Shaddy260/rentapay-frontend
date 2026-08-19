@@ -1,0 +1,67 @@
+.utility-bills-section {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.utility-bills-section__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .utility-bills-section__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.utility-bill-card {
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.utility-bill-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.utility-bill-card__icon {
+  font-size: var(--text-lg);
+}
+
+.utility-bill-card__amount {
+  font-family: var(--font-body);
+  font-size: var(--text-2xl);
+  color: var(--color-primary-dark);
+}
+
+.utility-bill-card__sub {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+.utility-bills-section__total {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.utility-bills-section__total-amount {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}

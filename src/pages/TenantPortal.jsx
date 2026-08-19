@@ -9,6 +9,7 @@ import Countdown from '../components/Countdown.jsx';
 import PortalSidebar from '../components/PortalSidebar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
 import UnitInfoCard from '../components/UnitInfoCard.jsx';
+import UtilityBillsSection from '../components/UtilityBillsSection.jsx';
 import PropertyRulesCard from '../components/PropertyRulesCard.jsx';
 import Skeleton from '../components/Skeleton.jsx';
 import StatisticsPanel from '../components/StatisticsPanel.jsx';
@@ -582,6 +583,15 @@ export default function TenantPortal() {
               </section>
             )}
 
+            {/* Water/electricity bills - entirely separate from rent
+                above. Renders nothing if the landlord hasn't set up
+                any utility billing for this unit. */}
+            <UtilityBillsSection
+              token={token}
+              paymentInstructions={paymentInstructions}
+              rentOwed={prepayment?.isAhead ? 0 : Number(breakdown?.totalDue || 0)}
+            />
+
             <UnitInfoCard unit={unit} profile={profile} dueDate={dueDate} />
           </>
         )}
@@ -734,6 +744,9 @@ export default function TenantPortal() {
                   ? <>Send payment via M-Pesa (Send Money) to <strong>{paymentInstructions.stkPhoneNumber}</strong>, then submit your M-Pesa code below.</>
                   : <>Pay via M-Pesa using the details below, then submit your M-Pesa code below.</>}
               </p>
+              {paymentInstructions?.description && (
+                <p className="tenant-portal-hint">{paymentInstructions.description}</p>
+              )}
 
               <PaymentPlanRequest token={token} totalDue={breakdown?.totalDue} />
             </section>
@@ -991,7 +1004,7 @@ function VacatingNoticeModal({ token, onClose, onDone }) {
   );
 }
 
-function PaybillModal({ paymentInstructions, amountDue, token, onClose, onDone }) {
+export function PaybillModal({ paymentInstructions, amountDue, token, onClose, onDone, targetInvoiceId, title }) {
   const [transactionCode, setTransactionCode] = useState('');
   const [amountPaid, setAmountPaid] = useState(amountDue != null ? String(amountDue) : '');
   const [mpesaPayerName, setMpesaPayerName] = useState('');
@@ -1021,6 +1034,7 @@ function PaybillModal({ paymentInstructions, amountDue, token, onClose, onDone }
         mpesaPayerName: mpesaPayerName.trim(),
         mpesaPayerPhone: mpesaPayerPhone.trim(),
         mpesaSmsTimestamp: new Date(mpesaSmsTimestamp).toISOString(),
+        ...(targetInvoiceId ? { targetInvoiceId } : {}),
       };
       const res = await api.submitPaybillTransaction(payload, token);
       if (res.isDuplicate) {
@@ -1046,11 +1060,19 @@ function PaybillModal({ paymentInstructions, amountDue, token, onClose, onDone }
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-card__header">
-          <h3>Pay Rent</h3>
+          <h3>{title || 'Pay Rent'}</h3>
           <button className="modal-card__close" onClick={onClose}>×</button>
         </div>
         <form className="modal-form" onSubmit={submit}>
           {error && <p className="modal-error">{error}</p>}
+          {/* Direct request: a note the landlord/manager writes once at
+              setup, shown right where the tenant taps Pay Rent / Pay
+              <utility> - e.g. "Rent due by the 5th, water billed
+              separately." Applies to rent and every utility, since both
+              flows share this same modal. */}
+          {paymentInstructions?.description && (
+            <p className="tenant-portal-hint">{paymentInstructions.description}</p>
+          )}
           {paymentInstructions?.method === 'paybill' ? (
             <p>Use Paybill <strong>{paymentInstructions.paybillNumber}</strong>, Account Number <strong>{paymentInstructions.accountNumber}</strong>. Once you've paid, fill in the details below exactly as shown on your M-Pesa confirmation SMS.</p>
           ) : paymentInstructions?.method === 'till' ? (

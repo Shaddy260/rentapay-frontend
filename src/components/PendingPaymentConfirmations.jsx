@@ -347,7 +347,20 @@ export default function PendingPaymentConfirmations({ token, canConfirmReject = 
                 <div className="ppc-card__row">
                   <Avatar name={record.tenants?.full_name} photoUrl={record.tenants?.photo_url} size={44} />
                   <div className="ppc-card__info">
-                    <div className="ppc-card__name">{record.tenants?.full_name || 'Unknown tenant'}</div>
+                    <div className="ppc-card__name">
+                      {record.tenants?.full_name || 'Unknown tenant'}
+                      {/* Direct request: distinguish rent submissions from a
+                          specific utility bill (water/electricity) right on
+                          the card, not just inside the details. */}
+                      <span className={`ppc-card__target-badge ppc-card__target-badge--${record.target_type === 'utility' ? (record.target_invoice?.utility_type || 'utility') : 'rent'}`}>
+                        {record.target_type === 'utility'
+                          ? (record.target_invoice?.utility_type === 'water' ? '💧 Water bill'
+                            : record.target_invoice?.utility_type === 'electricity' ? '⚡ Electricity bill'
+                            : '🔌 Utility bill')
+                          : '🏠 Rent'}
+                        {record.target_invoice?.month_key ? ` · ${record.target_invoice.month_key}` : ''}
+                      </span>
+                    </div>
                     <div className="ppc-card__unit">
                       {record.units?.properties?.name ? `${record.units.properties.name} · ` : ''}
                       {record.units?.unit_name || '—'}

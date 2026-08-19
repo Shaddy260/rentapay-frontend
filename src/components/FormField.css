@@ -61,3 +61,12 @@
   margin: 0;
   font-weight: 500;
 }
+
+.form-field__static {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-sunken, #f4f4f4);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
