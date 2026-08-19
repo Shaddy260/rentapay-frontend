@@ -201,6 +201,7 @@ export default function BaPayoutSubmit() {
 
         {step === 'email' && (
           <form onSubmit={handleRequestOtp} className="tenant-onboarding-form">
+<<<<<<< HEAD
             <div className="u-flex-row" style={{ alignItems: 'center', gap: '6px' }}>
               <span>Verify your account</span>
               <InfoTip text={<>
@@ -209,6 +210,13 @@ export default function BaPayoutSubmit() {
                   : "Enter the email on your RentaPay Brand Ambassador account. We'll send a one-time code to confirm it's you before letting you submit your payout details."}
               </>} />
             </div>
+=======
+            <p className="tenant-onboarding-instruction">
+              {isEditMode
+                ? "Enter the email on your RentaPay Brand Ambassador account. We'll send a one-time code to confirm it's you before letting you correct your on-file payout details."
+                : "Enter the email on your RentaPay Brand Ambassador account. We'll send a one-time code to confirm it's you before letting you submit your payout details."}
+            </p>
+>>>>>>> origin/main
             {requestError && <p className="tenant-onboarding-error">{requestError}</p>}
             <label>
               Account email
@@ -270,7 +278,11 @@ export default function BaPayoutSubmit() {
               {isEditMode
                 ? "Update the M-Pesa number or name we should pay your commission to. This correction link stays live until it expires, but each verification code can only be used once."
                 : "Enter the M-Pesa number and name we should pay your commission to. Double-check these — errors here mean you won't get paid. You can only submit this once, so please make sure everything is correct before you continue."}
+<<<<<<< HEAD
             </>} />
+=======
+            </p>
+>>>>>>> origin/main
 
             {submitError && <p className="tenant-onboarding-error">{submitError}</p>}
 

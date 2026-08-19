@@ -652,10 +652,13 @@ export const api = {
   // the new General Manager role.
   listGeneralManagers: (token, search) => request(`/admin/general-managers${search ? `?search=${encodeURIComponent(search)}` : ''}`, { token }),
   createGeneralManager: (payload, token) => request('/admin/general-managers', { method: 'POST', body: payload, token }),
+<<<<<<< HEAD
   // Prompt 7 — self-service onboarding link, same shape as the BA link
   // methods above (getBaOnboardingLink / generateBaOnboardingLink).
   getGmOnboardingLink: (token) => request('/admin/general-managers/onboarding-link', { token }),
   generateGmOnboardingLink: (token) => request('/admin/general-managers/onboarding-link/generate', { method: 'POST', token }),
+=======
+>>>>>>> origin/main
   // Suspend / reactivate a General Manager's own account (admin-only —
   // a General Manager can never manage another General Manager's account).
   setGeneralManagerStatus: (managerId, status, token) => request(`/admin/general-managers/${managerId}/status`, { method: 'PATCH', body: { status }, token }),

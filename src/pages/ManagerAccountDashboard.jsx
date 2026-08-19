@@ -455,7 +455,11 @@ export default function ManagerAccountDashboard() {
             {!tabLoading && expiringLandlords && (
               <div className="admin-table-wrapper">
                 <table className="admin-table">
+<<<<<<< HEAD
                   <thead><tr><th>Landlord</th><th>Estate</th><th>Phone</th><th>Location</th><th>Expires</th><th></th></tr></thead>
+=======
+                  <thead><tr><th>Landlord</th><th>Estate</th><th>Phone</th><th>Location</th><th>Expires</th></tr></thead>
+>>>>>>> origin/main
                   <tbody>
                     {expiringLandlords.map((l) => (
                       <tr key={l.id}>
@@ -464,6 +468,7 @@ export default function ManagerAccountDashboard() {
                         <td>{l.phone}</td>
                         <td>{[l.location, l.county].filter(Boolean).join(', ') || '—'}</td>
                         <td>{l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '—'}</td>
+<<<<<<< HEAD
                         <td>
                           {l.phone && (
                             <a href={`tel:${l.phone}`} className="admin-table__call-btn" title={`Call ${l.full_name}`} aria-label={`Call ${l.full_name}`}>
@@ -471,6 +476,8 @@ export default function ManagerAccountDashboard() {
                             </a>
                           )}
                         </td>
+=======
+>>>>>>> origin/main
                       </tr>
                     ))}
                   </tbody>
