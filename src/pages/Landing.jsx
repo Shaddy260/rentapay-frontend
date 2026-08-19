@@ -12,15 +12,15 @@ import './Landing.css';
 // selection.
 const HERO_CONTENT = {
   landlord: {
-    eyebrow: '✦ Premium property management, built for Kenya',
-    headline: 'Management made simple.',
+    eyebrow: "BUILT FOR KENYA's LANDLORDS",
+    headline: 'Run your properties like a pro.',
     sub: 'Easily manage your properties and tenants, take M-Pesa payments, and monitor every unit in real time — all from one place, on any phone.',
     ctaLabel: 'Get started',
     ctaTo: '/register',
   },
   seeker: {
-    eyebrow: '✦ Find your next home, hassle-free',
-    headline: 'Find your next home.',
+    eyebrow: "KENYA'S VACANT UNITS, ONE TAP AWAY",
+    headline: 'Home hunting, minus the hustle.',
     sub: 'Browse vacant units by county and constituency, and reach out directly on WhatsApp — completely free, no account needed.',
     ctaLabel: 'Browse listings',
     ctaTo: '/find-a-house',

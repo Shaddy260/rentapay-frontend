@@ -155,6 +155,18 @@ export default function UnitDetail() {
   const [listingBusy, setListingBusy] = useState(false);
   const [depositBusy, setDepositBusy] = useState(false);
   const [depositAmountDraft, setDepositAmountDraft] = useState('');
+  // FEATURE (Landlord Bulk Deposit Assignment): scope selection for
+  // deposit settings, same shape as chargeScope above - apply to just
+  // this unit (default, unchanged instant-toggle behavior), every unit
+  // in the landlord's whole portfolio, or a hand-picked set of units.
+  // "all" is deliberately portfolio-wide (not just this property) per
+  // the spec ("across the landlord's entire portfolio in one go").
+  const [depositScope, setDepositScope] = useState('unit'); // 'unit' | 'all' | 'selected'
+  const [portfolioUnits, setPortfolioUnits] = useState(null); // lazy-loaded once scope needs it
+  const [portfolioUnitsLoading, setPortfolioUnitsLoading] = useState(false);
+  const [selectedDepositUnitIds, setSelectedDepositUnitIds] = useState([]);
+  const [bulkDepositRequires, setBulkDepositRequires] = useState(true);
+  const [bulkDepositAmount, setBulkDepositAmount] = useState('');
   // DIRECT REQUEST: "add an option in the landlord/manager portal that
   // they choose whether their vacant units should be listed public or
   // not." Toggle-able regardless of the unit's current status - a
@@ -220,6 +232,67 @@ export default function UnitDetail() {
         token
       );
       setNotice('Expected deposit amount saved.');
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDepositBusy(false);
+    }
+  }
+
+  async function loadPortfolioUnitsForDepositScope() {
+    if (portfolioUnits || portfolioUnitsLoading) return;
+    setPortfolioUnitsLoading(true);
+    try {
+      // No propertyId filter here on purpose - "all units" means the
+      // landlord's entire portfolio, not just this unit's property, and
+      // "selected units" should let a landlord pick across properties.
+      const res = await api.listUnits(token);
+      setPortfolioUnits((res.units || []).filter((u) => u.id !== unitId));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setPortfolioUnitsLoading(false);
+    }
+  }
+
+  function handleDepositScopeChange(nextScope) {
+    setDepositScope(nextScope);
+    setSelectedDepositUnitIds([]);
+    if (nextScope !== 'unit') {
+      setBulkDepositRequires(!!unit.requires_deposit);
+      setBulkDepositAmount(unit.deposit_amount_expected ?? '');
+      loadPortfolioUnitsForDepositScope();
+    }
+  }
+
+  function toggleDepositUnitSelection(id) {
+    setSelectedDepositUnitIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  }
+
+  async function handleApplyBulkDeposit(e) {
+    e.preventDefault();
+    if (depositScope === 'selected' && selectedDepositUnitIds.length === 0) {
+      setError('Select at least one unit to apply this deposit setting to.');
+      return;
+    }
+    setDepositBusy(true);
+    setError('');
+    try {
+      const payload = {
+        scope: depositScope,
+        requiresDeposit: bulkDepositRequires,
+        depositAmountExpected: bulkDepositRequires && bulkDepositAmount ? Number(bulkDepositAmount) : undefined,
+      };
+      if (depositScope === 'selected') {
+        // Same "always include the unit this page is on" behavior as
+        // the extra-charges scope picker below.
+        payload.unitIds = Array.from(new Set([unitId, ...selectedDepositUnitIds]));
+      }
+      const res = await api.bulkUpdateDepositSettings(payload, token);
+      setNotice(res.message || `Deposit setting applied to ${res.updated} unit(s).`);
+      setDepositScope('unit');
+      setSelectedDepositUnitIds([]);
       load();
     } catch (err) {
       setError(err.message);
@@ -538,38 +611,111 @@ export default function UnitDetail() {
               grouped into this same card since they're all about how
               this unit appears on the public listings page. */}
           <div className="unit-detail-hint u-divider-top">
-            <label className="u-checkbox-row u-checkbox-row--strong u-checkbox-row--wrap">
-              <input
-                type="checkbox"
-                checked={!!unit.requires_deposit}
-                disabled={depositBusy}
-                onChange={handleToggleRequiresDeposit}
-              />
-              <span>
-                This unit requires a deposit from a future tenant
-                <InfoTip
-                  text={
-                    unit.requires_deposit
-                      ? 'Prospective tenants browsing the public listing will see this unit requires a deposit.'
-                      : 'Prospective tenants browsing the public listing will see this unit does not require a deposit.'
-                  }
-                />
-              </span>
-            </label>
-            {unit.requires_deposit && (
-              <div className="u-flex-row u-mt-2">
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Expected deposit amount (optional, KES)"
-                  defaultValue={unit.deposit_amount_expected ?? ''}
-                  onChange={(e) => setDepositAmountDraft(e.target.value)}
-                  className="u-max-240"
-                />
-                <Button type="button" variant="ghost" loading={depositBusy} onClick={handleSaveDepositAmount}>
-                  Save amount
-                </Button>
+            {/* FEATURE (Landlord Bulk Deposit Assignment): scope
+                selector - who this deposit setting applies to. Kept
+                separate from the unit-picker area below so "this unit"
+                keeps its original instant toggle-on-click behavior
+                unchanged. */}
+            {!isCaretaker && (
+              <div className="add-charge-form__scope u-mb-2">
+                <label className="add-charge-form__scope-label">Apply deposit setting to</label>
+                <select value={depositScope} onChange={(e) => handleDepositScopeChange(e.target.value)}>
+                  <option value="unit">Just this unit ({unit.unit_name})</option>
+                  <option value="all">All units (entire portfolio)</option>
+                  <option value="selected">Selected units…</option>
+                </select>
               </div>
+            )}
+
+            {depositScope === 'unit' && (
+              <>
+                <label className="u-checkbox-row u-checkbox-row--strong u-checkbox-row--wrap">
+                  <input
+                    type="checkbox"
+                    checked={!!unit.requires_deposit}
+                    disabled={depositBusy}
+                    onChange={handleToggleRequiresDeposit}
+                  />
+                  <span>
+                    This unit requires a deposit from a future tenant
+                    <InfoTip
+                      text={
+                        unit.requires_deposit
+                          ? 'Prospective tenants browsing the public listing will see this unit requires a deposit.'
+                          : 'Prospective tenants browsing the public listing will see this unit does not require a deposit.'
+                      }
+                    />
+                  </span>
+                </label>
+                {unit.requires_deposit && (
+                  <div className="u-flex-row u-mt-2">
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Expected deposit amount (optional, KES)"
+                      defaultValue={unit.deposit_amount_expected ?? ''}
+                      onChange={(e) => setDepositAmountDraft(e.target.value)}
+                      className="u-max-240"
+                    />
+                    <Button type="button" variant="ghost" loading={depositBusy} onClick={handleSaveDepositAmount}>
+                      Save amount
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {(depositScope === 'all' || depositScope === 'selected') && (
+              <form className="add-charge-form" onSubmit={handleApplyBulkDeposit}>
+                <label className="u-checkbox-row u-checkbox-row--strong u-checkbox-row--wrap">
+                  <input
+                    type="checkbox"
+                    checked={bulkDepositRequires}
+                    onChange={(e) => setBulkDepositRequires(e.target.checked)}
+                  />
+                  <span>Requires a deposit from a future tenant</span>
+                </label>
+                {bulkDepositRequires && (
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Expected deposit amount (optional, KES)"
+                    value={bulkDepositAmount}
+                    onChange={(e) => setBulkDepositAmount(e.target.value)}
+                    className="u-max-240 u-mt-2"
+                  />
+                )}
+
+                {depositScope === 'selected' && (
+                  <div className="add-charge-form__unit-picker u-mt-2">
+                    {portfolioUnitsLoading && <p className="add-charge-form__hint">Loading units…</p>}
+                    {!portfolioUnitsLoading && portfolioUnits?.length === 0 && (
+                      <p className="add-charge-form__hint">No other units in your portfolio.</p>
+                    )}
+                    {!portfolioUnitsLoading && portfolioUnits?.length > 0 && (
+                      <>
+                        <p className="add-charge-form__hint">{unit.unit_name} is included automatically - pick any others to add:</p>
+                        <div className="add-charge-form__unit-list">
+                          {portfolioUnits.map((u) => (
+                            <label key={u.id} className="add-charge-form__unit-option">
+                              <input
+                                type="checkbox"
+                                checked={selectedDepositUnitIds.includes(u.id)}
+                                onChange={() => toggleDepositUnitSelection(u.id)}
+                              />
+                              {u.unit_name}
+                            </label>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <Button type="submit" variant="ghost" loading={depositBusy} className="u-mt-2">
+                  Apply to {depositScope === 'all' ? 'all units' : 'selected units'}
+                </Button>
+              </form>
             )}
           </div>
 

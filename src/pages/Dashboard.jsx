@@ -23,6 +23,7 @@ import RateTenantReminderPopup from '../components/RateTenantReminderPopup.jsx';
 import LoyaltyDiscountReminderPopup from '../components/LoyaltyDiscountReminderPopup.jsx';
 import PaymentHistoryPanel from '../components/PaymentHistoryPanel.jsx';
 import DisputesPanel from '../components/DisputesPanel.jsx';
+import UtilityMetersPanel from '../components/UtilityMetersPanel.jsx';
 import PaymentPlanRequestsPanel from '../components/PaymentPlanRequestsPanel.jsx';
 import Faq from '../components/Faq.jsx';
 import AnnouncementBell from '../components/AnnouncementBell.jsx';
@@ -679,6 +680,7 @@ export default function Dashboard() {
             group: 'Operations',
             items: [
               { key: 'maintenance', label: 'Maintenance', icon: '🔧', onClick: () => setActiveView('maintenance') },
+              { key: 'utility-meters', label: 'Utility Meters', icon: '🚰', onClick: () => setActiveView('utility-meters') },
               { key: 'expenses', label: 'Expenses', icon: '🧾', onClick: () => setActiveView('expenses') },
               { key: 'community', label: 'Community Board', icon: '🏘️', badge: communityBadge, onClick: () => setActiveView('community') },
               // Messages/Broadcast aren't named in any spec group -
@@ -909,6 +911,10 @@ export default function Dashboard() {
         </main>
       ) : activeView === 'disputes' ? (
         <DisputesPanel token={token} role={role} isCaretaker={isCaretaker} />
+      ) : activeView === 'utility-meters' ? (
+        <main className="dashboard-main">
+          <UtilityMetersPanel token={token} />
+        </main>
       ) : activeView === 'payment-plans' ? (
         <PaymentPlanRequestsPanel token={token} isCaretaker={isCaretaker} />
       ) : activeView === 'pending-confirmations' ? (

@@ -225,7 +225,7 @@ export default function TenantOnboarding() {
         {step === 'select-unit' && (
           <>
             <p className="tenant-onboarding-instruction">
-              Tap the unit <strong>YOU</strong> live in. Please make sure it's correct — no mistakes.
+              Tap your unit below. Double-check before continuing.
             </p>
             {units.length > 4 && (
               <input

@@ -11,9 +11,9 @@ import PortalSidebar from '../components/PortalSidebar.jsx';
 import AdminStatistics from '../components/AdminStatistics.jsx';
 import AdminRevenueDashboard from '../components/AdminRevenueDashboard.jsx';
 import AdminCredentialsPanel from '../components/AdminCredentialsPanel.jsx';
+import GeneralManagersPanel from '../components/GeneralManagersPanel.jsx';
 import AdminChangePasswordPanel from '../components/AdminChangePasswordPanel.jsx';
 import AdminHelpContactSettings from '../components/AdminHelpContactSettings.jsx';
-import AdminSqlPanel from '../components/AdminSqlPanel.jsx';
 import SupportChatWidget from '../components/SupportChatWidget.jsx';
 import SupportAnalyticsPanel from '../components/SupportAnalyticsPanel.jsx';
 import AdminRatingFlags from '../components/AdminRatingFlags.jsx';
@@ -633,6 +633,12 @@ export default function AdminDashboard() {
             ],
           },
           {
+            group: 'General Managers',
+            items: [
+              { key: 'general-managers', label: 'General Managers', icon: '🧑‍💼', onClick: () => setActiveTab('general-managers') },
+            ],
+          },
+          {
             group: 'Support',
             items: [
               { key: 'help', label: 'Help Requests', icon: '❓', badge: sidebarCounts.help, onClick: () => setActiveTab('help') },
@@ -649,7 +655,6 @@ export default function AdminDashboard() {
             group: 'System',
             items: [
               { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
-              { key: 'sql', label: 'SQL', icon: '🗄️', onClick: () => setActiveTab('sql') },
               { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
             ],
           },
@@ -814,7 +819,7 @@ export default function AdminDashboard() {
             <AdminCredentialsPanel token={token} />
           </>
         )}
-        {activeTab === 'sql' && <AdminSqlPanel token={token} />}
+        {activeTab === 'general-managers' && <GeneralManagersPanel token={token} />}
         {activeTab === 'rating-flags' && <AdminRatingFlags token={token} />}
         {activeTab === 'reported-accounts' && <AdminReportedAccounts token={token} />}
         {activeTab === 'subscription-pricing' && <AdminSubscriptionPricing token={token} />}
@@ -1081,6 +1086,17 @@ export default function AdminDashboard() {
                   </>
                 )}
               </section>
+            )}
+
+            {sidebarCounts.landlordPayments > 0 && (
+              <button
+                type="button"
+                className="admin-banner admin-banner--warning"
+                onClick={() => setActiveTab('manual-subscription-payments')}
+              >
+                <span>💳 Pending landlord manual payments awaiting confirmation</span>
+                <span className="admin-banner__count">{sidebarCounts.landlordPayments}</span>
+              </button>
             )}
 
             <section className="admin-section admin-section--danger">

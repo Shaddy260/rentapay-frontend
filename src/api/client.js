@@ -308,6 +308,9 @@ export const api = {
   sessionCheck: (token) => request('/auth/session-check', { token }),
   requestPasswordReset: (payload) => request('/auth/forgot-password/request', { method: 'POST', body: payload }),
   resetPassword: (payload) => request('/auth/forgot-password/reset', { method: 'POST', body: payload }),
+  // SECTION 3 (General Manager dedicated login) - hits its own backend
+  // endpoint, distinct from login()/adminLogin() above.
+  generalManagerLogin: (payload) => request('/auth/manager-account/login', { method: 'POST', body: payload }),
   adminLogin: (payload) => request('/auth/admin/login', { method: 'POST', body: payload }),
   adminVerifyOtp: (payload) => request('/auth/admin/verify-otp', { method: 'POST', body: payload }),
   adminForgotPassword: () => request('/auth/admin/forgot-password', { method: 'POST' }),
@@ -471,6 +474,7 @@ export const api = {
   updateListingStatus: (unitId, listingStatus, token) => request(`/units/${unitId}/listing-status`, { method: 'PATCH', body: { listingStatus }, token }),
   updateListingDescription: (unitId, listingDescription, token) => request(`/units/${unitId}/listing-description`, { method: 'PATCH', body: { listingDescription }, token }),
   updateDepositSettings: (unitId, payload, token) => request(`/units/${unitId}/deposit-settings`, { method: 'PATCH', body: payload, token }),
+  bulkUpdateDepositSettings: (payload, token) => request('/units/bulk-deposit-settings', { method: 'POST', body: payload, token }),
   removeUnit: (unitId, token) => request(`/units/${unitId}`, { method: 'DELETE', token }),
   addExtraCharge: (unitId, payload, token) => request(`/units/${unitId}/extra-charges`, { method: 'POST', body: payload, token }),
   bulkUpdateRent: (payload, token) => request('/units/bulk-rent', { method: 'POST', body: payload, token }),
@@ -640,17 +644,57 @@ export const api = {
 
   // Super Admin (blueprint section 13)
   getAdminDashboard: (token) => request('/admin/dashboard', { token }),
-  // Admin "SQL" tab (safe table-by-table viewer/editor - see adminSql.controller.js)
-  listAdminSqlTables: (token) => request('/admin/sql/tables', { token }),
-  listAdminSqlRows: (table, { limit, offset, search } = {}, token) => {
+  // SECTION 1 (General Manager spec): the admin "SQL" tab and its
+  // client methods (listAdminSqlTables/listAdminSqlRows/
+  // updateAdminSqlRow) have been removed outright - no UI on the
+  // platform exposes raw or table-scoped database access anymore.
+  // SECTION 2 (General Manager spec): admin-only account creation for
+  // the new General Manager role.
+  listGeneralManagers: (token, search) => request(`/admin/general-managers${search ? `?search=${encodeURIComponent(search)}` : ''}`, { token }),
+  createGeneralManager: (payload, token) => request('/admin/general-managers', { method: 'POST', body: payload, token }),
+  // Prompt 7 — self-service onboarding link, same shape as the BA link
+  // methods above (getBaOnboardingLink / generateBaOnboardingLink).
+  getGmOnboardingLink: (token) => request('/admin/general-managers/onboarding-link', { token }),
+  generateGmOnboardingLink: (token) => request('/admin/general-managers/onboarding-link/generate', { method: 'POST', token }),
+  // Suspend / reactivate a General Manager's own account (admin-only —
+  // a General Manager can never manage another General Manager's account).
+  setGeneralManagerStatus: (managerId, status, token) => request(`/admin/general-managers/${managerId}/status`, { method: 'PATCH', body: { status }, token }),
+  // SECTION 8 — admin browsing a specific General Manager's own log
+  // page (day/week/month). `view` is 'day'|'week'|'month', `date`
+  // (optional) anchors which day/week/month, defaults to today.
+  getGeneralManagerLogs: (managerId, { view, date } = {}, token) => {
     const params = new URLSearchParams();
-    if (limit != null) params.set('limit', limit);
-    if (offset != null) params.set('offset', offset);
-    if (search) params.set('search', search);
+    if (view) params.set('view', view);
+    if (date) params.set('date', date);
     const qs = params.toString();
-    return request(`/admin/sql/${table}${qs ? `?${qs}` : ''}`, { token });
+    return request(`/admin/general-managers/${managerId}/logs${qs ? `?${qs}` : ''}`, { token });
   },
-  updateAdminSqlRow: (table, id, payload, token) => request(`/admin/sql/${table}/${id}`, { method: 'PATCH', body: payload, token }),
+  // SECTION 9 — styled, branded PDF export of a specific General
+  // Manager's activity log, for an optional date range (omit both to
+  // export their full history). Reuses the shared authenticated-blob
+  // download helper above, same as every other server-generated PDF.
+  downloadGeneralManagerLogsPdf: (managerId, { from, to } = {}, token) => {
+    const params = {};
+    if (from) params.from = from;
+    if (to) params.to = to;
+    return downloadBaFile(`/admin/general-managers/${managerId}/logs/export.pdf`, params, token, `rentapay-gm-activity-${managerId.slice(0, 8)}.pdf`);
+  },
+  // SECTION 10 — Admin Revert Capability. Individual (one log entry)
+  // and bulk (every eligible, not-yet-reverted entry within an
+  // optional date range — omit both to revert the manager's entire
+  // revertible history) revert, both admin-only.
+  revertGeneralManagerLog: (managerId, logId, token) =>
+    request(`/admin/general-managers/${managerId}/logs/${logId}/revert`, { method: 'POST', token }),
+  revertGeneralManagerLogsInRange: (managerId, { from, to } = {}, token) =>
+    request(`/admin/general-managers/${managerId}/logs/revert-range`, { method: 'POST', body: { from, to }, token }),
+  // A General Manager browsing their OWN log page (Section 8).
+  getMyGeneralManagerLogs: ({ view, date } = {}, token) => {
+    const params = new URLSearchParams();
+    if (view) params.set('view', view);
+    if (date) params.set('date', date);
+    const qs = params.toString();
+    return request(`/manager-account/my-logs${qs ? `?${qs}` : ''}`, { token });
+  },
   listAllLandlords: (token) => request('/admin/landlords', { token }),
   // FEATURE (spec item 10): landlords who started but never finished
   // registration/setup, with which step they stopped at.
@@ -669,11 +713,14 @@ export const api = {
   getRevenueBreakdown: (period, token) => request(`/admin/revenue${period ? `?period=${period}` : ''}`, { token }),
   getRevenueTrend: (token) => request('/admin/revenue-trend', { token }),
   getRevenueDashboard: (token) => request('/admin/revenue-dashboard', { token }),
+  // Phase 12 - admin revenue statistics & pricing proposal.
+  getPricingProposal: (token, targetMarginPct) =>
+    request(`/admin/pricing-proposal${targetMarginPct != null ? `?targetMarginPct=${encodeURIComponent(targetMarginPct)}` : ''}`, { token }),
   getGrowthStatistics: (token) => request('/admin/growth-statistics', { token }),
   getExpiringLandlords: (days, token) => request(`/admin/expiring-landlords${days ? `?days=${days}` : ''}`, { token }),
   sendRenewalReminders: (payload, token) => request('/admin/expiring-landlords/remind', { method: 'POST', body: payload, token }),
   setLandlordStatus: (landlordId, payload, token) => request(`/admin/landlords/${landlordId}/status`, { method: 'PATCH', body: payload, token }),
-  deleteLandlordAccount: (landlordId, password, token) => request(`/admin/landlords/${landlordId}`, { method: 'DELETE', body: { password }, token }),
+  deleteLandlordAccount: (landlordId, password, token, extra = {}) => request(`/admin/landlords/${landlordId}`, { method: 'DELETE', body: { password, ...extra }, token }),
   editLandlordSubscription: (landlordId, payload, token) => request(`/admin/landlords/${landlordId}/subscription`, { method: 'PATCH', body: payload, token }),
   getLandlordProperties: (landlordId, token) => request(`/admin/landlords/${landlordId}/properties`, { token }),
   getActivityLog: (token) => request('/admin/activity-log', { token }),
@@ -687,7 +734,7 @@ export const api = {
   warnAccount: (accountType, accountId, payload, token) => request(`/admin/moderation/${accountType}/${accountId}/warn`, { method: 'POST', body: payload, token }),
   suspendAccountPermanently: (accountType, accountId, payload, token) => request(`/admin/moderation/${accountType}/${accountId}/suspend`, { method: 'POST', body: payload, token }),
   suspendAccountTemporarily: (accountType, accountId, payload, token) => request(`/admin/moderation/${accountType}/${accountId}/suspend-temporary`, { method: 'POST', body: payload, token }),
-  unsuspendAccount: (accountType, accountId, token) => request(`/admin/moderation/${accountType}/${accountId}/unsuspend`, { method: 'POST', token }),
+  unsuspendAccount: (accountType, accountId, token, payload = {}) => request(`/admin/moderation/${accountType}/${accountId}/unsuspend`, { method: 'POST', body: payload, token }),
 
   getLockdownStatus: (token) => request('/admin/lockdown-status', { token }),
   emergencyLockdown: (payload, token) => request('/admin/emergency-lockdown', { method: 'POST', body: payload, token }),
@@ -724,6 +771,12 @@ export const api = {
 
   // Account (both roles)
   changePassword: (payload, token) => request('/auth/change-password', { method: 'POST', body: payload, token }),
+  // SECTION 4 (Operations PIN) - General Manager's own self-service
+  // routes, all under /manager-account and all requiring their token.
+  setOperationsPin: (payload, token) => request('/manager-account/operations-pin', { method: 'POST', body: payload, token }),
+  changeOperationsPin: (payload, token) => request('/manager-account/operations-pin', { method: 'PATCH', body: payload, token }),
+  requestOperationsPinReset: (token) => request('/manager-account/operations-pin/forgot', { method: 'POST', token }),
+  resetOperationsPin: (payload, token) => request('/manager-account/operations-pin/reset', { method: 'POST', body: payload, token }),
   dismissOnboarding: (token) => request('/auth/dismiss-onboarding', { method: 'POST', token }),
   uploadProfilePhoto: (formData, token) => requestMultipart('/upload/profile-photo', { method: 'POST', formData, token }),
   uploadUnitPhotos: (unitId, formData, token) => requestMultipart(`/units/${unitId}/photos`, { method: 'POST', formData, token }),
@@ -982,20 +1035,33 @@ export const api = {
   requestBaEmailOtp: (email, onboardingToken) => request('/brand-ambassadors/email/send-otp', { method: 'POST', body: { email, onboardingToken } }),
   confirmBaEmailOtp: (email, code) => request('/brand-ambassadors/email/verify-otp', { method: 'POST', body: { email, code } }),
   submitBaOnboarding: (payload) => request('/brand-ambassadors/apply', { method: 'POST', body: payload }),
+
+  // PUBLIC — General Manager self-service onboarding (Prompt 7), same
+  // shape as the BA methods just above.
+  validateGmOnboardingLink: (onboardingToken) => request(`/manager-account/onboarding/link/validate?token=${encodeURIComponent(onboardingToken || '')}`),
+  requestGmEmailOtp: (email, onboardingToken) => request('/manager-account/onboarding/email/send-otp', { method: 'POST', body: { email, onboardingToken } }),
+  confirmGmEmailOtp: (email, code) => request('/manager-account/onboarding/email/verify-otp', { method: 'POST', body: { email, code } }),
+  submitGmOnboarding: (payload) => request('/manager-account/onboarding/apply', { method: 'POST', body: payload }),
   validateBaOnboardingLink: (onboardingToken) => request(`/brand-ambassadors/onboarding-link/validate?token=${encodeURIComponent(onboardingToken || '')}`),
 
-  // BA Payout Submission - BUILD SPEC PHASE 10: one-time, single-use
-  // submission (/ba-payout-submit?token=...) plus a separate 24h
-  // admin-issued edit link (/ba-payout-submit?edit=...). No
-  // resubmission endpoint exists anywhere in this API surface.
-  validateBaPayoutLink: (token, editToken) =>
-    request(
-      `/brand-ambassadors/payout-link/validate?${token ? `token=${encodeURIComponent(token)}` : `edit=${encodeURIComponent(editToken || '')}`}`
-    ),
+  // BA Payout Submission - BUILD SPEC PHASE 10 (v2): universal links,
+  // gated by email + OTP.
+  //   /ba-payout-submit          - one static, non-expiring link the
+  //                                same for every BA.
+  //   /ba-payout-edit?token=...  - one universal, 24h-rotating,
+  //                                admin-issued correction link.
+  // No resubmission endpoint exists anywhere in this API surface.
+  requestBaPayoutSubmitOtp: (email) => request('/brand-ambassadors/payout-link/submit/request-otp', { method: 'POST', body: { email } }),
+  verifyBaPayoutSubmitOtp: (email, code) => request('/brand-ambassadors/payout-link/submit/verify-otp', { method: 'POST', body: { email, code } }),
   submitBaPayoutDetails: (payload) => request('/brand-ambassadors/payout-link/submit', { method: 'POST', body: payload }),
-  editBaPayoutDetails: (payload) => request('/brand-ambassadors/payout-link/edit-submit', { method: 'POST', body: payload }),
-  getMyBaPayoutSubmission: (params) => {
-    const q = new URLSearchParams(params).toString();
+
+  validateBaPayoutEditLink: (token) => request(`/brand-ambassadors/payout-link/edit/validate?token=${encodeURIComponent(token || '')}`),
+  requestBaPayoutEditOtp: (token, email) => request('/brand-ambassadors/payout-link/edit/request-otp', { method: 'POST', body: { token, email } }),
+  verifyBaPayoutEditOtp: (email, code) => request('/brand-ambassadors/payout-link/edit/verify-otp', { method: 'POST', body: { email, code } }),
+  editBaPayoutDetails: (payload) => request('/brand-ambassadors/payout-link/edit', { method: 'POST', body: payload }),
+
+  getMyBaPayoutSubmission: (verificationToken, purpose) => {
+    const q = new URLSearchParams({ verificationToken, purpose: purpose || 'edit' }).toString();
     return request(`/brand-ambassadors/payout-link/my-submission?${q}`);
   },
   getBaPayoutLinkCurrent: (token) => request('/brand-ambassadors/payout-link/current', { token }),
@@ -1007,8 +1073,10 @@ export const api = {
   getBaCompletedPayments: (periodKey, token) =>
     request(`/brand-ambassadors/payout-link/completed${periodKey ? `?periodKey=${encodeURIComponent(periodKey)}` : ''}`, { token }),
   getBaPaymentHistory: (token) => request('/brand-ambassadors/payout-link/history', { token }),
-  generateBaPayoutEditLink: (baId, token) =>
-    request(`/brand-ambassadors/${baId}/payout-link/generate-edit-link`, { method: 'POST', token }),
+  // ADMIN - manage the one universal 24h correction link (not per-BA).
+  getBaPayoutEditLinkStatus: (token) => request('/brand-ambassadors/payout-link/edit-link/status', { token }),
+  generateBaPayoutEditLink: (token) =>
+    request('/brand-ambassadors/payout-link/edit-link/generate', { method: 'POST', token }),
   downloadBaCompletedPayoutPdf: (periodKey, token) =>
     downloadBaFile(
       '/brand-ambassadors/payout-link/completed/pdf',
@@ -1038,17 +1106,21 @@ export const api = {
 
   // Admin - Brand Ambassador applications & roster.
   listPendingBaApplications: (page, token) => request(`/brand-ambassadors/applications${page ? `?page=${page}` : ''}`, { token }),
-  approveBaApplication: (id, token) => request(`/brand-ambassadors/applications/${id}/approve`, { method: 'POST', token }),
-  rejectBaApplication: (id, reason, token) => request(`/brand-ambassadors/applications/${id}/reject`, { method: 'POST', body: { reason }, token }),
+  approveBaApplication: (id, token, extra = {}) => request(`/brand-ambassadors/applications/${id}/approve`, { method: 'POST', body: extra, token }),
+  rejectBaApplication: (id, reason, token, extra = {}) => request(`/brand-ambassadors/applications/${id}/reject`, { method: 'POST', body: { reason, ...extra }, token }),
   listBrandAmbassadors: (status, token) => request(`/brand-ambassadors${status ? `?status=${status}` : ''}`, { token }),
   // FIX (direct request): suspend/reactivate/offboard/restore now all
   // require the admin password, same as a landlord's suspend/activate
   // - each sends it in the body and the backend re-checks it before
   // touching the account.
-  suspendBrandAmbassador: (id, password, token) => request(`/brand-ambassadors/${id}/suspend`, { method: 'POST', body: { password }, token }),
-  reactivateBrandAmbassador: (id, password, token) => request(`/brand-ambassadors/${id}/reactivate`, { method: 'POST', body: { password }, token }),
-  offboardBrandAmbassador: (id, password, token) => request(`/brand-ambassadors/${id}/offboard`, { method: 'POST', body: { password }, token }),
-  restoreBrandAmbassador: (id, password, token) => request(`/brand-ambassadors/${id}/restore`, { method: 'POST', body: { password }, token }),
+  // SECTION 6 (General Manager spec): a General Manager calls these
+  // same functions but with `extra = { operationsPin, reason }`
+  // instead of an admin password - `password` is simply omitted for
+  // that role since it plays no role in confirming the action.
+  suspendBrandAmbassador: (id, password, token, extra = {}) => request(`/brand-ambassadors/${id}/suspend`, { method: 'POST', body: { password, ...extra }, token }),
+  reactivateBrandAmbassador: (id, password, token, extra = {}) => request(`/brand-ambassadors/${id}/reactivate`, { method: 'POST', body: { password, ...extra }, token }),
+  offboardBrandAmbassador: (id, password, token, extra = {}) => request(`/brand-ambassadors/${id}/offboard`, { method: 'POST', body: { password, ...extra }, token }),
+  restoreBrandAmbassador: (id, password, token, extra = {}) => request(`/brand-ambassadors/${id}/restore`, { method: 'POST', body: { password, ...extra }, token }),
   // BA portal (Phase 3) - the logged-in BA's own profile, scoped server-side to their JWT.
   getMyBaProfile: (token) => request('/brand-ambassadors/me', { token }),
   updateBaProfile: (payload, token) => request('/brand-ambassadors/me', { method: 'PATCH', body: payload, token }),
@@ -1170,4 +1242,20 @@ export const api = {
   getPendingSupportRating: (token) => request('/support-chat/pending-rating', { token }),
   getSupportChatHistory: (token) => request('/support-chat/history', { token }),
   getSupportAnalytics: (token) => request('/support-chat/analytics', { token }),
+
+  // Utility Sub-Metering - see RentaPay-Utility-Submetering-Spec.pdf,
+  // Sections 1-7. Caretaker/manager/landlord may all submit/correct
+  // readings and work the review screen (backend allows 'landlord'
+  // and 'manager' roles, which covers caretaker - see
+  // utilitySubmetering.routes.js).
+  uploadMeterReadingPhoto: (formData, token) => requestMultipart('/upload/meter-reading-photo', { method: 'POST', formData, token }),
+  listUtilityMeters: (token) => request('/utility-submetering/meters', { token }),
+  createUtilityMeter: (payload, token) => request('/utility-submetering/meters', { method: 'POST', body: payload, token }),
+  submitUtilityReading: (meterId, payload, token) => request(`/utility-submetering/meters/${meterId}/readings`, { method: 'POST', body: payload, token }),
+  listUtilityReadings: (meterId, token) => request(`/utility-submetering/meters/${meterId}/readings`, { token }),
+  correctUtilityReading: (readingId, payload, token) => request(`/utility-submetering/readings/${readingId}`, { method: 'PATCH', body: payload, token }),
+  getUtilityReadingCorrections: (readingId, token) => request(`/utility-submetering/readings/${readingId}/corrections`, { token }),
+  getUtilityReview: (readingId, token) => request(`/utility-submetering/readings/${readingId}/review`, { token }),
+  overrideUtilityRunUnit: (runId, runUnitId, payload, token) => request(`/utility-submetering/runs/${runId}/units/${runUnitId}`, { method: 'PATCH', body: payload, token }),
+  finalizeUtilityRun: (runId, token) => request(`/utility-submetering/runs/${runId}/finalize`, { method: 'POST', token }),
 };

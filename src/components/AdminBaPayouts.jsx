@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
+import InfoTip from './InfoTip.jsx';
 import { buildWaMeLink } from '../utils/whatsapp.js';
 import './AdminBaPayouts.css';
 
@@ -149,6 +150,8 @@ function PendingTab({ token }) {
 
   return (
     <>
+      <PayoutLinksPanel token={token} />
+
       {awaitingError && <p className="admin-ba-payouts__error">{awaitingError}</p>}
       {awaiting && awaiting.length > 0 && (
         <div className="admin-ba-payouts__awaiting">
@@ -262,6 +265,122 @@ function PendingTab({ token }) {
 }
 
 // =======================================================================
+// PAYOUT LINKS (Prompt 4) - submission link (static, non-expiring,
+// one-per-person) and correction link (universal, 24h-rotating) live
+// together here, under Pending Payments - this is the stage where
+// payout details actually need to be right before money moves.
+// Neither link is ever personalized: the exact same URL goes to every
+// Brand Ambassador regardless of which BA's context it's opened from.
+// =======================================================================
+function PayoutLinksPanel({ token }) {
+  const [status, setStatus] = useState(null); // { link, expiresAt, expired }
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState('');
+  const [notice, setNotice] = useState('');
+  const [submitCopied, setSubmitCopied] = useState(false);
+
+  const submissionLink = `${window.location.origin}/ba-payout-submit`;
+
+  const load = useCallback(() => {
+    api
+      .getBaPayoutEditLinkStatus(token)
+      .then(setStatus)
+      .catch((err) => setNotice(err instanceof ApiError ? err.message : 'Failed to load the correction link.'));
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function generate() {
+    setBusy(true);
+    setNotice('');
+    try {
+      const res = await api.generateBaPayoutEditLink(token);
+      setStatus({ link: res.link, expiresAt: res.expiresAt, expired: false });
+      try {
+        await navigator.clipboard.writeText(res.link);
+        setCopied('correction');
+        setTimeout(() => setCopied(''), 2000);
+      } catch {
+        // clipboard permissions can fail silently - the link is still
+        // shown with an explicit Copy button below either way.
+      }
+    } catch (err) {
+      setNotice(err instanceof ApiError ? err.message : 'Failed to generate a correction link.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyCorrection() {
+    if (!status?.link) return;
+    try {
+      await navigator.clipboard.writeText(status.link);
+      setCopied('correction');
+      setTimeout(() => setCopied(''), 2000);
+    } catch {
+      setNotice('Could not copy automatically - select and copy the link shown below instead.');
+    }
+  }
+
+  async function copySubmission() {
+    try {
+      await navigator.clipboard.writeText(submissionLink);
+      setSubmitCopied(true);
+      setTimeout(() => setSubmitCopied(false), 2000);
+    } catch {
+      setNotice('Could not copy automatically - select and copy the link shown below instead.');
+    }
+  }
+
+  return (
+    <div className="admin-ba-payouts__correction-panel">
+      <div className="admin-ba-payouts__correction-panel-text">
+        <strong>Submission link</strong>
+        <InfoTip text="One static link, the same for every Brand Ambassador, forever - it never expires and never regenerates. Each BA verifies their own registered email + a one-time code before they can submit, and can only submit once, ever. Share the exact same URL with everyone." />
+      </div>
+      <div className="admin-ba-payouts__edit-link-actions">
+        <code className="admin-ba-payouts__link-text">{submissionLink}</code>
+        <Button variant="ghost" onClick={copySubmission}>{submitCopied ? 'Copied!' : 'Copy link'}</Button>
+        <a
+          href={buildWaMeLink('', `Please submit your M-Pesa payment details for RentaPay here: ${submissionLink}`)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn--ghost"
+        >
+          Share via WhatsApp
+        </a>
+      </div>
+
+      <div className="admin-ba-payouts__correction-panel-text u-mt-4">
+        <strong>Correction link</strong>
+        <InfoTip text="One shared link, valid 24 hours, for any Brand Ambassador who needs to fix an already-submitted payout detail - the exact same URL for everyone, regardless of which BA's record it's shared from. Each BA verifies their own email + a one-time code before they can edit. Correcting details never changes a record's paid/pending status." />
+      </div>
+      {notice && <p className="admin-ba-payouts__notice">{notice}</p>}
+      {status?.link ? (
+        <div className="admin-ba-payouts__edit-link-actions">
+          <code className="admin-ba-payouts__link-text">{status.link}</code>
+          <span className="admin-ba-payouts__edit-link-expiry">Expires {fmtDate(status.expiresAt)} (24 hours from generation)</span>
+          <Button variant="ghost" onClick={copyCorrection}>{copied === 'correction' ? 'Copied!' : 'Copy link'}</Button>
+          <a
+            href={buildWaMeLink('', `If anything needs correcting on your RentaPay payout details, use this link: ${status.link}`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn--ghost"
+          >
+            Share via WhatsApp
+          </a>
+          <Button variant="ghost" disabled={busy} onClick={generate}>{busy ? 'Regenerating…' : 'Regenerate (invalidates old link)'}</Button>
+        </div>
+      ) : (
+        <Button variant="primary" disabled={busy} onClick={generate}>
+          {busy ? 'Generating…' : 'Generate 24-hour correction link'}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// =======================================================================
 // COMPLETED
 // =======================================================================
 function CompletedTab({ token }) {
@@ -269,16 +388,6 @@ function CompletedTab({ token }) {
   const [selectedPeriod, setSelectedPeriod] = useState('');
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
-  const [editLinkNotice, setEditLinkNotice] = useState('');
-  const [editLinkBusyKey, setEditLinkBusyKey] = useState('');
-  // FIX: previously the generated edit link was only ever shown as
-  // raw text inside a notice paragraph - copied silently to the
-  // clipboard with no visible confirmation and no way to send it
-  // straight to the BA. Now kept as structured state so the UI can
-  // render actual Copy/WhatsApp actions, per payoutKey so multiple
-  // cards' links don't clobber each other.
-  const [generatedLinks, setGeneratedLinks] = useState({}); // payoutKey -> { link, expiresAt, baPhone, baName }
-  const [copiedEditLinkKey, setCopiedEditLinkKey] = useState('');
 
   useEffect(() => {
     api
@@ -302,40 +411,6 @@ function CompletedTab({ token }) {
     load(selectedPeriod || undefined);
   }, [load, selectedPeriod]);
 
-  async function handleGenerateEditLink(card) {
-    setEditLinkNotice('');
-    setEditLinkBusyKey(card.payoutKey);
-    try {
-      const res = await api.generateBaPayoutEditLink(card.baId, token);
-      try {
-        await navigator.clipboard.writeText(res.link);
-      } catch {
-        // clipboard permissions can fail silently - the link is still
-        // shown as an explicit Copy button below either way.
-      }
-      setGeneratedLinks((prev) => ({
-        ...prev,
-        [card.payoutKey]: { link: res.link, expiresAt: res.expiresAt, baPhone: card.baPhone, baName: card.baName },
-      }));
-    } catch (err) {
-      setEditLinkNotice(err instanceof ApiError ? err.message : 'Failed to generate an edit link.');
-    } finally {
-      setEditLinkBusyKey('');
-    }
-  }
-
-  async function copyEditLink(payoutKey) {
-    const entry = generatedLinks[payoutKey];
-    if (!entry) return;
-    try {
-      await navigator.clipboard.writeText(entry.link);
-      setCopiedEditLinkKey(payoutKey);
-      setTimeout(() => setCopiedEditLinkKey(''), 2000);
-    } catch {
-      setEditLinkNotice('Could not copy automatically - select and copy the link shown below instead.');
-    }
-  }
-
   return (
     <>
       <div className="admin-ba-payouts__toolbar">
@@ -352,7 +427,6 @@ function CompletedTab({ token }) {
         </Button>
       </div>
 
-      {editLinkNotice && <p className="admin-ba-payouts__notice">{editLinkNotice}</p>}
       {error && <p className="admin-ba-payouts__error">{error}</p>}
 
       {!data && !error && <Skeleton height="200px" />}
@@ -377,38 +451,21 @@ function CompletedTab({ token }) {
                     {fmtKes(card.amountOwed)} · paid {fmtDate(card.paidAt)}
                   </div>
                   <div className="admin-ba-payouts__lock-note">
-                    🔒 Locked. Won't return to Pending. Corrections only via a 24-hour admin edit link.
+                    🔒 Locked. Won't return to Pending. Corrections don't touch payment status — only via the shared
+                    correction link under Pending Payments.
                   </div>
-                  {generatedLinks[card.payoutKey] ? (
-                    <div className="admin-ba-payouts__edit-link-actions">
-                      <span className="admin-ba-payouts__edit-link-expiry">
-                        Edit link expires {fmtDate(generatedLinks[card.payoutKey].expiresAt)} (valid 24 hours)
-                      </span>
-                      <Button variant="ghost" onClick={() => copyEditLink(card.payoutKey)}>
-                        {copiedEditLinkKey === card.payoutKey ? 'Copied!' : 'Copy edit link'}
-                      </Button>
-                      {generatedLinks[card.payoutKey].baPhone && (
-                        <a
-                          href={buildWaMeLink(
-                            generatedLinks[card.payoutKey].baPhone,
-                            `Hi ${card.baName}, use this link to correct your RentaPay payout details (valid 24 hours): ${generatedLinks[card.payoutKey].link}`
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="admin-ba-payouts__awaiting-whatsapp"
-                        >
-                          Share via WhatsApp
-                        </a>
+                  {card.baPhone && (
+                    <a
+                      href={buildWaMeLink(
+                        card.baPhone,
+                        `Hi, if anything needs correcting on your RentaPay payout details, use the correction link RentaPay admin shares with you.`
                       )}
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      disabled={editLinkBusyKey === card.payoutKey}
-                      onClick={() => handleGenerateEditLink(card)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-ba-payouts__awaiting-whatsapp"
                     >
-                      {editLinkBusyKey === card.payoutKey ? 'Generating…' : 'Generate 24-hour edit link'}
-                    </Button>
+                      Nudge via WhatsApp
+                    </a>
                   )}
                 </div>
               </div>
@@ -436,9 +493,10 @@ function HistoryTab({ token }) {
 
   return (
     <>
-      <p className="admin-ba-payouts__instruction">
-        Every payout ever marked paid, across every Brand Ambassador and every cycle — an append-only audit trail.
-      </p>
+      <div className="u-flex-row" style={{ alignItems: 'center', gap: '6px' }}>
+        <span className="admin-ba-payouts__title">Payment history</span>
+        <InfoTip text="Every payout ever marked paid, across every Brand Ambassador and every cycle — an append-only audit trail." />
+      </div>
       {error && <p className="admin-ba-payouts__error">{error}</p>}
       {!entries && !error && <Skeleton height="200px" />}
       {entries && entries.length === 0 && <p className="admin-ba-payouts__empty">No payments recorded yet.</p>}

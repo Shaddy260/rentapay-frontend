@@ -2,19 +2,19 @@
 /robots.txt   /robots.txt   200
 /favicon.ico  /favicon.ico  200
 
-# NOTE (spec item 9.1 - "reputation link is broken", superseded 2026-08-15):
-# The original fix here was a wildcard SPA fallback (`/* /index.html 200`)
-# so cold/deep-link requests like /reputation/<token>, /verify/:paymentId,
-# and /onboard/:token would reach index.html/React Router instead of the
-# host's default (which landed on /login).
-#
-# That rule now conflicts with wrangler.jsonc's
-# `assets.not_found_handling: "single-page-application"`, which does the
-# exact same job natively at the Workers-assets layer. Having both made
-# Cloudflare's deploy-time loop checker see `/* -> /index.html -> (falls
-# through to not_found_handling) -> /index.html -> ...` and refuse to
-# deploy ("Invalid _redirects configuration ... infinite loop").
-#
-# Fix: rely on wrangler.jsonc's native not_found_handling for SPA fallback
-# instead of duplicating it here. Do NOT re-add a `/* ... 200` catch-all
-# to this file while that setting is present in wrangler.jsonc.
+# FIX (spec item 9.1 - "reputation link is broken"): root cause was
+# here, not in the app. This is a single-page app - every real "page"
+# is a client-side React Router route, not a physical file on the
+# static host. Without a catch-all fallback, a cold/fresh request for
+# a deep link the host doesn't recognize as a file (e.g.
+# /reputation/<token>, opened fresh by a landlord who never loaded the
+# app first) fell through to the host's default behavior, which lands
+# on /login instead of ever reaching index.html/React Router. Adding
+# this wildcard rule - matched only after every specific rule above -
+# makes the host serve index.html (200, not a redirect) for any path
+# it doesn't otherwise recognize, so React Router's own /reputation/:token
+# route (see App.jsx) actually gets a chance to run. This is also what
+# was silently making /verify/:paymentId (the receipt QR code
+# destination, item 2.1) and /onboard/:token fragile on a cold load -
+# same underlying cause, now fixed for all of them at once.
+/*  /index.html  200

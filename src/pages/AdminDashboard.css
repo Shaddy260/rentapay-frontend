@@ -121,6 +121,28 @@
 
 .admin-banner--ok { background: var(--color-success-bg); color: var(--color-mpesa-dark); }
 .admin-banner--error { background: var(--color-error-bg); color: var(--color-error); }
+.admin-banner--warning {
+  background: var(--color-warning-bg, #FFF6E0);
+  color: var(--color-warning, #B8860B);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.admin-banner--warning:hover { filter: brightness(0.97); }
+.admin-banner__count {
+  background: var(--color-warning, #B8860B);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-weight: 700;
+  font-size: var(--text-xs);
+}
 
 .admin-tabs {
   display: flex;
@@ -336,6 +358,25 @@
 .admin-table__delete {
   color: var(--color-error);
   border-color: var(--color-error-bg) !important;
+}
+
+/* SECTION 6 (General Manager spec) — single-button row actions on
+   ManagerAccountDashboard's landlords/BA tables, styled the same as
+   the .admin-table__actions buttons above but without needing the
+   flex wrapper for a lone button. */
+.admin-table__action {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.admin-table__action--danger {
+  color: var(--color-error);
+  border-color: var(--color-error-bg);
 }
 
 .lockdown-active {

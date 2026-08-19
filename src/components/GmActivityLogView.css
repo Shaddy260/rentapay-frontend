@@ -1,0 +1,183 @@
+.gm-log-view__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.gm-log-view__tabs {
+  display: flex;
+  gap: 4px;
+  background: #f2f2f2;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.gm-log-view__tab {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.gm-log-view__tab--active {
+  background: #fff;
+  color: #111;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.gm-log-view__nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gm-log-view__nav-btn {
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.gm-log-view__date-input {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+
+.gm-log-view__export {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #f7faf7;
+  border: 1px solid #e2ede2;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+}
+
+.gm-log-view__export-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2e7d32;
+  margin-right: 2px;
+}
+
+.gm-log-view__export-to {
+  font-size: 0.82rem;
+  color: #777;
+}
+
+.gm-log-view__export .gm-log-view__nav-btn {
+  width: auto;
+  padding: 5px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2e7d32;
+  border-color: #cfe3cf;
+}
+
+.gm-log-view__export .gm-log-view__nav-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.gm-log-view__range {
+  color: #777;
+  font-size: 0.85rem;
+  margin: 0 0 10px;
+}
+
+.gm-log-view__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gm-log-entry {
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.gm-log-entry__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.gm-log-entry__title {
+  margin: 0 0 2px;
+  font-size: 1rem;
+}
+
+.gm-log-entry__meta {
+  margin: 0;
+  color: #888;
+  font-size: 0.82rem;
+}
+
+.gm-log-entry__reason {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+}
+
+.gm-log-entry__badge {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.gm-log-entry__badge--reverted {
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.gm-log-entry__toggle {
+  margin-top: 8px;
+  border: none;
+  background: none;
+  color: #2e7d32;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.gm-log-entry__details {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px dashed #eee;
+  padding-top: 8px;
+}
+
+.gm-log-entry__details-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.gm-log-entry__pre {
+  margin: 2px 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #fafafa;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+}

@@ -77,6 +77,39 @@ input, select, textarea {
   font-family: var(--font-body);
 }
 
+/* Platform-wide: field inputs sized to ~3/4 of their previous footprint.
+   !important is necessary here because dozens of per-component stylesheets
+   set their own padding/height/font-size on inputs with equal or higher
+   specificity - this is the one place meant to win that fight everywhere. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+  padding: 6px 9px !important;
+  font-size: 0.8125rem !important;
+  min-height: 30px !important;
+  line-height: 1.3 !important;
+}
+textarea {
+  min-height: 60px !important;
+}
+
+/* Platform-wide: label always above its field, never beside it.
+   Covers the common ".form-group" / ".field" wrapper pattern used across
+   portals. Forms using a bespoke wrapper class still need a manual check -
+   see audit notes. */
+.form-group,
+.field,
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+.form-group > label,
+.field > label,
+.input-group > label {
+  margin-bottom: 4px;
+  align-self: flex-start;
+}
+
 a {
   color: var(--color-primary);
 }
@@ -526,4 +559,22 @@ body:has(.subscription-lock-gate) {
 .tap-to-reveal__toggle:hover {
   background: var(--color-surface-hover, rgba(0, 0, 0, 0.04));
   color: var(--color-text, #333);
+}
+
+/* Reusable "call" quick-action - tappable phone dialer link on flagged/list rows */
+.admin-table__call-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-surface-raised, #f0f0f0);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.admin-table__call-btn:hover {
+  background: var(--color-primary-soft, #dcecea);
+  transform: scale(1.06);
 }

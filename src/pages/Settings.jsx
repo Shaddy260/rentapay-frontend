@@ -88,13 +88,6 @@ export default function Settings() {
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [savingDescription, setSavingDescription] = useState(false);
   const [savingCaretaker, setSavingCaretaker] = useState(false);
-  // FIX (direct request): a property's name could previously only be
-  // set once, either at signup or when buying it via AddPropertyModal
-  // - there was no way to correct it afterward (e.g. a typo, or a
-  // rename). Same edit/save pattern as description/rules above.
-  const [editingNameId, setEditingNameId] = useState(null);
-  const [nameDraft, setNameDraft] = useState('');
-  const [savingName, setSavingName] = useState(false);
 
   // --- Property manager add/edit state (landlord only) ---
   const [showAddManager, setShowAddManager] = useState(false);
@@ -293,30 +286,6 @@ export default function Settings() {
   function startEditingDescription(property) {
     setEditingDescriptionId(property.id);
     setDescriptionDraft(property.description || '');
-  }
-
-  function startEditingName(property) {
-    setEditingNameId(property.id);
-    setNameDraft(property.name || '');
-  }
-
-  async function saveName(propertyId) {
-    if (!nameDraft.trim()) {
-      setError('Property name cannot be empty.');
-      return;
-    }
-    setSavingName(true);
-    setError('');
-    try {
-      await api.updateProperty(propertyId, { name: nameDraft.trim() }, token);
-      setNotice('Property name updated.');
-      setEditingNameId(null);
-      load();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to update property name.');
-    } finally {
-      setSavingName(false);
-    }
   }
 
   async function saveDescription(propertyId) {
@@ -637,27 +606,10 @@ export default function Settings() {
           <ul className="settings-manager-list">
             {properties.map((p) => (
               <li key={p.id} className="settings-manager-row">
-                {editingNameId === p.id ? (
-                  <div className="settings-manager-row__edit">
-                    <input
-                      placeholder="Property name"
-                      value={nameDraft}
-                      onChange={(e) => setNameDraft(e.target.value)}
-                    />
-                    <div className="settings-manager-row__actions">
-                      <Button variant="primary" loading={savingName} onClick={() => saveName(p.id)}>Save</Button>
-                      <button type="button" className="ghost-link" onClick={() => setEditingNameId(null)}>Cancel</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="settings-manager-row__name">
-                    <strong>{p.name}</strong>
-                    {p.location && <span> — {p.location}</span>}
-                    <button type="button" className="ghost-link" onClick={() => startEditingName(p)} style={{ marginLeft: 8 }}>
-                      Edit name
-                    </button>
-                  </div>
-                )}
+                <div className="settings-manager-row__name">
+                  <strong>{p.name}</strong>
+                  {p.location && <span> — {p.location}</span>}
+                </div>
 
                 {editingPropertyId === p.id ? (
                   <div className="settings-manager-row__edit">

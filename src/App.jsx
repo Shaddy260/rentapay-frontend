@@ -53,12 +53,21 @@ const SharedReputation = lazy(() => import('./pages/SharedReputation.jsx'));
 const ReceiptVerify = lazy(() => import('./pages/ReceiptVerify.jsx'));
 const TenantOnboarding = lazy(() => import('./pages/TenantOnboarding.jsx'));
 const BaOnboarding = lazy(() => import('./pages/BaOnboarding.jsx'));
+const GmOnboarding = lazy(() => import('./pages/GmOnboarding.jsx'));
 const BaPayoutSubmit = lazy(() => import('./pages/BaPayoutSubmit.jsx'));
 const LandlordLeadForm = lazy(() => import('./pages/LandlordLeadForm.jsx'));
 const BaTerms = lazy(() => import('./pages/BaTerms.jsx'));
 const RegisterFlow = lazy(() => import('./pages/RegisterFlow.jsx'));
 const AdminPortalAccess = lazy(() => import('./pages/AdminPortalAccess.jsx'));
+// SECTION 3 (General Manager dedicated login) - own screen, own URL,
+// separate from AdminPortalAccess and from the shared Login above.
+const ManagerAccountAccess = lazy(() => import('./pages/ManagerAccountAccess.jsx'));
+const ManagerAccountDashboard = lazy(() => import('./pages/ManagerAccountDashboard.jsx'));
+// SECTION 4 (Operations PIN)
+const ManagerAccountPinSetup = lazy(() => import('./pages/ManagerAccountPinSetup.jsx'));
+const ManagerAccountSettings = lazy(() => import('./pages/ManagerAccountSettings.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const AdminGeneralManagerLogs = lazy(() => import('./pages/AdminGeneralManagerLogs.jsx'));
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const UnitsStatusPage = lazy(() => import('./pages/UnitsStatusPage.jsx'));
 const TenantPortal = lazy(() => import('./pages/TenantPortal.jsx'));
@@ -83,6 +92,18 @@ const SubscriptionLockGate = lazy(() => import('./components/SubscriptionLockGat
 // Falls back to a placeholder if unset, but you should always set your
 // own value before deploying; never ship the fallback to production.
 const ADMIN_PATH = import.meta.env.VITE_ADMIN_PATH || '/admin-portal-access-secret';
+
+// SECTION 3 (General Manager dedicated login) - same idea as
+// ADMIN_PATH above, but this one is meant to be a known, shareable
+// URL rather than a hidden one, so it defaults to the literal
+// '/manager-account' from the spec instead of an obscure placeholder.
+// Still overridable via VITE_MANAGER_PATH in frontend/.env if you
+// ever need to change it (e.g. rotating it, or running a second
+// environment) without a code change - see scripts/write-manager-path.js,
+// which keeps index.html and manifest-manager.json in sync with
+// whatever this resolves to, exactly like write-admin-path.js does
+// for the admin path.
+const MANAGER_PATH = import.meta.env.VITE_MANAGER_PATH || '/manager-account';
 
 // Deliberately minimal and dependency-free (no spinner library, no
 // image) so this fallback itself never adds to what has to download
@@ -126,10 +147,12 @@ export default function App() {
           {/* BUILD SPEC PHASE 2: the one generic, always-live public
               "Become a Brand Ambassador" link - no token in the URL. */}
           <Route path="/become-a-ba" element={<BaOnboarding />} />
+          <Route path="/onboard-general-manager" element={<GmOnboarding />} />
           {/* BA Monthly Payment Details & Payout Workflow - Phase 2:
               public, token-carrying "submit your payout M-Pesa
               details" link admin shares each month. */}
           <Route path="/ba-payout-submit" element={<BaPayoutSubmit />} />
+          <Route path="/ba-payout-edit" element={<BaPayoutSubmit />} />
           <Route path="/partner-with-us" element={<LandlordLeadForm />} />
           <Route path="/ba-terms" element={<BaTerms />} />
           <Route path="/register" element={<RegisterFlow />} />
@@ -160,7 +183,25 @@ export default function App() {
               both variants are registered here so either form works. */}
           <Route path={ADMIN_PATH} element={<AdminPortalAccess />} />
           <Route path={`${ADMIN_PATH}/`} element={<AdminPortalAccess />} />
+          {/* SECTION 3: General Manager's own dedicated login URL -
+              rentapay.co.ke/manager-account by default, changeable via
+              VITE_MANAGER_PATH (see MANAGER_PATH above and
+              scripts/write-manager-path.js) the same way ADMIN_PATH is. */}
+          <Route path={MANAGER_PATH} element={<ManagerAccountAccess />} />
+          <Route path={`${MANAGER_PATH}/`} element={<ManagerAccountAccess />} />
+          <Route path="/manager-account/dashboard" element={<ManagerAccountDashboard />} />
+          {/* SECTION 4: Operations PIN onboarding + settings. Not
+              gated on MANAGER_PATH like the login screen above - these
+              are reached only via an authenticated redirect (see
+              ManagerAccountAccess.jsx / ChangePassword.jsx), so a
+              fixed sub-path is fine even if MANAGER_PATH itself is
+              customized via VITE_MANAGER_PATH. */}
+          <Route path="/manager-account/setup-pin" element={<ManagerAccountPinSetup />} />
+          <Route path="/manager-account/settings" element={<ManagerAccountSettings />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          {/* SECTION 8: a specific General Manager's own dedicated log
+              page (day/week/month), reached from GeneralManagersPanel. */}
+          <Route path="/admin-dashboard/general-managers/:id/logs" element={<AdminGeneralManagerLogs />} />
 
           {/* Catch-all so unknown routes don't show a blank white screen */}
           <Route path="*" element={<Navigate to="/login" replace />} />

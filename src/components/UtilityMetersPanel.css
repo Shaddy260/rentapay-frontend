@@ -1,0 +1,132 @@
+/* Fallback base styles - .statistics-panel/.form-error aren't defined
+   in global.css (other panels like DisputesPanel rely on them only
+   incidentally being styled by whatever page happens to be mounted
+   alongside them); defining them here keeps this panel looking right
+   on its own regardless of what else is on the page. */
+.statistics-panel {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.form-error,
+.modal-error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9em;
+  margin: 8px 0;
+}
+
+.utility-meters-panel textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--color-hairline);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  resize: vertical;
+}
+
+.utility-meters-panel select {
+  width: 100%;
+  font-size: var(--text-base, 1rem);
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--color-hairline);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+}
+
+.utility-meter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.utility-meter-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-hairline);
+  border-radius: 12px;
+  background: var(--color-surface-raised);
+  flex-wrap: wrap;
+}
+
+.utility-meter-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.utility-meter-card__title {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.utility-meter-card__units {
+  color: var(--color-ink-soft);
+  font-size: 0.9em;
+}
+
+.utility-meter-card__rate {
+  color: var(--color-ink-soft);
+  font-size: 0.9em;
+}
+
+.utility-meter-card__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.utility-meter-badge {
+  font-size: 0.75em;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  color: var(--color-ink-soft);
+}
+
+.utility-meter-badge--shared {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent);
+  color: var(--color-ink);
+}
+
+.utility-unit-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--color-hairline);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.utility-unit-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.utility-history-modal {
+  max-width: 640px;
+  width: 100%;
+}

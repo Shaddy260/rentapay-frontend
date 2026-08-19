@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/write-build-id.js && node scripts/write-admin-path.js && vite build",
+    "build": "node scripts/write-build-id.js && node scripts/write-admin-path.js && node scripts/write-manager-path.js && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
