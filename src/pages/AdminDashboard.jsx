@@ -655,10 +655,7 @@ export default function AdminDashboard() {
             group: 'System',
             items: [
               { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
-<<<<<<< HEAD
-=======
               { key: 'general-managers', label: 'General Managers', icon: '🧑‍💼', onClick: () => setActiveTab('general-managers') },
->>>>>>> origin/main
               { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
             ],
           },

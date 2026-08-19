@@ -427,11 +427,8 @@ function CompletedTab({ token }) {
         </Button>
       </div>
 
-<<<<<<< HEAD
-=======
       <CorrectionLinkPanel token={token} />
 
->>>>>>> origin/main
       {error && <p className="admin-ba-payouts__error">{error}</p>}
 
       {!data && !error && <Skeleton height="200px" />}
@@ -456,22 +453,16 @@ function CompletedTab({ token }) {
                     {fmtKes(card.amountOwed)} · paid {fmtDate(card.paidAt)}
                   </div>
                   <div className="admin-ba-payouts__lock-note">
-<<<<<<< HEAD
                     🔒 Locked. Won't return to Pending. Corrections don't touch payment status — only via the shared
                     correction link under Pending Payments.
-=======
                     🔒 Locked. Won't return to Pending. Corrections only via the shared 24-hour correction link above.
->>>>>>> origin/main
                   </div>
                   {card.baPhone && (
                     <a
                       href={buildWaMeLink(
                         card.baPhone,
-<<<<<<< HEAD
                         `Hi, if anything needs correcting on your RentaPay payout details, use the correction link RentaPay admin shares with you.`
-=======
                         `Hi ${card.baName}, if anything needs correcting on your RentaPay payout details, use the correction link RentaPay admin shares with you (valid 24 hours from when it's generated).`
->>>>>>> origin/main
                       )}
                       target="_blank"
                       rel="noopener noreferrer"

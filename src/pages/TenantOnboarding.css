@@ -245,7 +245,6 @@
   opacity: 0.6;
   cursor: default;
 }
-<<<<<<< HEAD
 
 /* Verified-session email field (BA payout submit/correct flow) -
    confirmed but locked, matching the platform-wide "disabled" look. */
@@ -254,5 +253,3 @@
   color: var(--color-text-secondary, #6b6b6b);
   cursor: not-allowed;
 }
-=======
->>>>>>> origin/main
