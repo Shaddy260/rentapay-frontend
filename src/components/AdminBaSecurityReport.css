@@ -1,0 +1,74 @@
+.admin-ba-security__error {
+  color: #A33;
+}
+
+.admin-ba-security__window {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+  margin-top: 0;
+}
+
+.admin-ba-security__section {
+  margin-bottom: 24px;
+}
+
+.admin-ba-security__section--retired {
+  opacity: 0.7;
+}
+
+.admin-ba-security__retired {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: 0.875rem;
+  font-style: italic;
+  margin: 0;
+}
+
+.admin-ba-security__section h3 {
+  margin: 0 0 4px;
+}
+
+.admin-ba-security__hint {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: 0.875rem;
+  margin: 0 0 8px;
+}
+
+.admin-ba-security__empty {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-ba-security__cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-ba-security__card {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-security__card ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-ba-security__review-link {
+  border: none;
+  background: none;
+  color: var(--color-ink, #22282A);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  font-size: 0.875rem;
+}

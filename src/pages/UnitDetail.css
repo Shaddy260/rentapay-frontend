@@ -1,0 +1,721 @@
+.unit-detail-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.unit-detail-page--center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: var(--space-4);
+}
+
+.unit-detail-back {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  text-decoration: none;
+}
+
+.unit-detail-title-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  max-width: 100%;
+}
+
+.unit-detail-title-row h1 {
+  font-size: var(--text-2xl);
+}
+
+.unit-detail-code {
+  font-family: 'Courier New', monospace;
+  font-size: var(--text-xs);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--color-ink-soft);
+  display: inline-block;
+  /* BUG FIX (redesign spec section 5): this was one of the three
+     things called out as clipped off-screen - a long code, in a
+     monospace font that doesn't wrap by default, inside a flex/grid
+     ancestor with no min-width:0, was pushing the layout wider than
+     the viewport instead of breaking. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin-top: var(--space-2);
+}
+
+.unit-detail-type {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-5);
+}
+
+.unit-detail-banner {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
+.unit-detail-banner--ok {
+  background: var(--color-success-bg);
+  color: var(--color-mpesa-dark);
+}
+
+.unit-detail-banner--error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.unit-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.unit-detail-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  /* BUG FIX (redesign spec section 5, priority): CSS Grid tracks
+     default to a minimum width equal to the max-content size of
+     their children (min-width: auto) - so a card containing anything
+     that resists shrinking (a long monospace unit-ID tag, a table, a
+     row of buttons) could force the WHOLE grid track wider than the
+     viewport, clipping content at the screen edge instead of
+     wrapping. min-width: 0 lets each card shrink to the grid track's
+     actual available width and rely on wrapping/overflow rules
+     inside it instead. */
+  min-width: 0;
+}
+
+.unit-detail-card--wide {
+  grid-column: 1 / -1;
+}
+
+.unit-detail-card h2 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-4);
+}
+
+.unit-detail-hint {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin-top: var(--space-2);
+}
+
+/* Back link (page-level nav, sits above the card grid) */
+.unit-detail-back-row {
+  margin-bottom: var(--space-3);
+}
+
+/* Card 1: Unit info */
+.unit-info-name-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  row-gap: var(--space-2);
+  max-width: 100%;
+}
+
+.unit-info-name {
+  font-size: var(--text-2xl);
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Card 3: auto-detected occupancy badge - read-only, one of exactly
+   two states, replacing the old 3-control toggle/confirm/booked-
+   planned setup. */
+.occupancy-badge {
+  display: inline-block;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 100px;
+}
+
+.occupancy-badge--occupied {
+  background: var(--color-success-bg);
+  color: var(--color-mpesa-dark);
+}
+
+.occupancy-badge--vacant {
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  color: var(--color-ink-soft);
+}
+
+/* Listing freshness prompt (vacant units only) */
+.listing-freshness {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.listing-freshness__label {
+  margin-top: 0;
+  margin-bottom: var(--space-2);
+}
+
+/* Centered muted empty states (Tenant / Payment History cards) */
+.unit-detail-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.unit-detail-empty-state p {
+  margin: 0;
+}
+
+/* Destructive action, deliberately separated from routine actions -
+   plain red text at the bottom of the page, no bold/underline
+   treatment (unlike Rename's .ghost-link, which is underlined). */
+.unit-detail-danger-zone {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-hairline);
+  text-align: center;
+}
+
+.unit-detail-delete-link {
+  background: transparent;
+  border: none;
+  color: var(--color-error);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  text-decoration: none;
+  cursor: pointer;
+  padding: var(--space-3) var(--space-4);
+  min-height: 44px;
+}
+
+.unit-detail-delete-link:hover {
+  text-decoration: underline;
+}
+
+/* Rent/due-date edit rows */
+.edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  row-gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.edit-row:last-child {
+  border-bottom: none;
+}
+
+.edit-row__label {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.edit-row__display, .edit-row__editing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.edit-row__editing input {
+  width: 90px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+}
+
+.ghost-link {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.edit-row__editing button {
+  font-size: var(--text-xs);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-hairline);
+  cursor: pointer;
+}
+
+/* Rent effective-date picker */
+.edit-row__editing--stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  gap: var(--space-2);
+}
+
+.rent-effective-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-ink-soft);
+}
+
+.rent-effective-picker label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+
+.rent-effective-picker input[type='date'] {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+}
+
+.unit-detail-hint--scheduled {
+  background: var(--color-accent-soft, #FFF4E5);
+  border: 1px solid var(--color-accent, #C1622D);
+  color: var(--color-ink);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+/* Extra charges */
+.charges-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-3) 0;
+}
+
+.charges-list li {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.add-charge-form {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr auto;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  max-width: 100%;
+}
+
+.add-charge-form input,
+.add-charge-form select {
+  font-size: var(--text-sm);
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  /* BUG FIX (redesign spec section 5): this is the "KES extra-charge
+     input clipped off-screen" bug named directly in the spec. Grid
+     items default to min-width: auto, i.e. they won't shrink below
+     their own content's natural width (a number input's default
+     intrinsic width) - on a narrow card that forced this whole grid
+     row, and the page around it, wider than the viewport. */
+  min-width: 0;
+  width: 100%;
+}
+
+.add-charge-form button {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+/* FIX (screenshot: bulk deposit "Apply to all units" form - "Requires"
+   text clipped/overlapping the amount input, oversized dashed button):
+   this form used to reuse .add-charge-form, a 3-COLUMN GRID built for
+   a totally different form (Add Charge: one description input + one
+   amount input + one button, all on a single row). The deposit form
+   has a checkbox row, a conditional amount input, a conditional unit
+   picker, and a submit button - 4+ stacked block elements that all
+   got forced into 3 grid columns, squeezing/overlapping each other.
+   Its own class instead: a plain vertical stack, each field on its
+   own full-width line with real spacing. */
+.bulk-deposit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  max-width: 100%;
+}
+
+/* FIX: this used to select every <input>, including the checkbox
+   inside the "Requires a deposit from a future tenant" label above.
+   Forcing width: 100% on a checkbox stretches it to fill the entire
+   row inside its flex label, leaving almost no room for the label
+   text next to it - the text then wraps to one word (or fewer) per
+   line down the right edge instead of sitting beside the checkbox.
+   Scope this to the actual text/number inputs only. */
+.bulk-deposit-form input:not([type="checkbox"]) {
+  font-size: var(--text-sm);
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  min-width: 0;
+  width: 100%;
+}
+
+/* Vibrant, normal-sized submit button (was previously "Apply to X
+   units" reusing .add-charge-form button's dashed-outline style at a
+   size meant for a small inline "+ Add" button, which read as
+   oversized when placed at the bottom of a full form). Solid fill,
+   same visual weight as the app's other primary actions. */
+.bulk-deposit-form__submit {
+  align-self: flex-start;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+.bulk-deposit-form__submit:hover { filter: brightness(0.95); }
+.bulk-deposit-form__submit:disabled { opacity: 0.6; cursor: default; }
+
+/* FEATURE (direct request - "should tell whether it has already been
+   applied... do away with the confusion"): a small persistent status
+   line above the scope selector, instead of the form silently
+   resetting back to "Just this unit" with no memory of what was just
+   done. */
+.bulk-deposit-form__applied-note {
+  font-size: var(--text-sm);
+  color: var(--color-success, #2e7d32);
+  background: var(--color-success-bg, #eef7ee);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+  margin-bottom: var(--space-2);
+}
+
+/* FEATURE (spec item 12): scope selector + multi-unit picker on the
+   extra-charge form. Spans the full grid row (not just one of the
+   name/amount/recurring columns) since it's its own distinct step. */
+.add-charge-form__scope {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-subtle, #f7f7f7);
+}
+
+.add-charge-form__scope-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.add-charge-form__scope select {
+  width: 100%;
+}
+
+.add-charge-form__unit-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.add-charge-form__hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted, #666);
+  margin: 0;
+}
+
+.add-charge-form__unit-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-2);
+  max-height: 180px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.add-charge-form__unit-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--text-sm);
+}
+
+.add-charge-form__unit-option:has(input:disabled) {
+  color: var(--color-text-muted, #666);
+}
+
+.add-charge-form__unit-frozen-tag {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted, #666);
+}
+
+.charges-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-hairline);
+  color: var(--color-primary-dark);
+}
+
+/* Tenant panel */
+.tenant-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.tenant-panel--empty {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.tenant-panel__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tenant-panel__name {
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+.tenant-panel__phone {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.tenant-panel__balance {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-mpesa-dark);
+}
+
+.tenant-panel__balance--owing {
+  color: var(--color-error);
+}
+
+.tenant-panel__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.tenant-panel__actions button {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 0.45rem 0.8rem;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.tenant-panel__actions button:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.danger-link {
+  color: var(--color-error) !important;
+  border-color: var(--color-error-bg) !important;
+}
+
+/* Payment history table */
+/* BUG FIX (redesign spec section 5): .payments-table-wrap is used in
+   the JSX but had no rule defined for it at all - a table with no
+   overflow container forces its whole row wider than the viewport if
+   content doesn't fit, rather than scrolling internally. This is the
+   third concrete contributor to the "action buttons clipped
+   off-screen" bug (a wide, unwrapped table pushes everything after
+   it in the DOM flow wider too). */
+.payments-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.payments-table th {
+  text-align: left;
+  color: var(--color-ink-soft);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  padding: var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.payments-table td {
+  padding: var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.payment-status {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.payment-status--completed {
+  background: var(--color-success-bg);
+  color: var(--color-mpesa-dark);
+}
+
+.payment-status--pending {
+  background: #FBF3EC;
+  color: var(--color-accent);
+}
+
+.payment-status--failed, .payment-status--rejected {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+/* Modals - .modal-overlay itself now lives only in global.css
+   (z-index: 1000); see the matching note in TenantPortal.css for why
+   the duplicate, lower z-index: 100 version here was removed.
+   .modal-card / .modal-card__header / .modal-card__close now live
+   only in global.css too - see the matching note there. */
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.modal-form label {
+  margin-top: var(--space-2);
+}
+
+.modal-form input, .modal-form select, .modal-form textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+}
+
+.modal-form button[type="submit"] {
+  margin-top: var(--space-4);
+}
+
+.modal-error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+@media (max-width: 800px) {
+  .unit-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .unit-detail-page {
+    padding: var(--space-4);
+  }
+
+  .add-charge-form {
+    grid-template-columns: 1fr;
+  }
+
+  .unit-detail-title-row h1 {
+    font-size: var(--text-xl);
+  }
+
+  .rent-effective-picker {
+    width: 100%;
+  }
+}
+
+.tenant-panel__balance--ahead {
+  color: var(--color-mpesa-dark);
+  background: var(--color-success-bg);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  display: inline-block;
+}
+
+.unit-name-edit-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.unit-name-edit-form input {
+  font-size: var(--text-2xl);
+  font-family: var(--font-display);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  width: 140px;
+}
+
+.unit-name-edit-form button[type="submit"] {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+  cursor: pointer;
+}

@@ -1,0 +1,112 @@
+.bulk-rent-modal label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.bulk-rent-modal select,
+.bulk-rent-modal input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  box-sizing: border-box;
+}
+
+.bulk-rent-modal__mode-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.bulk-rent-modal__mode-toggle button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  background: var(--color-surface, #fff);
+  cursor: pointer;
+}
+
+.bulk-rent-modal__mode-toggle button.is-active {
+  background: var(--color-accent, #2b6777);
+  color: #fff;
+  border-color: var(--color-accent, #2b6777);
+}
+
+.bulk-rent-modal__hint {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #8a8374);
+  margin-top: 14px;
+}
+
+.bulk-rent-modal__result {
+  margin: 16px 0;
+}
+
+/* Unit picker (all vs select specific units) */
+.bulk-rent-modal__unit-picker {
+  margin-top: 8px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  border-radius: 8px;
+  background: var(--color-surface, #fff);
+  padding: 8px;
+}
+
+.bulk-rent-modal__unit-loading {
+  margin: 4px;
+  color: var(--color-text-muted, #8a8374);
+  font-size: 0.9rem;
+}
+
+.bulk-rent-modal__select-all {
+  font-size: 0.82rem;
+  margin: 2px 4px 6px;
+}
+
+.bulk-rent-modal__unit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.bulk-rent-modal__unit-row {
+  border-bottom: 1px solid var(--color-border, #e5e1d8);
+}
+
+.bulk-rent-modal__unit-row:last-child {
+  border-bottom: none;
+}
+
+.bulk-rent-modal__unit-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.bulk-rent-modal__unit-row input[type='checkbox'] {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.bulk-rent-modal__unit-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.bulk-rent-modal__unit-meta {
+  color: var(--color-text-muted, #8a8374);
+  font-size: 0.85rem;
+}
+
+.bulk-rent-modal__unit-count {
+  margin: 6px 4px 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #8a8374);
+}

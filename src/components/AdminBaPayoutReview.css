@@ -1,0 +1,205 @@
+.admin-ba-payout__period-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-payout__filter {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-ba-payout__filter-btn {
+  border: 1px solid var(--color-border, #E4DFD8);
+  background: var(--color-surface, #fff);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: var(--text-sm, 0.9375rem);
+  cursor: pointer;
+}
+
+.admin-ba-payout__filter-btn--active {
+  background: var(--color-ink, #22282A);
+  color: #fff;
+  border-color: var(--color-ink, #22282A);
+}
+
+.admin-ba-payout__period-input {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-payout__error {
+  color: #A33;
+  margin-bottom: 12px;
+}
+
+.admin-ba-payout__empty {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-ba-payout__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-ba-payout__item {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.admin-ba-payout__item--flagged {
+  border-color: #e0a94a;
+  background: #fff9ee;
+}
+
+.admin-ba-payout__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.admin-ba-payout__code {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-payout__badge {
+  margin-left: 8px;
+  background: #fbe4c8;
+  color: #8a5a1e;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.admin-ba-payout__contact {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+  margin-top: 2px;
+}
+
+.admin-ba-payout__totals {
+  text-align: right;
+  font-size: var(--text-sm, 0.9375rem);
+  white-space: nowrap;
+}
+
+.admin-ba-payout__grand-total {
+  font-weight: 700;
+}
+
+.admin-ba-payout__mark {
+  display: inline-block;
+  margin-top: 4px;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.admin-ba-payout__mark--paid {
+  background: #d9f1de;
+  color: #206633;
+}
+
+.admin-ba-payout__mark--not_paid {
+  background: #f4d9d9;
+  color: #8a2020;
+}
+
+.admin-ba-payout__detail {
+  margin-top: 12px;
+  border-top: 1px solid var(--color-border, #E4DFD8);
+  padding-top: 10px;
+}
+
+.admin-ba-payout__claims {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-ba-payout__claim {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-payout__claim label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-ba-payout__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-payout__link-btn {
+  border: none;
+  background: none;
+  color: var(--color-ink-soft, #5C6663);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+/* Item 10 - Payout Run: overall run summary + per-BA qualify/not-
+   qualify/commission-rate strip. */
+.admin-ba-payout__run-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: var(--color-surface-alt, #f5f6f8);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-payout__run-summary-total {
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.admin-ba-payout__ratio-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 6px 14px 10px;
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-ba-payout__ratio-qualifies {
+  color: var(--color-success, #1a7f37);
+  font-weight: 600;
+}
+
+.admin-ba-payout__ratio-not-qualifies {
+  color: var(--color-warning, #b45309);
+  font-weight: 600;
+}

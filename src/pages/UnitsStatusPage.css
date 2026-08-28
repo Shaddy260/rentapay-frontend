@@ -1,0 +1,70 @@
+.units-status-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--rp-space-1, 8px);
+  padding: var(--rp-space-3, 24px) var(--rp-space-2, 16px) 0;
+}
+
+.units-status-header__title {
+  display: flex;
+  align-items: center;
+  gap: var(--rp-space-1, 8px);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.units-status-header__count {
+  background: #eceae2;
+  color: #52504A;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.units-status-header__title--overdue { color: var(--rp-status-overdue, #CD4242); }
+.units-status-header__title--upcoming { color: var(--rp-status-upcoming, #B8600A); }
+.units-status-header__title--paid { color: var(--rp-status-paid, #398354); }
+.units-status-header__title--vacant { color: var(--rp-status-vacant, #747471); }
+
+.units-status-show-more {
+  margin-top: var(--rp-space-2, 16px);
+  width: 100%;
+  min-height: var(--rp-touch-min, 44px);
+  border-radius: var(--rp-radius-sm, 8px);
+  border: 1px dashed #D8D5CB;
+  background: #fff;
+  color: #52504A;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.unit-tile-skeleton {
+  border-radius: var(--rp-radius-sm, 8px);
+  border: 1px solid #EDEAE0;
+  padding: var(--rp-space-2, 16px);
+  min-height: 140px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.units-error-card {
+  border: 1px solid #EDEAE0;
+  border-radius: var(--rp-radius-lg, 12px);
+  padding: var(--rp-space-3, 24px);
+  text-align: center;
+  background: #fff;
+}
+.units-error-card button {
+  margin-top: var(--rp-space-2, 16px);
+  min-height: var(--rp-touch-min, 44px);
+  padding: 0 var(--rp-space-2, 16px);
+  border-radius: var(--rp-radius-sm, 8px);
+  border: none;
+  background: #0F3D3E;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}

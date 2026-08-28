@@ -1,0 +1,70 @@
+.apk-install-redirect {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  max-width: 480px;
+  margin: 0 auto;
+  border-radius: 14px;
+  background: var(--color-primary-dark, #16493c);
+  color: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+}
+
+.apk-install-redirect__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px;
+}
+
+.apk-install-redirect__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.apk-install-redirect__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.apk-install-redirect__text strong {
+  font-size: 0.9375rem;
+}
+
+.apk-install-redirect__text span {
+  font-size: 0.8125rem;
+  opacity: 0.85;
+}
+
+.apk-install-redirect__cta {
+  flex-shrink: 0;
+  background: #fff;
+  color: var(--color-primary-dark, #16493c);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 8px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.apk-install-redirect__dismiss {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #fff;
+  opacity: 0.75;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.apk-install-redirect__dismiss:hover {
+  opacity: 1;
+}

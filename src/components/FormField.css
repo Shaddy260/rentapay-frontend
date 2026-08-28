@@ -1,0 +1,138 @@
+.form-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+/* FIX (direct request: "the word email appears at the side instead
+   of at the top always, should be consistent"): label and input are
+   inline elements by default in plain HTML, so for the brief instant
+   before this stylesheet has fully applied (more noticeable on
+   slower connections, which is disproportionately mobile) they can
+   render side-by-side instead of stacked. Making the label an
+   explicit full-width block removes that possibility entirely,
+   regardless of load timing or screen size. */
+.form-field__label {
+  display: block;
+  width: 100%;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* CONSISTENT INPUT ANIMATION (direct request): plain fields, no
+   boxed border - just a bottom hairline that expands outward from
+   the center on focus/hover, matching the "Center Expanding Line"
+   reference. FormField is shared across the whole app, so this one
+   rule set is what every text input on the platform looks like. */
+.form-field__input-wrap {
+  position: relative;
+}
+
+.form-field input,
+.form-field select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: var(--text-base);
+  padding: 0.85rem 0.1rem;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1.5px solid var(--color-hairline);
+  background: transparent;
+  color: var(--color-ink);
+  transition: border-color 0.15s ease;
+}
+
+.form-field {
+  position: relative;
+}
+
+.form-field input,
+.form-field select {
+  position: relative;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: none;
+}
+
+/* The actual expanding line lives on a pseudo-element positioned
+   under each input/select, since a real border-bottom can't animate
+   its own width independent of the element's own box. */
+.form-field {
+  --field-underline-color: var(--color-primary);
+}
+
+.form-field input,
+.form-field select {
+  background-image: linear-gradient(var(--field-underline-color), var(--field-underline-color));
+  background-repeat: no-repeat;
+  background-position: 50% 100%;
+  background-size: 0% 2px;
+  transition: background-size 0.3s ease, border-color 0.15s ease;
+}
+
+.form-field input:hover,
+.form-field select:hover,
+.form-field input:focus,
+.form-field select:focus {
+  background-size: 100% 2px;
+}
+
+.form-field input::placeholder {
+  color: var(--color-ink-soft);
+  opacity: 0.6;
+}
+
+.form-field input:disabled {
+  background: var(--color-surface, #f4f4f4);
+  color: var(--color-ink-soft);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.form-field__input--error {
+  border-bottom-color: var(--color-error) !important;
+  --field-underline-color: var(--color-error);
+}
+
+.form-field__hint {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+.form-field__static-value {
+  font-size: var(--text-md, 1rem);
+  font-weight: 600;
+  color: var(--color-ink);
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted, #f3f2ee);
+  margin: 0 0 0.25rem;
+}
+
+.form-field__hint--warning {
+  color: var(--color-warning, #9a6700);
+}
+
+.form-field__error {
+  font-size: var(--text-xs);
+  color: var(--color-error);
+  margin: 0;
+  font-weight: 500;
+}
+
+.form-field__static {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-sunken, #f4f4f4);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}

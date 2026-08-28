@@ -1,0 +1,37 @@
+.photo-scroll-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  padding: 18px 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.photo-scroll-strip::-webkit-scrollbar {
+  height: 6px;
+}
+
+.photo-scroll-strip::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+.photo-scroll-strip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.unit-photos-panel__strip {
+  margin-bottom: 10px;
+}
+
+.photo-scroll-strip__item {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  transform: scale(0.82);
+  opacity: 0.45;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  will-change: transform, opacity;
+}

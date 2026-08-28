@@ -1,0 +1,10 @@
+/sitemap.xml  /sitemap.xml  200
+/robots.txt   /robots.txt   200
+/favicon.ico  /favicon.ico  200
+
+# NOTE: SPA deep-link fallback (React Router routes like /reputation/:token,
+# /verify/:paymentId, /onboard/:token) is now handled by Cloudflare's
+# built-in `not_found_handling: "single-page-application"` setting in
+# wrangler.jsonc, so no catch-all rule is needed here. Adding one caused
+# a redirect loop (Cloudflare error code 100324) because both mechanisms
+# were trying to own the same fallback.

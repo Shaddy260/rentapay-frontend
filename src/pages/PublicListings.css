@@ -1,0 +1,342 @@
+.public-listings {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+.public-listings__header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.public-listings__brand {
+  font-weight: 700;
+  color: var(--color-primary, #2E7D32);
+  text-decoration: none;
+}
+.public-listings__header h1 {
+  margin: 8px 0 4px;
+}
+.public-listings__header p {
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+.public-listings__search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 20px 0 28px;
+}
+.public-listings__search-input {
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  width: 100%;
+  max-width: 520px;
+  font-size: 1em;
+}
+.public-listings__search-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #2E7D32);
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
+}
+.public-listings__grid {
+  display: grid;
+  /* Sized so ~4 cards comfortably fit per row on a typical desktop
+     viewport, while still wrapping down responsively on smaller
+     screens instead of ever stretching a single card full-width. */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.public-listings__card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-surface-raised);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  /* Uniform glowing edge accent on the right side of every card - a
+     consistent visual/design touch applied to all listings equally
+     (not a "premium" indicator; every unit is the same tier). */
+  box-shadow: 3px 0 12px -2px rgba(46, 125, 50, 0.45);
+  transition: box-shadow 0.2s ease;
+}
+.public-listings__card::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  right: -1px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(46, 125, 50, 0), rgba(46, 125, 50, 0.9), rgba(46, 125, 50, 0));
+  filter: blur(1px);
+  pointer-events: none;
+}
+.public-listings__card:hover {
+  box-shadow: 4px 0 18px -1px rgba(46, 125, 50, 0.6);
+}
+.public-listings__photo {
+  /* DIRECT REQUEST: banner was too tall (4:3 at full card width made
+     it dominate the card, especially on a single-column mobile
+     layout). 16/3 is roughly a quarter of the old height at the same
+     width. */
+  aspect-ratio: 16 / 3;
+  background: #f2f2f2;
+  position: relative;
+  width: 100%;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  display: block;
+}
+.public-listings__photo:disabled {
+  cursor: default;
+}
+.public-listings__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.public-listings__photo-count {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.78em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.public-listings__photo-location {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  max-width: calc(100% - 16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.78em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.public-listings__maps-link {
+  display: inline-block;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #1f6f5c;
+  text-decoration: none;
+  margin: 4px 0 8px;
+}
+.public-listings__maps-link:hover {
+  text-decoration: underline;
+}
+.public-listings__photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4em;
+  color: #ccc;
+}
+.public-listings__info {
+  padding: 12px 14px 16px;
+}
+.public-listings__info h3 {
+  margin: 0 0 4px;
+  font-size: 1.05em;
+}
+.public-listings__location {
+  color: var(--color-ink-soft);
+  font-size: 0.85em;
+  margin: 0 0 6px;
+}
+.public-listings__rent {
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+.public-listings__description {
+  font-size: 0.9em;
+  color: var(--text-secondary, #555);
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+.public-listings__contact-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #25D366;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.public-listings__contact-btn:disabled {
+  opacity: 0.7;
+}
+
+/* FEATURE (direct request): collapsible per-property grouping, with
+   the property's tenant-reviewed reputation shown at the section
+   header, and per-unit listing-status/deposit badges. */
+.public-listings__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.public-listings__property-group {
+  border: 1px solid var(--color-hairline, #e2e2df);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.public-listings__property-header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--color-surface-soft, #f7f7f5);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.95em;
+}
+.public-listings__property-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.public-listings__property-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.public-listings__property-header-text strong {
+  font-size: 1.02em;
+  line-height: 1.3;
+}
+.public-listings__property-header-text .public-listings__location {
+  margin: 0;
+}
+.public-listings__property-toggle {
+  font-size: 0.8em;
+  color: var(--color-ink-soft);
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.public-listings__unit-count {
+  color: var(--color-ink-soft);
+  font-size: 0.85em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.public-listings__property-group--single {
+  border: none;
+}
+.public-listings__property-group--single .public-listings__card {
+  border-radius: 10px;
+}
+.public-listings__card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-hairline, #e2e2df);
+}
+.public-listings__card-meta strong {
+  font-size: 1.02em;
+}
+.public-listings__card-meta .public-listings__location {
+  margin: 0;
+}
+.public-listings__reputation {
+  font-weight: 600;
+  color: #b8860b;
+  white-space: nowrap;
+  font-size: 0.9em;
+}
+.public-listings__reputation em {
+  font-weight: 400;
+  font-style: normal;
+  color: var(--color-ink-soft);
+}
+.public-listings__reputation--none {
+  color: var(--color-ink-soft);
+  font-weight: 400;
+}
+.public-listings__property-group .public-listings__grid {
+  padding: 14px 16px 16px;
+}
+.public-listings__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.public-listings__status-badge,
+.public-listings__deposit-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.public-listings__status-badge--active {
+  background: #e6f4ea;
+  color: #1e7a34;
+}
+.public-listings__status-badge--booked {
+  background: #fdecea;
+  color: #b23b2e;
+}
+.public-listings__status-badge--planned {
+  background: #fff4e0;
+  color: #9a6300;
+}
+.public-listings__deposit-badge--required {
+  background: #eef1fb;
+  color: #37437a;
+}
+.public-listings__deposit-badge--none {
+  background: #f0f0ee;
+  color: #666;
+}
+
+/* DIRECT REQUEST: contact picker (landlord / manager / caretaker) so
+   a tenant can choose who to WhatsApp instead of always being
+   silently routed to whichever one the backend used to pick first. */
+.public-listings__contact-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.public-listings__contact-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border: 1px solid var(--color-hairline, #E4DFD8);
+  border-radius: var(--radius-md, 10px);
+  background: var(--color-surface-raised, #fff);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.public-listings__contact-option:hover {
+  background: var(--color-surface-sunken, #F5F5F0);
+}
