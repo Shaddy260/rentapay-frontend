@@ -1,0 +1,1894 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { fieldErrorsFromApi } from '../utils/validators.js';
+import { useAppNavigate as useNavigate } from '../hooks/useAppNavigate.js';
+import StepRail from '../components/StepRail.jsx';
+import Button from '../components/Button.jsx';
+import PasswordInput from '../components/PasswordInput.jsx';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter.jsx';
+import HeroPhotoBackground from '../components/HeroPhotoBackground.jsx';
+import PaymentDetailsCard from '../components/PaymentDetailsCard.jsx';
+import ManualPaymentHelp from '../components/ManualPaymentHelp.jsx';
+import InfoTip from '../components/InfoTip.jsx';
+import { api } from '../api/client.js';
+import { KENYA_COUNTIES } from '../constants/kenyaCounties.js';
+import { KENYA_CONSTITUENCIES } from '../constants/kenyaConstituencies.js';
+import './RegisterFlow.css';
+import '../components/FormField.css';
+
+// Pricing mirrors backend src/utils/pricing.js exactly.
+// Kept here only for instant on-screen cost preview; the backend is
+// the source of truth and recalculates server-side before charging.
+// NOTE: 50 (not the blueprint's stated 150) per direct instruction.
+
+/**
+ * DIRECT REQUEST: email verification now happens INLINE on the same
+ * "Your details" page, right under the email field - exactly like a
+ * tenant confirms their email on the same page before submitting via
+ * the onboarding link (see TenantOnboarding.jsx's emailOtpStatus
+ * pattern, mirrored here). No landlord account exists yet at this
+ * point - the OTP is sent/verified against the raw email address
+ * (see requestLandlordEmailVerification / confirmLandlordEmailVerification
+ * on the backend), and registerLandlord() itself is blocked, both here
+ * and server-side, until it's done. Submitting now goes straight from
+ * "Your details" to the Payment step - there's no separate
+ * "Verify email" page anymore.
+ */
+function useLandlordEmailVerification(email) {
+  // 'idle' | 'sending' | 'sent' | 'verifying' | 'verified'
+  const [status, setStatus] = useState('idle');
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
+  const [verifiedEmail, setVerifiedEmail] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
+
+  // Editing the email after it was sent/verified invalidates that
+  // verification - it only ever proved ownership of the exact address
+  // it was sent to, not whatever's typed in now.
+  function resetOnEmailChange() {
+    if (status !== 'idle') {
+      setStatus('idle');
+      setCode('');
+      setError('');
+      setVerifiedEmail('');
+      setVerificationToken('');
+    }
+  }
+
+  async function send() {
+    setError('');
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      setError('Enter a valid email address first.');
+      return;
+    }
+    setStatus('sending');
+    try {
+      await api.sendLandlordRegistrationEmailOtp({ email });
+      setStatus('sent');
+    } catch (err) {
+      setError(err.message || 'Failed to send verification code.');
+      setStatus('idle');
+    }
+  }
+
+  async function verify() {
+    setError('');
+    if (!code.trim()) {
+      setError('Enter the code sent to your email.');
+      return;
+    }
+    setStatus('verifying');
+    try {
+      const res = await api.verifyLandlordRegistrationEmailOtp({ email, otp: code.trim() });
+      setStatus('verified');
+      setVerifiedEmail(email);
+      setVerificationToken(res.emailVerification);
+    } catch (err) {
+      setError(err.message || 'Failed to verify code.');
+      setStatus('sent');
+    }
+  }
+
+  const isVerified = status === 'verified' && verifiedEmail === email;
+
+  return { status, code, setCode, error, isVerified, verificationToken, send, verify, resetOnEmailChange };
+}
+import { loadPricingSettings, getCachedPricingSettings, previewCost } from '../utils/pricing.js';
+import { clearStaleAccountCaches } from '../utils/clearStaleCaches.js';
+
+const STEPS = [
+  { key: 'details', title: 'Your details', subtitle: 'Name, phone, plan & email' },
+  { key: 'payment', title: 'M-Pesa payment', subtitle: 'Activate subscription' },
+  { key: 'property', title: 'Your property', subtitle: 'Estate & location' },
+  { key: 'method', title: 'Payment method', subtitle: 'How rent reaches you' },
+  { key: 'units', title: 'Add your units', subtitle: 'Rent per unit' },
+  { key: 'done', title: 'All set', subtitle: 'Dashboard unlocked' },
+];
+
+// Everything captured here survives a page refresh mid-registration -
+// AND surviving the tab/app being closed entirely and reopened much
+// later (direct request: "remember the last stage a user was at even
+// if he closes the phone and comes back even after 100 days"). This
+// is why localStorage is used here, not sessionStorage - sessionStorage
+// clears the moment the tab/app closes, which used to strand a
+// landlord who paid manually, closed the app while waiting for an
+// admin to confirm it, and came back days later: they'd land back at
+// step 0 with no memory of the account they already half-created.
+// A generous TTL guards against resuming into a genuinely stale/
+// abandoned attempt indefinitely - see PROGRESS_TTL_MS below.
+const STORAGE_KEY = 'rentapay_register_progress';
+const PROGRESS_TTL_MS = 100 * 24 * 60 * 60 * 1000; // 100 days
+
+function loadPersistedProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.savedAt && Date.now() - parsed.savedAt > PROGRESS_TTL_MS) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null; // corrupted/blocked storage - just start fresh
+  }
+}
+
+function persistProgress(snapshot) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...snapshot, savedAt: Date.now() }));
+  } catch {
+    // localStorage can throw in private-browsing/storage-full edge
+    // cases - registration still works, the person just loses resume
+    // capability on refresh, which is a reasonable degradation.
+  }
+}
+
+export default function RegisterFlow() {
+  const navigate = useNavigate();
+  const persisted = loadPersistedProgress();
+
+  // If there's no in-progress registration session (persisted === null)
+  // but there IS a valid login token in sessionStorage, this person
+  // arrived here via Login.jsx's "resume setup wizard" redirect - they
+  // already have a verified, active account and just haven't finished
+  // the property/units/payment-method steps yet. Starting them at step
+  // 0 would walk them through account creation again, which would
+  // immediately fail with "Account already exists" since the phone
+  // number is already registered. Jump straight to the Setup Wizard
+  // (step index 3 = "Your property") instead.
+  //
+  // This only fires once on initial mount (computed before any state
+  // exists), not on every render - a fresh registration in the same
+  // tab still works normally because `persisted` will be non-null by
+  // the time this check would otherwise matter.
+  // BUG FIX (direct request #9): this used to be inferred purely from
+  // "is there a landlord token sitting in sessionStorage right now",
+  // which is true for TWO very different situations:
+  //   1. Login.jsx just authenticated this person and their onboarding
+  //      is incomplete -> SHOULD resume the wizard mid-flight.
+  //   2. This person fully completed onboarding earlier in this same
+  //      browser tab (token never got cleared, e.g. they never
+  //      explicitly logged out) and is now tapping "Get Started" fresh
+  //      from the Landing page -> should NOT resume anything; Get
+  //      Started always means "start over from step 0", even though
+  //      the account was previously verified.
+  // Login.jsx now sets an explicit one-shot flag immediately before
+  // its resume-wizard redirect, so only case 1 satisfies this check.
+  // Get Started (Landing.jsx -> /register directly) never sets that
+  // flag, so it always falls through to a clean step-0 start below.
+  const resumingLoggedInLandlord =
+    !persisted && typeof localStorage !== 'undefined' && localStorage.getItem('rentapay_resume_setup') === 'true' && localStorage.getItem('rentapay_role') === 'landlord';
+
+  // Consume the flag immediately so it can never accidentally apply to
+  // a later, unrelated visit to this page in the same tab.
+  if (typeof localStorage !== 'undefined' && localStorage.getItem('rentapay_resume_setup')) {
+    localStorage.removeItem('rentapay_resume_setup');
+  }
+
+  // A fresh "Get Started" entry (no persisted wizard progress, not a
+  // login-driven resume) should never carry forward a stale session
+  // from a previously completed account on this device - clear it so
+  // nothing downstream (e.g. an old token still being sent on API
+  // calls) can leak into what's meant to be a brand-new signup.
+  if (!persisted && !resumingLoggedInLandlord && typeof localStorage !== 'undefined') {
+    localStorage.removeItem('rentapay_token');
+    localStorage.removeItem('rentapay_role');
+    localStorage.removeItem('rentapay_role_level');
+    localStorage.removeItem('rentapay_phone');
+    localStorage.removeItem('rentapay_active_property_id');
+    localStorage.removeItem('rentapay_subscription_expired');
+  }
+
+  // Set by Login.jsx when it redirects here because the landlord's
+  // subscription payment was never confirmed (see the paymentPending
+  // handling there). This session has no password in memory - it
+  // arrived via Login, not via step 0 of this wizard - so once payment
+  // is confirmed below we can't silently auto-login like a fresh
+  // registration does; the person needs to log in again normally.
+  const resumedFromLogin = persisted?.resumedFromLogin === true;
+
+  // Resolve the initial step by KEY, not by the raw saved number.
+  // Saving/restoring a bare array index used to be safe only for as
+  // long as STEPS never changed shape - but this flow has been
+  // through several step-order/step-count changes since (see the BUG
+  // FIX comments throughout this file), and each one silently
+  // reinterpreted anyone's old saved stepIndex against the NEW array,
+  // landing them on a completely different step than the one they
+  // left off at (e.g. jumping straight from payment to "Add your
+  // units", skipping "Your property" entirely, because the old
+  // number that used to mean "units" no longer lines up after a step
+  // was inserted). Matching by key is immune to future reordering:
+  // if the key isn't found (very old session, or the step it names no
+  // longer exists), fall back to the raw index only as a last resort,
+  // then to a safe default.
+  function resolveInitialStepIndex() {
+    if (persisted?.stepKey) {
+      const idx = STEPS.findIndex((s) => s.key === persisted.stepKey);
+      if (idx !== -1) return idx;
+    }
+    if (typeof persisted?.stepIndex === 'number' && persisted.stepIndex >= 0 && persisted.stepIndex < STEPS.length) {
+      return persisted.stepIndex;
+    }
+    return resumingLoggedInLandlord ? 2 : 0;
+  }
+
+  const [stepIndex, setStepIndex] = useState(resolveInitialStepIndex());
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // PHASE 4 (BA referral-link signup): read ?ref=<code> from the URL
+  // once on mount and resolve it to a display name ("Referred by
+  // <name>") - never just echo the raw code back.
+  //
+  // SECTION D (consolidated instructions) - full rewrite of this
+  // field's behavior:
+  //   - Link-based (?ref= present on arrival): the field is a
+  //     read-only CONFIRMATION, not an input. Auto-populated,
+  //     disabled, not clearable, no override path - the link used is
+  //     authoritative for the whole session, even if resolution fails
+  //     (see registerLandlord's own "fail silently" tagging - the
+  //     signup itself is never blocked by a stale/expired link code).
+  //   - Manual entry (no ?ref= on arrival): a real, editable, OPTIONAL
+  //     field. Typing a code that doesn't resolve blocks submission
+  //     with an explicit error - typing nothing is always fine.
+  // These are two different UX contracts, not one field with a
+  // pre-fill - hence the separate `referralFromLink` flag rather than
+  // just checking "does the URL still have ?ref".
+  const referralFromLink = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return !!new URLSearchParams(window.location.search).get('ref');
+  }, []);
+  const [referralCode, setReferralCode] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('ref') || '';
+  });
+  const [referredByName, setReferredByName] = useState(null);
+  // Only meaningful for the manual-entry path - link-based codes never
+  // surface this to the person, per the "fail silently" rule above.
+  const [referralNotFound, setReferralNotFound] = useState(false);
+
+  const [, setPricingLoaded] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    // Live rate/discount tiers from admin's current settings, not a
+    // hardcoded number - see utils/pricing.js. setPricingLoaded just
+    // forces a re-render once it resolves so the cost preview below
+    // picks up the freshly-cached values.
+    loadPricingSettings().then(() => { if (!cancelled) setPricingLoaded(true); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const code = referralCode.trim();
+    if (!code) { setReferredByName(null); setReferralNotFound(false); return; }
+    let cancelled = false;
+    api
+      .resolveBaReferralCode(code)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.matched) {
+          setReferredByName(res.fullName);
+          setReferralNotFound(false);
+        } else {
+          setReferredByName(null);
+          // Link-based codes stay silent even on a miss (expired/typo'd
+          // link) - only the manual-entry path shows the error, since
+          // only that path lets the person actually fix it.
+          setReferralNotFound(!referralFromLink && res.reason === 'not_found');
+        }
+      })
+      .catch(() => { if (!cancelled) { setReferredByName(null); setReferralNotFound(false); } });
+    return () => { cancelled = true; };
+  }, [referralCode, referralFromLink]);
+
+  // --- Step 1: registration details ---
+  const [form, setForm] = useState({
+    fullName: '',
+    phone: '',
+    whatsappNumber: '',
+    email: '',
+    password: '',
+    gender: '',
+    unitsCount: '',
+    periodMonths: '',
+    ...(persisted?.form || {}),
+  });
+
+  // --- Server state captured across steps ---
+  const [landlordId, setLandlordId] = useState(persisted?.landlordId ?? null);
+  const [checkoutRequestId, setCheckoutRequestId] = useState(persisted?.checkoutRequestId ?? null);
+  const [amountDue, setAmountDue] = useState(persisted?.amountDue ?? null);
+  // Payment (STK push / manual instructions) is only started once, when
+  // the landlord lands on the Payment step after verifying their email -
+  // this flag stops a page refresh from re-triggering a second STK
+  // prompt against the same subscription.
+  const [paymentInitiated, setPaymentInitiated] = useState(persisted?.paymentInitiated ?? false);
+  const [paymentInitiating, setPaymentInitiating] = useState(false);
+
+  // --- Setup wizard state (steps 4-7) ---
+  const [property, setProperty] = useState({
+    estateName: '', location: '', county: '', constituency: '', description: '', mapsLink: '',
+    // Caretaker contact - a plain, no-login contact record shown to
+    // tenants alongside the landlord's own contact (TenantPortal.jsx).
+    // Separate from the property MANAGER, who is a real login account
+    // added later from Settings. Optional: many landlords are their
+    // own caretaker.
+    caretakerName: '', caretakerPhone: '',
+  });
+  const [defaultPropertyId, setDefaultPropertyId] = useState(persisted?.defaultPropertyId ?? null);
+  const [paymentMethod, setPaymentMethod] = useState({ method: 'stk', paybillNumber: '', accountNumber: '', tillNumber: '', stkPhoneNumber: '' });
+
+  // FEATURE (direct request: "include a searchbar when the landlords
+  // are choosing counties"): filters the county/constituency <select>
+  // options down to whatever's typed, instead of scrolling a 47-entry
+  // list. Constituency search resets whenever the county changes so a
+  // stale filter from the previous county doesn't hide everything.
+  const [countySearch, setCountySearch] = useState('');
+  const [constituencySearch, setConstituencySearch] = useState('');
+  const filteredCounties = KENYA_COUNTIES.filter((c) => c.toLowerCase().includes(countySearch.trim().toLowerCase()));
+  const filteredConstituencies = (KENYA_CONSTITUENCIES[property.county] || []).filter((c) =>
+    c.toLowerCase().includes(constituencySearch.trim().toLowerCase())
+  );
+  const [units, setUnits] = useState([]);
+  // FIX (direct request: "entering data one by one for many units
+  // could be so hectic while almost all units could be having the
+  // same rent... a UI for duplicate... asks how many units... name
+  // the units from the first one to the last one"): lets a landlord
+  // fill in ONE unit's details (name, type, rent) and generate several
+  // more just like it in one go, auto-numbered onward from that first
+  // unit's name, instead of retyping the same rent 8+ times.
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [duplicateCount, setDuplicateCount] = useState('');
+  const [newUnit, setNewUnit] = useState({ unitName: '', unitType: 'Bedsitter', customUnitType: '', rentAmount: '' });
+
+  // The real, authoritative unit quota the landlord paid for. We do
+  // NOT trust form.unitsCount for this - that value only reflects
+  // whatever was typed on step 0 during THIS browser session, which is
+  // meaningless for a landlord resuming an existing account (it just
+  // sits at the default of 5 regardless of what they actually paid
+  // for). Fetched once from the backend, the actual source of truth,
+  // as soon as we have a token to ask with.
+  const [unitLimit, setUnitLimit] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('rentapay_token');
+    if (!token) return; // no token yet (brand-new registration, hasn't logged in) - nothing to fetch
+
+    api
+      .getSubscriptionStatus(token)
+      .then((status) => setUnitLimit(status.unit_limit))
+      .catch((err) => {
+        // Non-fatal: if this fails, handleAddUnit below falls back to
+        // form.unitsCount as a best-effort guess rather than blocking
+        // the person entirely on a network hiccup.
+        console.warn('Could not fetch real unit limit, falling back to form.unitsCount:', err.message);
+      });
+  }, []);
+
+  // Persist the values that actually matter for resuming after a
+  // refresh. NOT persisting `password` in plaintext past step 1 would
+  // be ideal, but it's needed again nowhere downstream once
+  // registerLandlord() has fired, so we simply don't include it here -
+  // only the fields a resumed session actually needs are stored.
+  React.useEffect(() => {
+    persistProgress({
+      stepIndex,
+      stepKey: STEPS[stepIndex]?.key,
+      landlordId,
+      checkoutRequestId,
+      amountDue,
+      paymentInitiated,
+      defaultPropertyId,
+      form: { fullName: form.fullName, phone: form.phone, whatsappNumber: form.whatsappNumber, email: form.email, unitsCount: form.unitsCount, periodMonths: form.periodMonths },
+    });
+  }, [stepIndex, landlordId, checkoutRequestId, amountDue, paymentInitiated, defaultPropertyId, form.fullName, form.phone, form.email, form.unitsCount, form.periodMonths]);
+
+  // FIX (direct request: "after manual confirmation by admin the page
+  // does not automatically proceed... even after reloading several
+  // times"): the STK poll (handlePaymentConfirmed) and the manual-
+  // payment poll (pollManualPaymentStatus) below only run as a live
+  // in-memory loop kicked off by tapping a button - a page reload
+  // (or just closing the tab and coming back, which sessionStorage-
+  // based resume is explicitly meant to support) kills that loop
+  // completely with no replacement. Landing back on this exact step
+  // via the persisted stepIndex/landlordId used to just show the same
+  // static "waiting" screen forever, even if an admin had already
+  // confirmed the payment minutes ago - nothing on mount ever asked
+  // the backend again. This checks once, silently, the moment this
+  // step is (re)loaded with a landlordId, and moves straight into the
+  // account if it turns out to already be confirmed - reloading (or
+  // coming back later) now actually has a chance of unsticking things
+  // instead of just re-displaying the same dead end.
+  useEffect(() => {
+    if (stepIndex !== 1 || !landlordId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        if (checkoutRequestId) {
+          const res = await api.checkSubscriptionPaymentStatus(checkoutRequestId);
+          if (cancelled) return;
+          if (res.status === 'completed') {
+            await proceedAfterVerification(res.token);
+            return;
+          }
+        }
+        const manualRes = await api.checkRegistrationManualPaymentStatus(landlordId);
+        if (cancelled) return;
+        if (manualRes.status === 'completed') {
+          await proceedAfterVerification(manualRes.token);
+          return;
+        }
+        if (manualRes.status === 'rejected') {
+          setManualSubmitted(false);
+          setManualPollError('Your submitted payment could not be verified. Please double-check the transaction code and try again, or contact support.');
+        } else if (manualRes.status === 'pending') {
+          // A manual payment IS on file and still pending admin review
+          // - resume the same visible "waiting for confirmation" state
+          // and background poll a fresh reload would otherwise have
+          // silently dropped, instead of leaving the page looking like
+          // nothing was ever submitted.
+          setManualSubmitted(true);
+          pollManualPaymentStatus();
+        }
+      } catch (err) {
+        console.warn('Resume payment-status check failed (non-fatal):', err.message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally only on mount / when landing on this step - not on
+    // every keystroke of the manual-payment form.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIndex, landlordId]);
+
+  // DIRECT FIX: this used to fall back to `|| 1` for both units and
+  // period, so an empty form silently priced itself as "1 unit x 1
+  // month" and showed KES 50 before the landlord had entered
+  // anything. Only preview a real cost once both fields actually have
+  // a value; otherwise show 0.
+  const cost = form.unitsCount && form.periodMonths
+    ? previewCost(Number(form.unitsCount), Number(form.periodMonths))
+    : { rate: getCachedPricingSettings().baseRatePerUnitPerMonth, discount: 0, total: 0 };
+
+  // Inline email verification, right on this same page - see
+  // useLandlordEmailVerification above.
+  const emailVerify = useLandlordEmailVerification(form.email);
+
+  // REDESIGN (Premium Redesign Plan, Phase 5): the verify-email button
+  // only appears once a valid, complete email address is entered -
+  // no button (and nothing to be disabled) while the field is still
+  // empty or obviously incomplete.
+  const emailLooksComplete = /^\S+@\S+\.\S+$/.test(form.email.trim());
+
+  // REDESIGN (Premium Redesign Plan, Phase 5): submit button is
+  // disabled/muted until every required field on this step is
+  // actually valid, not just email verification - matches the same
+  // checks doHandleSubmitDetails enforces server-side/on submit.
+  const detailsStepValid = Boolean(
+    form.fullName.trim() &&
+      form.phone.trim() &&
+      form.whatsappNumber.trim() &&
+      emailVerify.isVerified &&
+      form.password &&
+      form.password.length >= 6 &&
+      form.unitsCount &&
+      Number(form.unitsCount) >= 1 &&
+      form.periodMonths &&
+      Number(form.periodMonths) >= 1 &&
+      !(!referralFromLink && referralCode.trim() && referralNotFound)
+  );
+
+  function updateForm(field, value) {
+    setForm((f) => ({ ...f, [field]: value }));
+    if (field === 'email') emailVerify.resetOnEmailChange();
+  }
+
+  // -----------------------------------------------------------------
+  // STEP 0 -> 1 : submit registration, land on Verify-email
+  // (payment no longer starts here - see the Payment-step effect that
+  // calls initiateLandlordPayment, which only fires after email is
+  // verified)
+  // -----------------------------------------------------------------
+  // BUG FIX (direct request: "Sign up Loop for landlords... Need to
+  // redo the process the second time for it to go through"): same
+  // root cause as the property-submit and units-submit races
+  // documented below - `loading` is a STATE variable, and React state
+  // updates aren't synchronous, so there's a real window right after
+  // the first click, before the re-render that disables the submit
+  // button lands. A fast double-click, or a form re-submit from a
+  // slow mobile keyboard's "Done"/"Go" key firing alongside the tap,
+  // fires handleSubmitDetails a second time inside that window. Both
+  // invocations read the same phone/email (neither has seen the
+  // other's insert yet), so the first call creates the pending
+  // landlord + fires the STK push, and the second collides with it -
+  // typically surfacing as "An account with this phone number already
+  // exists" even though the person only tried once. That error sends
+  // them back to redo the whole form, and only succeeds the second
+  // time because the earlier pending row's stale-cleanup path (above)
+  // now clears the way. A ref closes this gap because writing to it
+  // takes effect immediately, in the same tick as the click - unlike
+  // `loading`.
+  const submitDetailsInFlight = useRef(false);
+
+  async function handleSubmitDetails(e) {
+    e.preventDefault();
+    if (submitDetailsInFlight.current) return;
+    submitDetailsInFlight.current = true;
+    try {
+      await doHandleSubmitDetails(e);
+    } finally {
+      submitDetailsInFlight.current = false;
+    }
+  }
+
+  async function doHandleSubmitDetails(e) {
+    setError('');
+    if (!form.unitsCount || Number(form.unitsCount) < 1) {
+      setError('Please enter the number of units you want to register.');
+      return;
+    }
+    if (!form.periodMonths || Number(form.periodMonths) < 1) {
+      setError('Please enter your subscription period in months.');
+      return;
+    }
+    // SECTION D: a manually-typed code that doesn't resolve must block
+    // submission of that field's value, not silently drop it - only
+    // applies to manual entry; a link-based code is authoritative
+    // regardless of resolution state (see the effect above).
+    if (!referralFromLink && referralCode.trim() && referralNotFound) {
+      setError('No such referral code exists — please check with your BA or leave this field blank.');
+      return;
+    }
+    // DIRECT REQUEST: block submission (same as the tenant onboarding
+    // flow) until the email has been verified right here on this page.
+    if (!emailVerify.isVerified) {
+      setError('Please verify your email address before submitting.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await api.registerLandlord({
+        fullName: form.fullName,
+        phone: form.phone,
+        whatsappNumber: form.whatsappNumber,
+        email: form.email,
+        password: form.password,
+        gender: form.gender || undefined,
+        unitsCount: Number(form.unitsCount),
+        periodMonths: Number(form.periodMonths),
+        refCode: referralCode.trim() || undefined,
+        emailVerification: emailVerify.verificationToken,
+      });
+      setLandlordId(res.landlordId);
+      setAmountDue(res.amountDue);
+      // DIRECT REQUEST (same-page verification): email is already
+      // confirmed by the time this call succeeds, so "Submit" now
+      // lands straight on the Payment step - no separate
+      // "Verify your email" page in between anymore.
+      setStepIndex(1);
+    } catch (err) {
+      // err.details is an ARRAY only for the password-strength
+      // validator (utils/password.js) - join it into one readable
+      // line. Anything else (a plain string, or nothing) falls back
+      // to itself/err.message - checking Array.isArray here matters:
+      // calling .join on a non-array string used to throw INSIDE this
+      // catch block itself, before setError ever ran, which is what
+      // made a duplicate-email error look like a silent no-op.
+      // Phase 2: backend Zod validation (validate.middleware.js) returns
+      // `fields` per input - surface those messages directly.
+      const fields = fieldErrorsFromApi(err);
+      if (fields) {
+        setError(Object.values(fields).join(' '));
+      } else {
+        setError(Array.isArray(err.details) ? err.details.join(' ') : (err.details || err.message));
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // -----------------------------------------------------------------
+  // STEP 2 -> 3 : "I've paid" - DIRECT REQUEST FIX ("a landlord cannot
+  // proceed to the next step unless payment has been confirmed by
+  // either Daraja or manual confirmation by admin - OTP should not
+  // have authority to confirm/verify the account"): this used to
+  // advance to a separate OTP-entry step once payment was confirmed,
+  // and typing that OTP in was what actually flipped the account to
+  // verified. That made the OTP the real gate, not the payment. There
+  // is no OTP step anymore - this polls the backend (which self-heals
+  // by asking Safaricom directly if needed - see
+  // checkSubscriptionPaymentStatus in payment.controller.js) until the
+  // payment is confirmed one way or the other, and payment
+  // confirmation itself is what verifies the account server-side
+  // (activateLandlordAfterPayment). Once confirmed, this proceeds
+  // straight into the account - no code to enter.
+  // -----------------------------------------------------------------
+  const [paymentPolling, setPaymentPolling] = useState(false);
+  const [paymentPollError, setPaymentPollError] = useState('');
+
+  async function handlePaymentConfirmed() {
+    setPaymentPollError('');
+    setPaymentPolling(true);
+
+    const MAX_ATTEMPTS = 20; // ~60s at 3s intervals - enough for a real STK prompt + PIN entry
+    const INTERVAL_MS = 3000;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+      try {
+        const res = await api.checkSubscriptionPaymentStatus(checkoutRequestId);
+        if (res.status === 'completed') {
+          setPaymentPolling(false);
+          await proceedAfterVerification(res.token);
+          return;
+        }
+        if (res.status === 'failed') {
+          setPaymentPolling(false);
+          setPaymentPollError(
+            res.reason
+              ? `Payment was not completed: ${res.reason}. You can pay manually below instead.`
+              : 'Payment was not completed (cancelled or insufficient funds). You can pay manually below instead.'
+          );
+          // THE FIX (direct request: "when a person has insufficient
+          // funds or cancels, it doesn't cease, and the pay-manually
+          // option isn't visible"): a failed/cancelled STK attempt used
+          // to just sit there with the manual-pay link buried below as
+          // a small text toggle nobody noticed. Automatically opening
+          // the manual form the moment we know STK failed means the
+          // person isn't left guessing what to do next.
+          setShowManualPayment(true);
+          return;
+        }
+        // 'pending' - keep polling
+      } catch (err) {
+        // A single failed poll shouldn't abort the whole thing - the
+        // backend itself might just be briefly slow. Keep trying until
+        // MAX_ATTEMPTS is exhausted.
+        console.warn('Payment status poll failed, retrying:', err.message);
+      }
+      await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
+    }
+
+    setPaymentPolling(false);
+    setPaymentPollError(
+      "We couldn't confirm your payment yet. If the M-Pesa prompt failed, was cancelled, or you had insufficient funds, you can pay manually below instead."
+    );
+    setShowManualPayment(true);
+  }
+
+  // THE FIX (direct request: "it doesn't cease when the transaction is
+  // cancelled... and then I can't see pay manually"): previously
+  // handlePaymentConfirmed only ran when the user tapped "I've
+  // completed the payment" - if the STK prompt was cancelled or failed
+  // silently (insufficient funds, wrong PIN, timeout), the screen just
+  // sat on "Check your phone" forever with no indication anything went
+  // wrong, and the manual-pay fallback stayed hidden below a small text
+  // link. Auto-starting the same poll the instant this step mounts
+  // means a failure is detected and the manual form is surfaced
+  // automatically, without the person needing to know to click
+  // anything first.
+  useEffect(() => {
+    if (stepIndex !== 1 || !checkoutRequestId || manualSubmitted) return;
+    handlePaymentConfirmed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIndex, checkoutRequestId]);
+
+  // DIRECT REQUEST (reordered flow): payment only starts once the
+  // landlord actually reaches this step - i.e. after email is
+  // verified, never before. paymentInitiated guards against firing a
+  // second STK prompt on a refresh.
+  useEffect(() => {
+    if (stepIndex !== 1 || !landlordId || paymentInitiated) return;
+    let cancelled = false;
+    (async () => {
+      setPaymentInitiating(true);
+      try {
+        const res = await api.initiateLandlordPayment({ landlordId });
+        if (cancelled) return;
+        setCheckoutRequestId(res.checkoutRequestId);
+        setAmountDue(res.amountDue);
+        if (res.stkFailed) {
+          setPaymentPollError("We couldn't send the automatic M-Pesa prompt right now - pay manually below instead.");
+          setShowManualPayment(true);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setPaymentPollError(err.message || 'Could not start payment. Please try again or pay manually below.');
+        setShowManualPayment(true);
+      } finally {
+        if (!cancelled) {
+          setPaymentInitiating(false);
+          setPaymentInitiated(true);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIndex, landlordId, paymentInitiated]);
+
+  // -----------------------------------------------------------------
+  // Registration-time manual payment fallback (direct request: "there
+  // should be a UI for manual payment that when opened meanwhile gives
+  // instructions to pay on paybill 522522 acct 1341657388, the exact
+  // amount they were to pay - at the moment there is no that manual
+  // entering of payment"). Same idea as the STK poll above, but for
+  // when the prompt never arrives at all - a landlord can pay directly
+  // to RentaPay's paybill and submit the M-Pesa transaction code
+  // instead of waiting on a popup that might not come.
+  // -----------------------------------------------------------------
+  // FIX (direct request: "there is not that manual payment option...
+  // its not visible or persistent at all"): this used to start
+  // collapsed behind a small ghost-styled toggle button, only
+  // revealed on a click - easy to miss entirely, which is exactly
+  // what was reported. Now it's open by default the moment the STK
+  // step loads, right alongside "I've completed the payment" - still
+  // collapsible for anyone who doesn't want it taking up space, but
+  // no longer something you have to know to go looking for.
+  const [showManualPayment, setShowManualPayment] = useState(true);
+  const [manualForm, setManualForm] = useState({ transactionCode: '', mpesaPayerName: '', mpesaPayerPhone: '' });
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+  const [manualError, setManualError] = useState('');
+  const [manualSubmitted, setManualSubmitted] = useState(false);
+  const [manualSubmittedAt, setManualSubmittedAt] = useState(null);
+  const [manualPolling, setManualPolling] = useState(false);
+  const [manualPollError, setManualPollError] = useState('');
+
+  async function handleSubmitManualPayment(e) {
+    e.preventDefault();
+    setManualError('');
+    setManualSubmitting(true);
+    try {
+      await api.submitRegistrationManualPayment({
+        landlordId,
+        transactionCode: manualForm.transactionCode,
+        amountPaid: amountDue,
+        mpesaPayerName: manualForm.mpesaPayerName,
+        mpesaPayerPhone: manualForm.mpesaPayerPhone,
+      });
+      setManualSubmitted(true);
+      setManualSubmittedAt(new Date().toISOString());
+      pollManualPaymentStatus();
+    } catch (err) {
+      setManualError(Array.isArray(err.details) ? err.details.join(' ') : (err.details || err.message));
+    } finally {
+      setManualSubmitting(false);
+    }
+  }
+
+  async function pollManualPaymentStatus() {
+    setManualPollError('');
+    setManualPolling(true);
+    // Unlike the STK poll (which waits on Safaricom, seconds away),
+    // this is waiting on an admin to review the submission - could be
+    // minutes, not seconds. Polls less aggressively and for longer.
+    const MAX_ATTEMPTS = 40;
+    const INTERVAL_MS = 15000;
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+      try {
+        const res = await api.checkRegistrationManualPaymentStatus(landlordId);
+        if (res.status === 'completed') {
+          setManualPolling(false);
+          await proceedAfterVerification(res.token);
+          return;
+        }
+        if (res.status === 'rejected') {
+          setManualPolling(false);
+          setManualPollError('Your submitted payment could not be verified. Please double-check the transaction code and try again, or contact support.');
+          setManualSubmitted(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Manual payment status poll failed, retrying:', err.message);
+      }
+      await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
+    }
+
+    setManualPolling(false);
+    setManualPollError("Still waiting on confirmation - this can take a little while. Feel free to close this page and check back by logging in once it's approved.");
+  }
+
+  // -----------------------------------------------------------------
+  // Payment confirmed -> account verified server-side already (see
+  // activateLandlordAfterPayment). Nothing left to prove here - just
+  // get a session token and move into the setup wizard.
+  //
+  // PERMANENT FIX (direct request: "why does it loop back wanting the
+  // landlord to enter details a second time... I've fixed this so
+  // many times, I need a PERMANENT fix"): this used to call
+  // api.login({ phone, password }) here, using form.password still
+  // sitting in React state from step 0. That password is deliberately
+  // never persisted to sessionStorage (security - see the
+  // progress-persist effect above), so it only survives as long as
+  // the tab's JS memory does. Manual-payment review alone can take "a
+  // few minutes to a few hours" (ManualPaymentHelp.jsx), and even the
+  // STK path routinely means backgrounding the tab to approve the
+  // prompt in the M-Pesa app - either one can get the tab reloaded/
+  // discarded by the mobile browser. The moment that happened,
+  // form.password reset to '', the auto-login silently failed (caught,
+  // only console.warn'd), and the wizard sailed on through the
+  // property/payment-method/units steps with NO valid token - each of
+  // those steps checks for a token before calling its backend endpoint
+  // and just silently no-ops without one. The landlord filled
+  // everything in, watched it all appear to work, and only discovered
+  // nothing was actually saved once they tried to reach the dashboard
+  // for real - which IS the "have to redo it a second time" loop.
+  //
+  // The permanent fix doesn't patch that race - it removes the
+  // dependency on the password surviving in memory entirely. The
+  // backend now mints and returns a session token directly in the
+  // SAME response that confirms payment (see
+  // payment.controller.js's tokenForActivatedLandlord and
+  // landlordManualSubscriptionPayment.controller.js's matching fix) -
+  // a real, already-tied-to-this-landlordId payment (or an admin's
+  // manual confirmation) is every bit as strong an identity proof as
+  // re-checking a password. Nothing left in browser memory means
+  // nothing left for a reload, a backgrounded tab, or a multi-hour
+  // wait to lose. Works identically whether this landlord arrived
+  // fresh from step 0 or resumed via Login.jsx (resumedFromLogin) -
+  // that whole "redirect to /login and make them sign back in" branch
+  // below only fires now as a last-resort fallback, if a token is
+  // somehow missing from the response.
+  // -----------------------------------------------------------------
+  async function proceedAfterVerification(tokenFromPoll) {
+    setError('');
+
+    if (tokenFromPoll) {
+      clearStaleAccountCaches();
+      localStorage.setItem('rentapay_token', tokenFromPoll);
+      localStorage.setItem('rentapay_role', 'landlord');
+      setStepIndex(2);
+      return;
+    }
+
+    if (resumedFromLogin) {
+      // No password in memory for this session (it was typed into
+      // Login.jsx, on a previous page load) - can't auto-login here.
+      // Payment is confirmed, so a normal login will succeed and land
+      // them back on this exact step via the resumingLoggedInLandlord
+      // shortcut above.
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem('rentapay_info_message', 'Payment confirmed! Please log in to continue setting up your account.');
+      navigate('/login');
+      return;
+    }
+
+    // Fallback only - the backend should always include tokenFromPoll
+    // now. form.password is still in memory at this point in the
+    // common case (we deliberately never persist it to sessionStorage
+    // - see the progress-persist effect above - but it hasn't been
+    // cleared from state yet either).
+    try {
+      const loginRes = await api.login({ accountType: 'landlord', phone: form.phone, password: form.password });
+      clearStaleAccountCaches();
+      localStorage.setItem('rentapay_token', loginRes.token);
+      localStorage.setItem('rentapay_role', 'landlord');
+    } catch (loginErr) {
+      // Don't hard-fail progress over this - worst case the wizard's
+      // later steps silently skip their backend calls (each checks
+      // for a token before calling) and the person can just log in
+      // normally afterward to finish setup.
+      console.warn('Auto-login after payment confirmation failed, continuing without a token:', loginErr.message);
+    }
+
+    setStepIndex(2);
+  }
+
+  // -----------------------------------------------------------------
+  // STEP 3 -> 4 : property details (Setup Wizard step 1)
+  // -----------------------------------------------------------------
+  // BUG FIX ("landlord enters property details, isn't advanced, has to
+  // re-enter the same details a second time before it's accepted"):
+  // this used to guard against double-submit by checking the `loading`
+  // STATE variable, exactly like the units-submit bug documented below
+  // (see unitsSubmitInFlight) - but React state updates aren't
+  // synchronous, so there's a real window right after the first click,
+  // before the re-render that disables the button lands, where a fast
+  // double-click (or a double form-submit event) fires this handler
+  // twice. Both invocations then read the SAME stale defaultPropertyId
+  // (still null) and both call createProperty - one insert wins, the
+  // other loses and its error path sends the landlord back to redo the
+  // property step, even though it was already saved by its sibling.
+  // Retyping and resubmitting then "works" only because defaultPropertyId
+  // is now set from the first call, so the second attempt safely
+  // updates instead of colliding. A ref closes this gap because writing
+  // to it takes effect immediately, in the same tick as the click.
+  const propertySubmitInFlight = useRef(false);
+
+  async function handlePropertySubmit(e) {
+    e.preventDefault();
+    if (propertySubmitInFlight.current) return;
+    propertySubmitInFlight.current = true;
+    try {
+      await doHandlePropertySubmit();
+    } finally {
+      propertySubmitInFlight.current = false;
+    }
+  }
+
+  async function doHandlePropertySubmit() {
+    setError('');
+
+    const token = localStorage.getItem('rentapay_token');
+    if (token) {
+      setLoading(true);
+      try {
+        await api.updatePropertyDetails(
+          { estateName: property.estateName, location: property.location, county: property.county, constituency: property.constituency, description: property.description },
+          token
+        );
+
+        // Also create/update a Property row so this shows up in the
+        // property switcher and so the manager/caretaker contact can be
+        // shown to tenants (TenantPortal.jsx reads unit.properties.manager_*).
+        // Units created later in this wizard get assigned to it.
+        if (!defaultPropertyId) {
+          const res = await api.createProperty(
+            {
+              name: property.estateName,
+              location: property.location,
+              county: property.county,
+              constituency: property.constituency,
+              description: property.description,
+              mapsLink: property.mapsLink || undefined,
+              caretakerName: property.caretakerName || undefined,
+              caretakerPhone: property.caretakerPhone || undefined,
+            },
+            token
+          );
+          setDefaultPropertyId(res.property.id);
+        } else {
+          await api.updateProperty(
+            defaultPropertyId,
+            {
+              name: property.estateName,
+              location: property.location,
+              county: property.county,
+              constituency: property.constituency,
+              description: property.description,
+              mapsLink: property.mapsLink || '',
+              caretakerName: property.caretakerName || '',
+              caretakerPhone: property.caretakerPhone || '',
+            },
+            token
+          );
+        }
+      } catch (err) {
+        // FIX: this used to only warn + show an error banner, then fall
+        // through to setStepIndex(4) anyway - so a failed save (network
+        // blip, validation error) silently skipped the landlord forward
+        // with their property details never actually written. Now a
+        // failure keeps them on this step so they can see the error and
+        // retry, instead of quietly losing their data.
+        console.warn('Could not save property details:', err.message);
+        setError(`Could not save property details: ${err.message}. Please try again.`);
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+    }
+    setStepIndex(3);
+  }
+
+  // -----------------------------------------------------------------
+  // STEP 4 -> 5 : payment method (Setup Wizard step 2)
+  // -----------------------------------------------------------------
+  async function handlePaymentMethodSubmit(e) {
+    e.preventDefault();
+    setError('');
+
+    const token = localStorage.getItem('rentapay_token');
+    if (token) {
+      setLoading(true);
+      try {
+        await api.updatePaymentMethod(
+          { method: paymentMethod.method, paybillNumber: paymentMethod.paybillNumber, accountNumber: paymentMethod.accountNumber, tillNumber: paymentMethod.tillNumber, stkPhoneNumber: paymentMethod.stkPhoneNumber },
+          token
+        );
+      } catch (err) {
+        console.warn('Could not save payment method:', err.message);
+        setError(`Could not save payment method: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+    setStepIndex(4);
+  }
+
+  // -----------------------------------------------------------------
+  // STEP 5 : add units, live ledger preview (signature element)
+  // -----------------------------------------------------------------
+  function handleAddUnit(e) {
+    e.preventDefault();
+    if (!newUnit.unitName || !newUnit.rentAmount) return;
+    if (newUnit.unitType === 'Custom' && !newUnit.customUnitType.trim()) {
+      setError('Enter a custom unit type, or pick one of the preset types.');
+      return;
+    }
+
+    // Enforce the subscription's unit quota. Prefer the real value
+    // fetched from the backend; fall back to form.unitsCount only if
+    // that fetch hasn't resolved yet or failed outright - better to
+    // guess using something than to enforce nothing at all.
+    const effectiveLimit = unitLimit ?? Number(form.unitsCount) ?? null;
+    if (effectiveLimit != null && units.length >= effectiveLimit) {
+      setError(
+        `You've reached your subscription limit of ${effectiveLimit} unit${effectiveLimit === 1 ? '' : 's'}. ` +
+          `To add more, increase your unit count on your subscription first.`
+      );
+      return;
+    }
+
+    setError('');
+    const resolvedUnitType = newUnit.unitType === 'Custom' ? newUnit.customUnitType.trim() : newUnit.unitType;
+    const code = `RPA-${newUnit.unitName.replace(/\s+/g, '').toUpperCase()}-${String(units.length + 1).padStart(3, '0')}`;
+    setUnits((u) => [...u, { ...newUnit, unitType: resolvedUnitType, rentAmount: Number(newUnit.rentAmount), code, extraCharges: [] }]);
+    setNewUnit({ unitName: '', unitType: 'Bedsitter', customUnitType: '', rentAmount: '' });
+  }
+
+  // "Duplicate" - generates `duplicateCount` units from the currently
+  // filled-in unit form (name/type/rent), auto-numbered onward from
+  // the typed unit name. "A1" with a count of 8 produces A1..A8;
+  // "House" (no trailing number) produces "House 1".."House 8". Every
+  // generated unit shares the same type and rent as the typed one -
+  // that's the whole point, since most units in a building usually do.
+  function handleDuplicateUnits(e) {
+    e.preventDefault();
+    setError('');
+
+    if (!newUnit.unitName || !newUnit.rentAmount) {
+      setError('Fill in the unit name and rent first - duplication clones those details onto the rest.');
+      return;
+    }
+    if (newUnit.unitType === 'Custom' && !newUnit.customUnitType.trim()) {
+      setError('Enter a custom unit type, or pick one of the preset types.');
+      return;
+    }
+
+    const count = Number(duplicateCount);
+    if (!Number.isInteger(count) || count < 1) {
+      setError('Enter how many units to create (a whole number of 1 or more).');
+      return;
+    }
+
+    // Same subscription-quota check as adding one unit, but against
+    // the WHOLE batch - a landlord shouldn't find out unit 6 of 8
+    // silently failed partway through.
+    const effectiveLimit = unitLimit ?? Number(form.unitsCount) ?? null;
+    if (effectiveLimit != null && units.length + count > effectiveLimit) {
+      const slotsLeft = Math.max(0, effectiveLimit - units.length);
+      setError(
+        `That would add ${count} units, but your subscription only has ${slotsLeft} unit slot${slotsLeft === 1 ? '' : 's'} left ` +
+          `(limit ${effectiveLimit}, ${units.length} already added). Lower the number, or increase your unit count on your subscription first.`
+      );
+      return;
+    }
+
+    const resolvedUnitType = newUnit.unitType === 'Custom' ? newUnit.customUnitType.trim() : newUnit.unitType;
+    const rentAmount = Number(newUnit.rentAmount);
+
+    // Split the typed name into a non-numeric prefix and a trailing
+    // number, preserving zero-padding (e.g. "A01" -> "A01", "A02", ...
+    // not "A01", "A2"). No trailing number ("House") just appends
+    // " 1", " 2", ... instead.
+    const match = newUnit.unitName.match(/^(.*?)(\d+)$/);
+    const prefix = match ? match[1] : `${newUnit.unitName} `;
+    const startNum = match ? Number(match[2]) : 1;
+    const padLength = match ? match[2].length : 0;
+
+    const generated = [];
+    for (let i = 0; i < count; i += 1) {
+      const name = `${prefix}${String(startNum + i).padStart(padLength, '0')}`;
+      const code = `RPA-${name.replace(/\s+/g, '').toUpperCase()}-${String(units.length + generated.length + 1).padStart(3, '0')}`;
+      generated.push({ unitName: name, unitType: resolvedUnitType, customUnitType: newUnit.customUnitType, rentAmount, code, extraCharges: [] });
+    }
+
+    setUnits((u) => [...u, ...generated]);
+    setNewUnit({ unitName: '', unitType: 'Bedsitter', customUnitType: '', rentAmount: '' });
+    setDuplicateCount('');
+    setDuplicateOpen(false);
+  }
+
+  // BUG FIX ("Saved 0 of 22 units... unit named GE1 already exists"
+  // even though the table below already shows all 22 saved with real
+  // codes): the Continue button below only disables via the `loading`
+  // STATE variable, and React state updates aren't synchronous - there
+  // is a real window, right after the first click, before the
+  // re-render that disables the button lands. A fast double-click (or
+  // an impatient second tap while the first request is still
+  // in-flight) fires handleUnitsSubmit a second time inside that
+  // window. Both invocations then read the SAME stale `units` array
+  // (neither one has seen the other's progress yet) and both start
+  // creating from unit #1 - one wins and creates everything
+  // successfully (which is what the table beneath the error was
+  // showing), the other loses that race on unit #1 and gets a 409,
+  // reporting "saved 0" from its own stale point of view even though
+  // the sibling call already saved everything.
+  //
+  // A `loading` state check at the top of the function doesn't close
+  // this gap (same async-update problem); a ref does, because writing
+  // to it takes effect immediately, in the same tick as the click.
+  const unitsSubmitInFlight = useRef(false);
+
+  async function handleUnitsSubmit() {
+    if (unitsSubmitInFlight.current) return;
+    unitsSubmitInFlight.current = true;
+    try {
+      await doHandleUnitsSubmit();
+    } finally {
+      unitsSubmitInFlight.current = false;
+    }
+  }
+
+  async function doHandleUnitsSubmit() {
+    setError('');
+    const token = localStorage.getItem('rentapay_token');
+
+    if (!token) {
+      // No token (e.g. auto-login after OTP failed) - nothing we can
+      // persist. Let the person continue with local-only data rather
+      // than trap them; they can finish setup and add units properly
+      // once logged in normally.
+      await doHandleFinishSetup();
+      return;
+    }
+
+    setLoading(true);
+    // FIX (huge signup bug: "failed to fetch units" / "could not save
+    // unit - unit name exists" even though it clearly did save, unit
+    // count exceeding the subscription, duplicate names showing up
+    // elsewhere): this used to fire every unit's createUnit
+    // call at once with Promise.all, which raced on the same "next
+    // code" number and could fail (or exceed the subscription
+    // limit) unpredictably.
+    //
+    // DIRECT REQUEST FIX ("duplication of units takes soo long...
+    // should only take a few seconds... should add the units not just
+    // reproduce and say failed to add units"): sending them one at a
+    // time sequentially (the previous fix for the race above) closed
+    // the correctness bug but made adding many duplicated units feel
+    // slow - each unit was a full separate round trip. The backend's
+    // new POST /units/bulk endpoint does the same race-free work
+    // (existing names, next code, subscription limit) but only
+    // ONCE for the whole batch, inserting every unit together - so
+    // this is now a single request no matter how many units were
+    // duplicated, typically finishing in a couple of seconds. Units
+    // that collide with an existing name come back individually in
+    // `skipped` instead of failing the whole batch.
+    const pending = units.filter((u) => !u.id);
+    if (pending.length === 0) {
+      setLoading(false);
+      await doHandleFinishSetup();
+      return;
+    }
+    try {
+      const res = await api.createUnitsBulk(
+        {
+          units: pending.map((u) => ({ unitName: u.unitName, unitType: u.unitType, rentAmount: u.rentAmount })),
+          propertyId: defaultPropertyId || undefined,
+        },
+        token
+      );
+      const savedByName = new Map((res.units || []).map((u) => [u.unit_name.toLowerCase(), u]));
+      const skippedByName = new Map((res.skipped || []).map((s) => [s.unitName.toLowerCase(), s.reason]));
+      const updatedUnits = units.map((u) => {
+        if (u.id) return u; // already created in an earlier attempt
+        const saved = savedByName.get(u.unitName.toLowerCase());
+        return saved ? { ...u, id: saved.id, code: saved.unit_payment_code } : u;
+      });
+      setUnits(updatedUnits);
+      setLoading(false);
+
+      if (skippedByName.size > 0) {
+        const stillPending = updatedUnits.filter((u) => !u.id).length;
+        const [firstReason] = skippedByName.values();
+        setError(
+          `${res.units.length} unit${res.units.length === 1 ? '' : 's'} saved. ${skippedByName.size} skipped (${firstReason}). ` +
+            (stillPending > 0 ? `Fix the name${stillPending === 1 ? '' : 's'} above and tap "Continue" again.` : '')
+        );
+        return;
+      }
+      await doHandleFinishSetup();
+    } catch (err) {
+      setLoading(false);
+      setError(`Could not save units: ${err.message}. Nothing was lost - tap "Continue" again to retry.`);
+    }
+  }
+
+  const finishSetupInFlight = useRef(false);
+
+  async function handleFinishSetup() {
+    if (finishSetupInFlight.current) return;
+    finishSetupInFlight.current = true;
+    try {
+      await doHandleFinishSetup();
+    } finally {
+      finishSetupInFlight.current = false;
+    }
+  }
+
+  async function doHandleFinishSetup() {
+    setError('');
+    const token = localStorage.getItem('rentapay_token');
+
+    if (token) {
+      // Real completion path: this person is logged in (either they
+      // just finished OTP verification moments ago in THIS session, or
+      // they arrived here via Login.jsx's resume redirect after
+      // logging in separately). Tell the backend so
+      // setup_wizard_complete flips to true and future logins stop
+      // sending them back into this wizard - closing the loop that
+      // existed before this endpoint was added.
+      setLoading(true);
+      try {
+        await api.completeSetupWizard({}, token);
+      } catch (err) {
+        // THE FIX for "shows success, sends me to login, then the
+        // wizard just starts again": this used to only console.warn
+        // and quietly show the 'done' screen anyway, so a failed
+        // completeSetupWizard call (e.g. the must_change_password /
+        // setup_wizard_complete schema-cache bug - see
+        // sql/2026-07-fixes.sql) looked exactly like success right up
+        // until the next login bounced the landlord straight back
+        // into this wizard, with no explanation of why. Now the
+        // person actually sees that it failed and can retry, instead
+        // of the wizard silently lying about having finished.
+        setError(
+          `Could not save your setup as complete: ${err.message}. ` +
+            `Your units and property details ARE saved - tap "Continue with ${units.length} unit${units.length === 1 ? '' : 's'}" again to retry, ` +
+            `or you'll be brought back here automatically next time you log in.`
+        );
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+    }
+    // No token (e.g. testing wizard UI in isolation without ever
+    // having logged in) - nothing to call, just show the done screen.
+    setStepIndex(5);
+  }
+
+  const totalExpectedRent = units.reduce((sum, u) => sum + u.rentAmount, 0);
+
+  return (
+    <div className="register-page">
+      {/* REDESIGN (direct request): same rotating property-photo
+          background as the login screen, behind a frosted step rail
+          - the form panel itself stays a solid card since this page
+          carries dense multi-step content (pricing tables, receipts)
+          that needs to stay easily readable. */}
+      <HeroPhotoBackground
+        wrapClassName="register-page__photo-bg"
+        photoClassName="register-page__photo"
+        overlayClassName="register-page__photo-overlay"
+      />
+      <aside className="register-page__rail">
+        <div className="register-page__brand">
+          RentaPay <span>Setup</span>
+        </div>
+        <StepRail steps={STEPS} currentIndex={stepIndex} />
+      </aside>
+
+      <main className="register-page__main">
+        <div className="register-page__panel">
+          {error && <div className="api-error-banner">{error}</div>}
+
+          {/* STEP 0: Registration details */}
+          {/* REDESIGN (Premium Redesign Plan, Phase 5): card-based
+              layout on a soft cream surface (see .register-page in
+              RegisterFlow.css), fields grouped into Personal info /
+              Contact / Account / Plan sections with dividers, "I am
+              a" relabelled to "Gender", instructional copy removed,
+              verify-email only rendered once the email looks
+              complete, pricing summary restyled as a receipt-style
+              card, and the submit button is full-width/gold/disabled
+              until the whole step is valid. */}
+          {stepIndex === 0 && (
+            <>
+              <h1>Let&apos;s get you set up</h1>
+              {referredByName && (
+                <div className="register-page__referral-banner">
+                  Referred by <strong>{referredByName}</strong>
+                </div>
+              )}
+              <form onSubmit={handleSubmitDetails} className="register-form">
+                <div className="register-form-section">
+                  <h2 className="register-form-section__title">Personal info</h2>
+                  <div className="register-page__form-grid">
+                    <div className="form-field form-field--full">
+                      <label className="form-field__label" htmlFor="fullName">Full name</label>
+                      <input id="fullName" required value={form.fullName} onChange={(e) => updateForm('fullName', e.target.value)} placeholder="Jane Wanjiru" />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="referralCode">Referral code (optional)</label>
+                      <input
+                        id="referralCode"
+                        value={referralCode}
+                        onChange={(e) => !referralFromLink && setReferralCode(e.target.value.toUpperCase())}
+                        placeholder="e.g. JASRAH-4KLT7"
+                        disabled={referralFromLink}
+                        readOnly={referralFromLink}
+                        aria-invalid={referralNotFound || undefined}
+                        className={referralNotFound ? 'form-field__input--error' : undefined}
+                      />
+                      {referralFromLink ? (
+                        <p className="form-field__hint">
+                          Applied from your referral link{referredByName ? ` — referred by ${referredByName}` : ''}. This can&apos;t be changed.
+                        </p>
+                      ) : referralNotFound ? (
+                        <p className="form-field__error">
+                          No such referral code exists — please check with your BA or leave this field blank.
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="gender">Gender</label>
+                      <select id="gender" value={form.gender} onChange={(e) => updateForm('gender', e.target.value)}>
+                        <option value="">Prefer not to say</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="register-form-section">
+                  <h2 className="register-form-section__title">Contact</h2>
+                  <div className="register-page__form-grid">
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="phone">Phone number</label>
+                      <input id="phone" required value={form.phone} onChange={(e) => updateForm('phone', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="whatsappNumber">WhatsApp number<InfoTip text="Shown publicly on free vacant-unit listings so tenants can reach you on WhatsApp. Can be different from your login phone." /></label>
+                      <input id="whatsappNumber" required value={form.whatsappNumber} onChange={(e) => updateForm('whatsappNumber', e.target.value)} placeholder="07XXXXXXXX or 2547XXXXXXXX" />
+                    </div>
+                    <div className="form-field form-field--full">
+                      <label className="form-field__label" htmlFor="email">Email</label>
+                      <input id="email" type="email" required value={form.email} onChange={(e) => updateForm('email', e.target.value)} placeholder="jane@example.com" />
+                    </div>
+                    {/* DIRECT REQUEST: verification box right under the
+                        email field, same page - send a code, enter it,
+                        only then is the email considered verified.
+                        Submission is blocked (both here and server-side
+                        in registerLandlord) until it is.
+                        REDESIGN (Phase 5): only rendered once the
+                        email address actually looks complete, with a
+                        small fade-in, instead of always showing a
+                        disabled button. */}
+                    {emailLooksComplete && (
+                      <div className="form-field form-field--full register-form__email-verify-wrap">
+                        <div className="tenant-onboarding-email-verify">
+                          {emailVerify.isVerified ? (
+                            <p className="tenant-onboarding-email-verify__done">✓ Email verified</p>
+                          ) : (
+                            <>
+                              {(emailVerify.status === 'idle' || emailVerify.status === 'sending') && (
+                                <button
+                                  type="button"
+                                  className="tenant-onboarding-email-verify__btn"
+                                  onClick={emailVerify.send}
+                                  disabled={emailVerify.status === 'sending'}
+                                >
+                                  {emailVerify.status === 'sending' ? 'Sending code…' : 'Verify email'}
+                                </button>
+                              )}
+                              {(emailVerify.status === 'sent' || emailVerify.status === 'verifying') && (
+                                <div className="tenant-onboarding-email-verify__code-row">
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    placeholder="6-digit code"
+                                    value={emailVerify.code}
+                                    onChange={(e) => emailVerify.setCode(e.target.value.replace(/\D/g, ''))}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="tenant-onboarding-email-verify__btn"
+                                    onClick={emailVerify.verify}
+                                    disabled={emailVerify.status === 'verifying'}
+                                  >
+                                    {emailVerify.status === 'verifying' ? 'Verifying…' : 'Confirm code'}
+                                  </button>
+                                  <button type="button" className="tenant-onboarding-email-verify__resend" onClick={emailVerify.send} disabled={emailVerify.status === 'verifying'}>
+                                    Resend code
+                                  </button>
+                                </div>
+                              )}
+                              {emailVerify.error && <p className="api-error-banner" role="alert">{emailVerify.error}</p>}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="register-form-section">
+                  <h2 className="register-form-section__title">Account</h2>
+                  <div className="register-page__form-grid">
+                    <div className="form-field form-field--full">
+                      <label className="form-field__label" htmlFor="password">Password</label>
+                      <PasswordInput id="password" required value={form.password} onChange={(e) => updateForm('password', e.target.value)} placeholder="At least 6 characters" />
+                      <PasswordStrengthMeter password={form.password} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="register-form-section">
+                  <h2 className="register-form-section__title">Plan</h2>
+                  <div className="register-page__form-grid">
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="unitsCount">Number of units</label>
+                      <input id="unitsCount" type="number" min="1" required value={form.unitsCount} onChange={(e) => updateForm('unitsCount', e.target.value)} />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="periodMonths">Subscription period (months)<InfoTip text="Any length you want - discounts apply automatically at 3, 6, and 12 months." /></label>
+                      <input
+                        id="periodMonths"
+                        type="number"
+                        min="1"
+                        step="1"
+                        required
+                        value={form.periodMonths}
+                        onChange={(e) => updateForm('periodMonths', e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="cost-summary cost-summary--receipt">
+                    <div className="cost-summary__row">
+                      <span>KES {cost.rate.toFixed(2)} / unit / month</span>
+                      <span>{form.unitsCount} units × {form.periodMonths} mo</span>
+                    </div>
+                    {cost.discount > 0 && (
+                      <div className="cost-summary__row">
+                        <span>Discount applied</span>
+                        <span>{Math.round(cost.discount * 100)}% off</span>
+                      </div>
+                    )}
+                    <div className="cost-summary__row cost-summary__row--total">
+                      <span>Total due today</span>
+                      <span className="cost-summary__total-value">KES {cost.total.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="register-page__actions">
+                  <Button type="submit" variant="mpesa" loading={loading} disabled={!detailsStepValid} className="register-form__submit">
+                    Submit
+                  </Button>
+                </div>
+              </form>
+            </>
+          )}
+
+          {/* STEP 1: M-Pesa payment pending (email already verified inline on the details page above) */}
+          {stepIndex === 1 && (
+            <div className="mpesa-pending">
+              {paymentInitiating ? (
+                <>
+                  <h2>Starting your payment…</h2>
+                  <p className="register-page__intro u-mt-1">One moment while we set this up.</p>
+                </>
+              ) : checkoutRequestId ? (
+                <>
+                  <div className="mpesa-pending__pulse">📲</div>
+                  <h2>Check your phone</h2>
+                  <p>
+                    We sent an M-Pesa prompt to <strong>{form.phone}</strong> for KES {amountDue?.toLocaleString()}.
+                    Enter your PIN to activate your RentaPay account.
+                  </p>
+                  {paymentPollError && <div className="api-error-banner" role="alert">{paymentPollError}</div>}
+                  <div className="u-mt-6">
+                    <Button variant="primary" loading={paymentPolling} onClick={handlePaymentConfirmed}>
+                      {paymentPolling ? 'Confirming your payment…' : "I've completed the payment"}
+                    </Button>
+                  </div>
+                  {paymentPolling && (
+                    <p className="register-page__intro u-mt-4">
+                      Checking with M-Pesa - this can take up to a minute. Don't close this page.
+                    </p>
+                  )}
+                </>
+              ) : (
+                // No checkoutRequestId at all means the automatic M-Pesa
+                // push itself could never be sent (see the
+                // initiateLandlordPayment effect's res.stkFailed
+                // handling above) - nothing to poll here, so go
+                // straight to the manual-payment section below instead
+                // of pretending a prompt is on its way.
+                <>
+                  <h2>Pay to activate your account</h2>
+                  {paymentPollError && <div className="api-error-banner" role="alert">{paymentPollError}</div>}
+                </>
+              )}
+
+              {!manualSubmitted ? (
+                <div className="register-page__section-divider">
+                  <div className="register-page__section-header">
+                    <h3>Or pay manually</h3>
+                    <button
+                      type="button"
+                      className="ghost-link"
+                      onClick={() => setShowManualPayment((v) => !v)}
+                    >
+                      {showManualPayment ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  <InfoTip text={<>
+                    If the M-Pesa prompt fails, gets cancelled, or never arrives - or you'd simply rather pay this way -
+                    send the amount yourself and enter the confirmation details below.
+                  </>} />
+                  {showManualPayment && (
+                    <form onSubmit={handleSubmitManualPayment} className="u-mt-4 u-text-left register-page__fields">
+                      <PaymentDetailsCard amount={amountDue} note="Enter the M-Pesa confirmation details below - your account will be activated once an admin verifies it (usually within a few minutes)." />
+                      {manualError && <div className="api-error-banner" role="alert">{manualError}</div>}
+                      <div className="form-field">
+                        <label className="form-field__label">M-Pesa transaction code</label>
+                        <input required value={manualForm.transactionCode} onChange={(e) => setManualForm((f) => ({ ...f, transactionCode: e.target.value }))} placeholder="e.g. QGH7XXXXX" />
+                      </div>
+                      <div className="form-field">
+                        <label className="form-field__label">Name on the M-Pesa message</label>
+                        <input required value={manualForm.mpesaPayerName} onChange={(e) => setManualForm((f) => ({ ...f, mpesaPayerName: e.target.value }))} />
+                      </div>
+                      <div className="form-field">
+                        <label className="form-field__label">Phone number that paid</label>
+                        <input required value={manualForm.mpesaPayerPhone} onChange={(e) => setManualForm((f) => ({ ...f, mpesaPayerPhone: e.target.value }))} placeholder="07XXXXXXXX" />
+                      </div>
+                      <Button type="submit" variant="primary" loading={manualSubmitting}>Submit payment</Button>
+                    </form>
+                  )}
+                </div>
+              ) : (
+                <div className="register-page__section-divider">
+                  <p className="register-page__intro">
+                    {manualPolling ? 'Waiting for your payment to be verified - this page will move on automatically once it is.' : 'Submitted. Waiting for verification.'}
+                  </p>
+                  {manualPollError && <div className="api-error-banner" role="alert">{manualPollError}</div>}
+                  <ManualPaymentHelp variant="admin" submittedAt={manualSubmittedAt} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STEP 2: Setup Wizard Step 1 — Property */}
+          {stepIndex === 2 && (
+            <>
+              <span className="success-badge">✓ Payment confirmed</span>
+              <h1>Tell us about your property</h1>
+              <p className="register-page__intro">Setup Wizard — Step 1 of 4</p>
+              <form onSubmit={handlePropertySubmit} className="register-page__fields">
+                <div className="form-field">
+                  <label className="form-field__label" htmlFor="estateName">Estate name</label>
+                  <input id="estateName" required value={property.estateName} onChange={(e) => setProperty((p) => ({ ...p, estateName: e.target.value }))} placeholder="Sunrise Apartments" />
+                </div>
+                <div className="register-page__form-grid">
+                  <div className="form-field">
+                    <label className="form-field__label" htmlFor="location">Location</label>
+                    <input id="location" required value={property.location} onChange={(e) => setProperty((p) => ({ ...p, location: e.target.value }))} placeholder="Kilimani" />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-field__label" htmlFor="county">County</label>
+                    {/* FEATURE (direct request: "include a searchbar when the
+                        landlords are choosing counties"): a plain <select>
+                        with 47 counties meant scrolling through the whole
+                        list to find one. This is still a real <select> (so
+                        validation/required and the exact-match value stay
+                        intact) but paired with a text filter above it that
+                        narrows the options as you type - e.g. typing "kis"
+                        leaves only Kisumu/Kisii/Kisii-adjacent counties
+                        visible instead of all 47. */}
+                    <input
+                      type="text"
+                      placeholder="Type to search counties…"
+                      value={countySearch}
+                      onChange={(e) => setCountySearch(e.target.value)}
+                      className="u-mb-2"
+                    />
+                    <select
+                      id="county"
+                      required
+                      value={property.county}
+                      onChange={(e) => {
+                        setProperty((p) => ({ ...p, county: e.target.value, constituency: '' }));
+                        setConstituencySearch('');
+                      }}
+                    >
+                      <option value="" disabled>Select a county…</option>
+                      {filteredCounties.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label className="form-field__label" htmlFor="constituency">Constituency</label>
+                    <input
+                      type="text"
+                      placeholder={property.county ? 'Type to search constituencies…' : 'Select a county first…'}
+                      value={constituencySearch}
+                      disabled={!property.county}
+                      onChange={(e) => setConstituencySearch(e.target.value)}
+                      className="u-mb-2"
+                    />
+                    <select
+                      id="constituency"
+                      required
+                      disabled={!property.county}
+                      value={property.constituency}
+                      onChange={(e) => setProperty((p) => ({ ...p, constituency: e.target.value }))}
+                    >
+                      <option value="" disabled>{property.county ? 'Select a constituency…' : 'Select a county first…'}</option>
+                      {filteredConstituencies.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-field">
+                  <label className="form-field__label" htmlFor="description">Description (optional)</label>
+                  <input id="description" value={property.description} onChange={(e) => setProperty((p) => ({ ...p, description: e.target.value }))} placeholder="3-storey block, 12 units" />
+                </div>
+                <div className="form-field">
+                  <label className="form-field__label" htmlFor="mapsLink">Google Maps link (recommended)</label>
+                  <input
+                    id="mapsLink"
+                    type="url"
+                    value={property.mapsLink}
+                    onChange={(e) => setProperty((p) => ({ ...p, mapsLink: e.target.value }))}
+                    placeholder="https://maps.app.goo.gl/…"
+                  />
+                  <InfoTip text={<>
+                    Open Google Maps, find this property, tap Share, then paste the link here.
+                    Prospective tenants browsing vacant units will be able to tap it to see exactly where
+                    this property is.
+                  </>} />
+                </div>
+
+                {/* DIRECT REQUEST: the caretaker question used to live
+                    here too, duplicating Settings > Caretaker contacts.
+                    It's removed from setup - caretaker contact is now
+                    only ever added/edited from Settings, once the
+                    property already exists, instead of asking during
+                    onboarding. property.caretakerName/caretakerPhone
+                    stay in state (still sent as undefined below) so
+                    nothing else that reads `property` needs to change. */}
+
+                <div className="register-page__actions">
+                  <Button type="submit" variant="primary" loading={loading}>Continue</Button>
+                </div>
+              </form>
+            </>
+          )}
+
+          {/* STEP 3: Setup Wizard Step 2 — Payment method */}
+          {stepIndex === 3 && (
+            <>
+              <h1>How will rent reach you?</h1>
+              <p className="register-page__intro">Setup Wizard — Step 2 of 4</p>
+              <form onSubmit={handlePaymentMethodSubmit} className="register-page__fields">
+                <div className="form-field">
+                  <label className="form-field__label" htmlFor="method">Method</label>
+                  <select id="method" value={paymentMethod.method} onChange={(e) => setPaymentMethod((p) => ({ ...p, method: e.target.value }))}>
+                    <option value="stk">Send Money</option>
+                    <option value="paybill">Paybill</option>
+                    <option value="till">Till Number</option>
+                  </select>
+                </div>
+                {paymentMethod.method === 'stk' && (
+                  <div className="form-field">
+                    <label className="form-field__label" htmlFor="stkPhoneNumber">Phone number to send money to<InfoTip text="The M-Pesa prompt for rent payments goes to this number." /></label>
+                    <input
+                      id="stkPhoneNumber"
+                      value={paymentMethod.stkPhoneNumber || ''}
+                      onChange={(e) => setPaymentMethod((p) => ({ ...p, stkPhoneNumber: e.target.value }))}
+                      placeholder="e.g. 0712345678"
+                    />
+                  </div>
+                )}
+                {paymentMethod.method === 'paybill' && (
+                  <div className="register-page__form-grid">
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="paybillNumber">Paybill number</label>
+                      <input id="paybillNumber" value={paymentMethod.paybillNumber} onChange={(e) => setPaymentMethod((p) => ({ ...p, paybillNumber: e.target.value }))} />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-field__label" htmlFor="accountNumber">Account number</label>
+                      <input id="accountNumber" value={paymentMethod.accountNumber} onChange={(e) => setPaymentMethod((p) => ({ ...p, accountNumber: e.target.value }))} />
+                    </div>
+                  </div>
+                )}
+                {paymentMethod.method === 'till' && (
+                  <div className="form-field">
+                    <label className="form-field__label" htmlFor="tillNumber">Till number</label>
+                    <input id="tillNumber" value={paymentMethod.tillNumber} onChange={(e) => setPaymentMethod((p) => ({ ...p, tillNumber: e.target.value }))} />
+                  </div>
+                )}
+                <div className="register-page__actions">
+                  <Button type="submit" variant="primary">Continue</Button>
+                </div>
+              </form>
+            </>
+          )}
+
+          {/* STEP 4: Setup Wizard Step 3 — Units (signature ledger element) */}
+          {stepIndex === 4 && (
+            <>
+              <h1>Add your units</h1>
+              <p className="register-page__intro">
+                Setup Wizard — Step 3 of 4. Each unit gets a permanent payment code automatically.
+                {' '}
+                {(unitLimit ?? form.unitsCount) != null && (
+                  <strong>
+                    {units.length} of {unitLimit ?? form.unitsCount} units added.
+                  </strong>
+                )}
+              </p>
+
+              <form onSubmit={handleAddUnit} className="add-unit-row">
+                <div className="form-field">
+                  <label className="form-field__label" htmlFor="unitName">Unit name</label>
+                  <input id="unitName" value={newUnit.unitName} onChange={(e) => setNewUnit((u) => ({ ...u, unitName: e.target.value }))} placeholder="A1" />
+                </div>
+                <div className="form-field">
+                  <label className="form-field__label" htmlFor="unitType">Type</label>
+                  <select id="unitType" value={newUnit.unitType} onChange={(e) => setNewUnit((u) => ({ ...u, unitType: e.target.value }))}>
+                    <option>Bedsitter</option>
+                    <option>1 Bedroom</option>
+                    <option>2 Bedroom</option>
+                    <option>3 Bedroom</option>
+                    <option value="Custom">Custom…</option>
+                  </select>
+                </div>
+                {newUnit.unitType === 'Custom' && (
+                  <div className="form-field">
+                    <label className="form-field__label" htmlFor="customUnitType">Custom type</label>
+                    <input
+                      id="customUnitType"
+                      value={newUnit.customUnitType}
+                      onChange={(e) => setNewUnit((u) => ({ ...u, customUnitType: e.target.value }))}
+                      placeholder="e.g. Studio, Servant Quarter"
+                    />
+                  </div>
+                )}
+                <div className="form-field">
+                  <label className="form-field__label" htmlFor="rentAmount">Rent (KES)</label>
+                  <input id="rentAmount" type="number" value={newUnit.rentAmount} onChange={(e) => setNewUnit((u) => ({ ...u, rentAmount: e.target.value }))} placeholder="8000" />
+                </div>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  className="add-unit-row__btn"
+                  disabled={(unitLimit ?? form.unitsCount) != null && units.length >= (unitLimit ?? form.unitsCount)}
+                >
+                  + Add
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="add-unit-row__btn"
+                  onClick={() => setDuplicateOpen((open) => !open)}
+                  disabled={(unitLimit ?? form.unitsCount) != null && units.length >= (unitLimit ?? form.unitsCount)}
+                >
+                  Duplicate…
+                </Button>
+              </form>
+
+              {duplicateOpen && (
+                <form onSubmit={handleDuplicateUnits} className="add-unit-row duplicate-units-row">
+                  <div className="form-field">
+                    <label className="form-field__label" htmlFor="duplicateCount">
+                      How many units like this one? (including "{newUnit.unitName || '…'}")
+                    </label>
+                    <input
+                      id="duplicateCount"
+                      type="number"
+                      min="1"
+                      value={duplicateCount}
+                      onChange={(e) => setDuplicateCount(e.target.value)}
+                      placeholder="e.g. 8"
+                      autoFocus
+                    />
+                  </div>
+                  <InfoTip
+                    label="How does this work?"
+                    text={'Uses the name, type, and rent typed above, and numbers the rest onward automatically (e.g. "A1" \u2192 A1, A2, A3…).'}
+                  />
+                  <div className="add-unit-row__actions">
+                    <Button type="submit" variant="primary" className="add-unit-row__btn">Create units</Button>
+                    <Button type="button" variant="ghost" className="add-unit-row__btn" onClick={() => { setDuplicateOpen(false); setDuplicateCount(''); }}>Cancel</Button>
+                  </div>
+                </form>
+              )}
+
+              <div className="unit-ledger">
+                <div className="unit-ledger__header">
+                  <span>Unit</span>
+                  <span>Monthly rent</span>
+                </div>
+                {units.length === 0 ? (
+                  <div className="unit-ledger__empty">No units added yet — add your first one above.</div>
+                ) : (
+                  units.map((u, i) => (
+                    <div className="unit-ledger__row" key={i}>
+                      <span className="unit-ledger__row-name">
+                        {u.unitName} <span className="unit-ledger__code">{u.code}</span>
+                      </span>
+                      <span className="unit-ledger__row-amount">KES {u.rentAmount.toLocaleString()}</span>
+                    </div>
+                  ))
+                )}
+                {units.length > 0 && (
+                  <div className="unit-ledger__footer">
+                    <span>Expected monthly revenue</span>
+                    <span>KES {totalExpectedRent.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="register-page__actions">
+                <Button type="button" variant="primary" loading={loading} disabled={units.length === 0} onClick={handleUnitsSubmit}>
+                  Continue with {units.length} unit{units.length === 1 ? '' : 's'}
+                </Button>
+              </div>
+              <InfoTip text={<>
+                Need to add water, garbage, or other extra charges per unit? You can do that anytime after
+                setup from each unit's page on your dashboard.
+              </>} />
+            </>
+          )}
+
+          {/* STEP 5: Setup Wizard Step 4 — Done */}
+          {stepIndex === 5 && (
+            <div className="mpesa-pending">
+              <div className="mpesa-pending__icon">🎉</div>
+              <h2>Your dashboard is ready</h2>
+              <p>
+                {units.length} unit{units.length === 1 ? '' : 's'} added, expected monthly revenue KES {totalExpectedRent.toLocaleString()}.
+              </p>
+              <div className="u-mt-6">
+                {/*
+                  BUG FIX (direct request): this used to send the
+                  landlord back to /login even though completeSetupWizard
+                  just succeeded moments ago with the SAME token still
+                  sitting in sessionStorage - a completely unnecessary
+                  extra login. Worse, that follow-up login then briefly
+                  routed them back into this very wizard before finally
+                  landing on the dashboard (Login.jsx's
+                  `!res.setupWizardComplete` check was reading whatever
+                  was true at the START of that request), so a single
+                  "finish setup" click cost the landlord two logins to
+                  actually reach their dashboard. Since they're already
+                  authenticated right here, just go straight there -
+                  zero extra round trips.
+                */}
+                <Button variant="primary" onClick={() => { localStorage.removeItem(STORAGE_KEY); navigate('/dashboard'); }}>
+                  Go to my dashboard
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}

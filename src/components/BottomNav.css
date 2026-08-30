@@ -1,0 +1,191 @@
+.bottom-nav-wrap {
+  display: none;
+}
+
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  /* !important below is deliberate belt-and-suspenders: this bar is
+     now portaled onto <body> (see BottomNav.jsx) specifically so nothing
+     upstream can turn "fixed" into "fixed relative to some ancestor"
+     - but pinning position/inset/z-index here too means even a rogue
+     higher-specificity rule elsewhere in the app can't quietly pull it
+     back into normal document flow (which is what put it at the TOP of
+     the screen instead of the bottom). */
+  .bottom-nav-wrap {
+    display: flex !important;
+    position: fixed !important;
+    left: 12px !important;
+    right: 12px !important;
+    top: auto !important;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0)) !important;
+    z-index: 999 !important;
+    /* Scroll-direction show/hide (see useScrollVisibility in
+       BottomNav.jsx): slide the whole bar down out of view rather than
+       fading, and skip the transition for reduced-motion users. */
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    will-change: transform;
+  }
+
+  .bottom-nav-wrap.is-hidden {
+    transform: translateY(calc(100% + 24px + env(safe-area-inset-bottom, 0)));
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .bottom-nav-wrap.is-visible {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* FEATURE (direct request: "liquid glass" nav bar, both light and
+     dark mode). A floating frosted-glass pill instead of a flat
+     edge-to-edge bar - --glass-bg/--glass-border/--glass-shadow flip
+     tone per theme (see tokens.css) so the same rules give a light
+     frosted pill in light mode and a dark frosted pill in dark mode,
+     with no per-theme override needed here.
+     DIRECT REQUEST (latest): always visible, fixed to the bottom of
+     the screen - no scroll-based auto-hide and no manual collapse.
+     Every page using this bar reserves matching bottom padding (see
+     "room for BottomNav" in each page's CSS) so it never covers the
+     last bit of scrollable content. */
+  .bottom-nav {
+    display: flex;
+    position: relative;
+    isolation: isolate; /* keeps the sliding indicator (z-index: 0) from ever drawing over button labels (z-index: 1) */
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow:
+      0 20px 40px -12px var(--glass-shadow),
+      0 6px 16px -6px var(--glass-shadow),
+      inset 0 0 0 1px var(--glass-border);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0));
+    gap: 2px;
+    /* Entrance animation - the pill settles into place with a soft
+       spring on first mount (page load / theme switch) rather than
+       just appearing. */
+    animation: liquid-nav-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* The sliding highlight itself - one pill, same size as a single
+     tab, that glides from tab to tab instead of each tab drawing its
+     own separate background. Sits behind the buttons (z-index: 0,
+     buttons are 1 via .bottom-nav__item below) so labels/icons stay
+     readable as it passes under them. */
+  .bottom-nav__indicator {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 0;
+    /* width comes from the inline style (100 / item count) so it always
+       matches one tab's flex share exactly; translateX below moves it
+       in those same 100%-of-itself steps, so it lines up under
+       whichever tab is active regardless of how many tabs there are. */
+    border-radius: 999px;
+    background: var(--color-surface-sunken);
+    z-index: 0;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+
+  .bottom-nav__item {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2px;
+    background: none;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 2px 6px;
+    color: var(--color-text-muted, #8a8374);
+    font-size: 0.68rem;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+
+  .bottom-nav__item.is-active {
+    color: var(--color-accent, #2b6777);
+    transform: translateY(-1px);
+  }
+
+  .bottom-nav__item:active {
+    transform: scale(0.94);
+  }
+
+  .bottom-nav__icon {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  /* FIX (direct request: "big fonts... hide features - show all
+     features on screen, don't hide a single UI"): this used to be
+     `white-space: nowrap` + `text-overflow: ellipsis`, so once a
+     phone's font size was large enough, a label like "Dashboard" or
+     "Messages" got silently cut down to "Dash…" or worse - the exact
+     "hidden feature" being described, and the person had no way to
+     even tell a label was being cut off. Letting the label wrap onto
+     a second line instead means the full word is always visible - the
+     bar is slightly taller when it wraps, but nothing is ever
+     truncated or invisible.
+   */
+  .bottom-nav__label {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: center;
+    line-height: 1.15;
+  }
+
+  /* Leave room at the bottom of the page so this permanently-visible
+     bar never covers the last bit of scrollable content on mobile.
+     --bottom-nav-height is measured live off the actual rendered bar
+     (see useBottomNavHeightVar in BottomNav.jsx) so this stays correct
+     even when the bar grows taller than the 76px fallback - e.g. its
+     labels wrapping to two lines at larger accessibility font sizes.
+     The extra 24px is breathing room between the bar and the content
+     above it (on top of the bar's own bottom safe-area offset), and
+     env(safe-area-inset-bottom) is added again here for pages/devices
+     where the two paddings don't otherwise stack. */
+  .dashboard-main,
+  .tenant-portal-main,
+  .messages-page__main {
+    padding-bottom: calc(var(--bottom-nav-height, 76px) + 48px + env(safe-area-inset-bottom, 0));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav-wrap {
+    transition: none;
+  }
+}
+
+@keyframes liquid-nav-in {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav {
+    transition: none;
+    animation: none;
+  }
+  .bottom-nav__item.is-active {
+    transform: none;
+  }
+}

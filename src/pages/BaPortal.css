@@ -1,0 +1,692 @@
+.ba-portal {
+  min-height: 100vh;
+  background: var(--color-bg, #f5f6f8);
+  /* FIX (item 9): the portal shell itself must never be the thing
+     that lets a wide inner element (a fixed-width table, a wide
+     grid row) push the page wider than the viewport - this is the
+     outermost safety net, on top of the specific scroll wrappers
+     added below for the individual wide elements. */
+  /* FIX (direct request: "scrolling completely blocked on the BA
+     dashboard specifically"). `overflow-x: hidden` here was doing
+     exactly what the identical rule on html/body was already doing
+     one level up (see the long note in global.css) - forcing
+     overflow-y to auto as an unavoidable side effect and turning
+     THIS element into its own second, nested auto-scroll container,
+     stacked inside the one html/body was already creating. Two
+     nested auto-generated scroll boxes is a much less reliable setup
+     for touch scrolling than one, which is very likely why this page
+     specifically was worse than the others. `overflow-x: clip` keeps
+     the exact same horizontal clipping this line always provided,
+     without ever touching the vertical axis - so there is now zero
+     extra scroll container on this page beyond the browser's own
+     native one. */
+  overflow-x: hidden; /* fallback for browsers predating overflow: clip support */
+  overflow-x: clip;
+  width: 100%;
+}
+
+.ba-portal-main {
+  padding: 24px 20px 80px;
+  max-width: 880px;
+  margin: 0 auto;
+  /* FIX (item 9): belt-and-braces alongside .ba-portal's overflow-x -
+     without this, a child wider than the viewport (see
+     .ba-claim-list-scroll / .ba-table-scroll below) could still force
+     ba-portal-main itself to grow past 100% width on some mobile
+     browsers before the scroll wrapper's own overflow rule kicks in. */
+  max-width: min(880px, 100%);
+  box-sizing: border-box;
+}
+
+.ba-portal-main--loading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 24px;
+}
+
+.ba-portal-banner {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.ba-portal-banner--error {
+  background: #fdecec;
+  color: #a12626;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ba-portal-banner__retry {
+  flex-shrink: 0;
+  border: 1px solid #a12626;
+  background: transparent;
+  color: #a12626;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ba-portal-banner__retry:hover {
+  background: #a12626;
+  color: #fff;
+}
+
+.ba-portal-welcome h1 {
+  margin: 0 0 4px;
+  font-size: 1.4rem;
+}
+
+.ba-portal-welcome p {
+  margin: 0 0 20px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-referral-card {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.ba-referral-card__label {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.ba-referral-card__link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.ba-referral-card__link {
+  flex: 1 1 260px;
+  background: var(--color-bg, #f5f6f8);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.ba-referral-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ba-referral-card__btn {
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-surface, #fff);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ba-referral-card__btn--whatsapp {
+  background: #25d366;
+  color: #fff;
+  border-color: #25d366;
+}
+
+.ba-referral-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ba-referral-card__hint {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-portal-stub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ba-portal-stub-card {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.ba-portal-stub-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.ba-portal-stub-card p {
+  margin: 0;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.88rem;
+}
+
+.ba-portal-placeholder {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 24px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-portal-placeholder h2 {
+  margin: 0 0 8px;
+  color: var(--color-text, #111827);
+}
+
+.ba-claim-panel {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+/* Item 5: the manual "log a landlord" form is now a fallback, tucked
+   behind a toggle rather than the primary view - separated visually
+   from OnboardedLandlordsPanel above it with a top margin. */
+.ba-claim-panel--fallback {
+  margin-top: 20px;
+}
+
+.ba-claim-panel__fallback-toggle {
+  background: none;
+  border: none;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ba-claim-panel__intro {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.88rem;
+  margin: 0 0 18px;
+}
+
+.ba-claim-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.ba-claim-form__row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-claim-form__row input {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--color-text, #111827);
+}
+
+.ba-claim-result {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+}
+
+.ba-claim-result--matched {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.ba-claim-result--unmatched {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.ba-claim-result--conflict {
+  background: #fdecec;
+  color: #a12626;
+}
+
+.ba-claim-panel__list-heading {
+  margin: 24px 0 10px;
+  font-size: 1rem;
+}
+
+.ba-claim-panel__empty {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.88rem;
+}
+
+/* Item 8 - onboarded landlords as cards instead of a bare list/table. */
+.ba-onboarded-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.ba-onboarded-card {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--color-surface, #fff);
+  min-width: 0;
+}
+
+.ba-onboarded-card__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ba-onboarded-card__name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ba-onboarded-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 3px 0;
+  border-top: 1px solid var(--color-border, #f0f1f3);
+}
+
+.ba-onboarded-card__row:first-of-type {
+  border-top: none;
+}
+
+.ba-onboarded-card__label {
+  color: var(--color-text-muted, #6b7280);
+  font-weight: 600;
+}
+
+.ba-claim-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* FIX (item 9): the claim list row is a fixed multi-column grid (7
+   columns once phone/email/location/match/qualification/submitted are
+   all shown) that simply cannot compress to a narrow phone width
+   without truncating into illegibility. Rather than let the grid
+   shrink columns to nothing (or worse, spill past the screen edge),
+   this wrapper gives the row its natural width and scrolls
+   horizontally within the card - the row itself never exceeds the
+   viewport, only this inner strip does, and only when needed. */
+.ba-claim-list-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ba-claim-list-scroll .ba-claim-list {
+  min-width: 640px;
+}
+
+/* FIX (item 9): same fixed-width-table problem as the claim list
+   above - a 4-5 column data table can't meaningfully reflow on a
+   narrow screen, so it scrolls horizontally within its own card
+   instead of pushing the page wider than the viewport. */
+.ba-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ba-table-scroll .ba-earnings-panel__table {
+  min-width: 480px;
+}
+
+.ba-claim-list__row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.86rem;
+  align-items: center;
+}
+
+.ba-claim-list__status {
+  text-transform: capitalize;
+  font-weight: 600;
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+}
+
+.ba-claim-list__status--qualified,
+.ba-claim-list__status--paid {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+/* Phase 5 - dashboard/stats cards + trend/tier blocks */
+
+.ba-stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.ba-stats-cards--dashboard {
+  margin-top: 4px;
+}
+
+.ba-stats-card {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+
+.ba-stats-card__value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+}
+
+.ba-stats-card__label {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-trend-card,
+.ba-tier-card {
+  margin-top: 16px;
+}
+
+.ba-trend-card h3,
+.ba-tier-card h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.ba-tier-card__current {
+  margin: 0 0 10px;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.9rem;
+}
+
+.ba-tier-card__progress-track {
+  background: var(--color-bg, #f5f6f8);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.ba-tier-card__progress-fill {
+  background: var(--color-accent, #2563eb);
+  height: 100%;
+  border-radius: 999px;
+}
+
+.ba-tier-card__progress-label {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-tier-card__earnings-row {
+  display: flex;
+  gap: 24px;
+  margin-top: 4px;
+}
+
+.ba-tier-card__earnings-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+}
+
+.ba-tier-card__earnings-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #6b7280);
+  margin-top: 2px;
+}
+
+.ba-stats-panel {
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.ba-stats-chart-block {
+  margin-top: 18px;
+}
+
+.ba-stats-chart-block h3 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.ba-claim-panel__list-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ba-claim-panel__list-header .ba-claim-panel__list-heading {
+  margin: 0;
+}
+
+.ba-claim-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ba-claim-filter label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+  /* FIX (item 7): "date out of the box" - date inputs have a
+     browser-imposed intrinsic content width (notably wide on iOS
+     Safari) that flex-wrap alone does not shrink; without an
+     explicit basis + min-width:0 here, that intrinsic width pushed
+     the input past the card edge on narrow screens instead of
+     wrapping/shrinking with the rest of the filter row. */
+  flex: 1 1 130px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ba-claim-filter input[type='date'] {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.82rem;
+  /* FIX (item 7): force the input itself to respect its container's
+     width instead of the browser's native date-picker intrinsic
+     width, on every screen size. */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 420px) {
+  /* FIX (item 7): on very narrow phones, let each date field take
+     the full row instead of two squeezed side-by-side fields, which
+     is what was actually clipping past the card edge in the report. */
+  .ba-claim-filter label {
+    flex-basis: 100%;
+  }
+}
+
+.ba-claim-list__row {
+  grid-template-columns: 1.1fr 1fr 1.1fr 1fr 0.8fr 0.9fr 1fr;
+}
+
+.ba-claim-list__row--head {
+  background: transparent;
+  border: none;
+  padding: 0 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-claim-list__date {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* Phase 6 - Settings & Profile */
+
+.ba-settings-panel {
+  max-width: 640px;
+}
+
+.ba-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 380px;
+}
+
+.ba-settings-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.ba-settings-form input {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--color-text, #111827);
+}
+
+.ba-settings-form__readonly {
+  background: var(--color-bg-muted, #f3f4f6);
+  color: var(--color-text-muted, #6b7280);
+  cursor: not-allowed;
+}
+
+.ba-settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* Phase 17 - Earnings statement panel */
+.ba-earnings-panel__period-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 20px;
+}
+
+.ba-earnings-panel__period-bar input[type='month'],
+.ba-earnings-panel__period-bar input[type='date'] {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.88rem;
+}
+
+.ba-earnings-panel__error {
+  color: var(--color-danger, #b91c1c);
+  font-size: 0.88rem;
+  margin-bottom: 12px;
+}
+
+.ba-earnings-panel__actions {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0 20px;
+}
+
+.ba-earnings-panel__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.ba-earnings-panel__table th,
+.ba-earnings-panel__table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.ba-earnings-panel__table th {
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* Item 10 - small "why was I paid this" line under base/commission
+   cells: which unit bracket / commission tier applied. */
+.ba-earnings-panel__why {
+  font-size: 0.74rem;
+  color: var(--color-text-muted, #6b7280);
+  margin-top: 2px;
+}
+
+/* Phase 18 - Leaderboard panel */
+.ba-leaderboard-panel__hint {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.85rem;
+  margin: 6px 0 16px;
+}
+
+.ba-leaderboard-panel__row--me {
+  background: var(--color-brand-tint, #eef7f0);
+  font-weight: 600;
+}
+
+.ba-leaderboard-panel__my-rank {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}

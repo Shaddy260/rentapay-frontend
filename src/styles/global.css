@@ -1,0 +1,694 @@
+@import './tokens.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  /* FIX (direct request: "scrolling is completely blocked, mostly on
+     the landlord/BA/tenant dashboards, not all sections, admin is
+     fine"). Root cause, finally isolated: `overflow-x: hidden` looks
+     like it only touches the horizontal axis, but it does not - per
+     the CSS Overflow spec, the moment overflow-x is set to anything
+     other than `visible`, the browser is required to also silently
+     force overflow-y from `visible` to `auto`, even though nothing
+     here ever asked for that. That turns html/body into their OWN
+     internal scrolling box instead of using the browser's native,
+     viewport-level document scrolling - and the exact same thing was
+     ALSO happening a second, nested time on `.ba-portal` (BaPortal.css
+     had its own separate `overflow-x: hidden`), stacking two
+     auto-generated scroll containers inside each other on that page
+     specifically. A nested `overflow-y: auto` box like this is
+     exactly the pattern that mobile WebViews and some mobile browsers
+     are known to sometimes fail to hand touch-scroll gestures to
+     correctly, especially the more deeply nested/taller the content
+     inside it is - which lines up with what was reported: it showed
+     up worst on the pages with the most nested, scroll-heavy content
+     (landlord dashboard's various panels, the BA portal, the tenant
+     portal), was inconsistent between sections of the same page
+     depending on how deep/tall that section's content was, and never
+     showed up on the admin dashboard, which never opted into the
+     second, `.ba-portal`-style nested version of this bug at all.
+     `overflow-x: clip` fixes this at the source: it clips horizontal
+     overflow the same as `hidden` always did (so the earlier "wide
+     table pushes content off the right edge" fix stays intact), but
+     it is explicitly defined NOT to trigger that overflow-y auto side
+     effect - each axis is handled independently, so vertical
+     scrolling stays exactly what it always should have been: the
+     browser's own native, full-document scroll, with nothing of ours
+     silently substituted in its place. */
+  overflow-x: hidden; /* fallback for browsers predating overflow: clip support */
+  overflow-x: clip;
+  width: 100%;
+  /* FIX (direct request: scrolling on the dashboards feels poor/stuck).
+     Two separate things were missing at the root level:
+     1) `scroll-behavior: smooth` - without it, any in-app jump to an
+        anchor or scrollTo() call snaps instantly instead of gliding,
+        which is what reads as "poor"/janky.
+     2) `-webkit-overflow-scrolling: touch` - on iOS Safari specifically,
+        leaving this unset makes the page scroll natively-but-choppy
+        (no inertia/momentum) instead of the smooth momentum scroll
+        every native app has; this turns momentum scrolling on for the
+        whole document. */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  /* FIX (direct request: refreshing should never show a blank white
+     screen - it should behave like Kilimall's own pull-to-refresh,
+     where existing content stays on screen with a small "Refreshing..."
+     indicator instead of vanishing).
+     Mobile Chrome/Safari's OWN pull-to-refresh gesture, the one that
+     fires when someone swipes down at the very top of the page, does a
+     full document reload - the entire React app unmounts, and the
+     visible white flash before it remounts and refetches is exactly
+     the "complete whitescreen" being reported. Dashboard.jsx and
+     TenantPortal.jsx already cache their data in sessionStorage so a
+     reload rehydrates fast, but that's still a real navigation with a
+     blank frame in between; it doesn't fix the flash itself.
+     `overscroll-behavior-y: contain` turns the browser's native
+     refresh-by-reload gesture off at the root, so PullToRefresh.jsx
+     (used on Dashboard and TenantPortal) can own that same swipe
+     gesture itself, in-app, without a real navigation ever happening -
+     old data stays exactly where it is, matching the Kilimall reference. */
+  overscroll-behavior-y: contain;
+}
+
+/* =====================================================================
+   FIX (direct request: "some users have big fonts on their phones and
+   some features are hidden... the platform does not respond to auto
+   rotate - it should respond to auto rotate and side scrolling when
+   the font is big and should show all features on screen").
+   -------------------------------------------------------------------
+   Mobile Safari and some Android browsers silently INFLATE font size
+   beyond what the page's own CSS asks for (its own "readability"
+   heuristic, separate from the OS-level large-text accessibility
+   setting) - and by default it recalculates that inflation differently
+   in portrait vs. landscape, so text can visibly jump in size the
+   moment someone rotates their phone. Combined with any container
+   built for one specific font size, that jump is exactly what makes
+   buttons/labels overflow their box and get visually cut off/hidden.
+   Turning that specific auto-inflation off makes text size consistent
+   across rotation; it does NOT disable or override the OS-level large
+   text/zoom accessibility settings people actually rely on - those
+   still work normally through rem/em units, which every font-size in
+   this codebase already uses (see tokens.css).
+   ===================================================================== */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Any element explicitly marked "must not wrap or grow" is still
+   allowed to scroll internally rather than clip its content outright -
+   a plain `overflow: hidden` on a fixed-size UI chrome element (a
+   button, a pill, a nav item) can otherwise hide part of its own label
+   the moment a user's font size is larger than what the layout was
+   built for. */
+.btn, button, .status-option, .bottom-nav__item, .portal-sidebar__item {
+  min-width: 0;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography standardisation (Section 1: Visual Design & Branding) -
+   the logged-in app (dashboard, login, in-app screens) uses a single
+   sans-serif family throughout. The serif display face is reserved
+   for the public marketing landing page only - see the
+   `.landing-page` override in Landing.css, which is the one place
+   still allowed to opt back into var(--font-display). */
+h1, h2, h3 {
+  font-family: var(--font-body);
+  margin: 0;
+  color: var(--color-primary-dark);
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: var(--font-body);
+}
+
+/* CONSISTENT INPUT ANIMATION (direct request), platform default: a
+   plain field with a bottom hairline that expands outward from the
+   center on hover/focus - no boxed border. FormField.css layers its
+   own copy of this on top for form-field-wrapped inputs (including
+   the --field-underline-color error-state override); this is the
+   fallback for any input/select/textarea elsewhere in the app that
+   isn't wrapped in .form-field, so the animation reads as one
+   consistent platform-wide behavior rather than two different looks. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
+select,
+textarea {
+  border: none;
+  border-bottom: 1.5px solid var(--color-hairline);
+  border-radius: 0;
+  background-color: transparent;
+  background-image: linear-gradient(var(--color-primary), var(--color-primary));
+  background-repeat: no-repeat;
+  background-position: 50% 100%;
+  background-size: 0% 2px;
+  transition: background-size 0.3s ease, border-color 0.15s ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):hover,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):focus,
+select:hover,
+select:focus,
+textarea:hover,
+textarea:focus {
+  outline: none;
+  background-size: 100% 2px;
+}
+
+/* Platform-wide: field inputs sized to ~3/4 of their previous footprint.
+   !important is necessary here because dozens of per-component stylesheets
+   set their own padding/height/font-size on inputs with equal or higher
+   specificity - this is the one place meant to win that fight everywhere. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+  padding: 6px 9px !important;
+  font-size: 0.8125rem !important;
+  min-height: 30px !important;
+  line-height: 1.3 !important;
+}
+textarea {
+  min-height: 60px !important;
+}
+
+/* Platform-wide: label always above its field, never beside it.
+   Covers the common ".form-group" / ".field" wrapper pattern used across
+   portals. Forms using a bespoke wrapper class still need a manual check -
+   see audit notes. */
+.form-group,
+.field,
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+.form-group > label,
+.field > label,
+.input-group > label {
+  margin-bottom: 4px;
+  align-self: flex-start;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+/* Visible keyboard focus everywhere - accessibility floor */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* Shared centered-modal shell, used by every dialog in the app
+   (announcements, broadcasts, confirmations, etc) so they always open
+   in the middle of the screen with nothing clipped or pushed off to
+   the side, on any device. */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 36, 33, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-4, 16px);
+}
+
+/* DIRECT REQUEST: "when a feature is open I can still scroll/tap the
+   other visible things underneath, and tapping the popup also
+   triggers whatever's behind it." Two separate root causes, fixed
+   together:
+   1) The overlay div itself was correctly full-screen/fixed, but
+      the page BEHIND it was never actually scroll-locked - so on
+      touch devices a "tap" on the modal could double as a scroll
+      gesture on the page underneath, shifting what's under your
+      finger between touchstart and touchend and firing a tap on
+      the wrong (hidden) element. This :has() rule locks body scroll
+      the instant ANY .modal-overlay exists in the DOM, for every
+      modal in the app at once - no need to wire scroll-locking into
+      each of the 20+ components that render one individually.
+   2) Two other stylesheets (TenantPortal.css, UnitDetail.css) had
+      their own duplicate .modal-overlay rule at z-index: 100 instead
+      of this file's 1000 - depending on which stylesheet the
+      cascade picked, a modal could render UNDER other fixed page
+      elements that happened to sit at a z-index in between, making
+      it possible for a tap to land on that hidden element instead
+      of the modal on top of it. Removed those duplicates so this is
+      the only .modal-overlay definition left in the app. */
+body:has(.modal-overlay),
+body:has(.rate-reminder-overlay),
+body:has(.subscription-lock-gate) {
+  overflow: hidden;
+}
+
+.modal-shell {
+  background: var(--color-surface-raised, #fff);
+  border-radius: var(--radius-lg, 14px);
+  padding: var(--space-5, 20px);
+  width: 100%;
+  /* DIRECT REQUEST: "the other details are beyond the screen... so
+     that there's no much scrolling." max-width was a flat 420px with
+     nothing capping it to the actual viewport - on a narrow phone, a
+     wide child (like a multi-column table) could still push this
+     past the screen edge sideways, cutting off whatever's on the
+     right (a column, a button) with no visual hint anything was even
+     missing. min() keeps it at 420px on anything roomy enough, but
+     never wider than the screen itself. */
+  max-width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,0.2));
+}
+
+/* Base rule (page-specific stylesheets add sticky-header variants on
+   top of this) - any table dropped inside one of these scrolls
+   HORIZONTALLY WITHIN ITSELF when it doesn't fit, instead of the
+   table (and everything after it, like a modal's action buttons)
+   pushing the whole container wider than the screen. */
+.payments-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* FIX (direct request): the "Reward selected" modal (and any other
+   modal built on ModalShell.jsx / the plain .modal-card markup used
+   across the app) opened with no visible card behind it - content
+   floated directly over the dark .modal-overlay. Root cause: .modal-card
+   was only ever defined inside TenantPortal.css and UnitDetail.css
+   (duplicated, identically, in both), so any page that doesn't import
+   one of those two stylesheets - AdminDashboard among them - rendered
+   the class with zero background/padding/border-radius/shadow. Same
+   class of bug as the .modal-overlay z-index issue noted above; fixed
+   the same way, by keeping exactly one definition here in global.css
+   and removing the page-scoped duplicates. */
+.modal-card {
+  background: var(--color-surface-raised, #fff);
+  border-radius: var(--radius-lg, 14px);
+  padding: var(--space-5, 20px);
+  max-width: 420px;
+  width: 100%;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,0.2));
+}
+
+.modal-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4, 16px);
+}
+
+.modal-card__header h3 {
+  font-size: var(--text-lg, 1.125rem);
+  margin: 0;
+}
+
+.modal-card__close {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  color: var(--color-ink-soft, #666);
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* =====================================================================
+   FIX (direct request): on a phone, every list/table on the platform
+   (tenants, payments, complaints, admin lists - anything that's a
+   plain <table>) used to get cut off at the edge of the screen with
+   no way to reach the columns past that point, short of tilting the
+   phone to landscape. This makes every table on the platform scroll
+   horizontally within itself on narrow screens - the list scrolls,
+   nothing else on the page does. Deliberately scoped to `table`
+   only, not a blanket "make everything scrollable" rule, since the
+   request was specifically "lists only, not the whole platform".
+
+   BUG FIX (platform-wide misalignment - every list, every user type):
+   the previous version of this rule also forced `thead`, `tbody`, AND
+   `tr` to `display: table` individually. That doesn't keep them as
+   one table - it turns EACH of them into its own separate, independent
+   table, and each one computes its own column widths purely from its
+   own content, with no relationship to the others. So the header row
+   was one table, and every single body row was ANOTHER table, each
+   sizing its columns differently depending on how long that row's own
+   text happened to be. That's why headers drifted away from the data
+   under them and rows didn't line up with each other - it wasn't a
+   rendering glitch, the rows genuinely were unrelated tables sitting
+   on top of each other.
+
+   Fix: only the table itself needs to switch to a block box so it can
+   scroll on its own. `thead`/`tbody`/`tr` are left at their default
+   table-role display values (table-header-group / table-row-group /
+   table-row) instead of being pulled out into separate tables, so
+   there's exactly one column-width calculation shared by the header
+   and every row, and everything stays in straight, matching columns
+   from top to bottom while the whole thing still scrolls sideways as
+   one unit on narrow screens.
+   ===================================================================== */
+@media (max-width: 720px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+}
+
+/* Broadcast panel - continuous conversation view for sent
+   announcements (direct request: moved out of the header into the
+   side menu, remembers history, allows delete). */
+.broadcast-panel {
+  background: var(--color-surface-raised, #fff);
+  border-radius: var(--radius-lg, 14px);
+  width: 100%;
+  max-width: 480px;
+  max-height: min(80vh, 640px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,0.2));
+}
+
+.broadcast-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4, 16px) var(--space-4, 16px) 0;
+}
+
+.broadcast-panel__hint {
+  padding: 0 var(--space-4, 16px);
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+
+.broadcast-panel__thread {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.broadcast-panel__empty {
+  color: var(--color-ink-soft);
+  text-align: center;
+  margin-top: var(--space-4, 16px);
+}
+
+.broadcast-panel__bubble {
+  background: var(--color-surface-subtle, #f3f4f6);
+  border-radius: 12px;
+  padding: 10px 12px;
+  align-self: flex-end;
+  max-width: 85%;
+}
+
+.broadcast-panel__bubble-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: var(--color-ink-soft);
+  margin-bottom: 4px;
+}
+
+.broadcast-panel__bubble-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.broadcast-panel__delete {
+  border: none;
+  background: none;
+  color: #b3261e;
+  font-size: 0.75rem;
+  padding: 4px 0 0;
+  cursor: pointer;
+}
+
+.broadcast-panel__composer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: var(--space-4, 16px);
+  border-top: 1px solid var(--color-border, #e2e2e2);
+}
+
+.broadcast-panel__audience {
+  flex: 1 1 100%;
+}
+
+.broadcast-panel__input {
+  flex: 1 1 100%;
+  resize: vertical;
+  font-family: inherit;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* =====================================================================
+   UTILITY CLASSES (design-system pass, direct request)
+   ---------------------------------------------------------------------
+   The codebase leans heavily on inline `style={{...}}` for one-off
+   spacing/flex tweaks. That works, but (a) it doesn't scale as the page
+   count grows, (b) it's inconsistent (same visual gap expressed as
+   raw px in one file, rem in another), and (c) it silently breaks dark
+   mode whenever a hardcoded hex sneaks into an inline style instead of
+   a --color-* token (see tokens.css DARK MODE note above).
+
+   This is a small, generic utility layer - not a full migration of
+   every page. Start here for new code and when touching a file that
+   already has inline styles; move its inline styles onto these (or a
+   page-specific class) rather than adding more inline styles on top.
+   ===================================================================== */
+.u-flex-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.u-flex-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.u-flex-end {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.u-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.u-checkbox-row--strong {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* Rows where the label text can wrap to 2+ lines on narrow screens
+   (checkbox + long sentence + InfoTip icon) - align-items: center
+   above looks fine on one line, but once the text wraps, centering
+   against the growing text block pushes the checkbox down oddly and,
+   worse, treats the icon as its own flex item that can get shoved
+   onto an orphan line below the wrapped text instead of sitting right
+   after the last word. Wrapping the text + icon together in one
+   inline span (see UnitDetail.jsx) keeps them wrapping as a single
+   unit; align-items: flex-start here keeps the checkbox pinned to the
+   first line instead of drifting to the vertical center of a
+   now-taller row.  */
+.u-checkbox-row--wrap {
+  align-items: flex-start;
+}
+.u-checkbox-row--wrap input[type="checkbox"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.u-mt-1 { margin-top: var(--space-1); }
+.u-mt-2 { margin-top: var(--space-2); }
+.u-mt-3 { margin-top: var(--space-3); }
+.u-mt-4 { margin-top: var(--space-4); }
+.u-mt-5 { margin-top: var(--space-5); }
+.u-mt-6 { margin-top: var(--space-6); }
+.u-mt-0 { margin-top: 0; }
+
+.u-mb-1 { margin-bottom: var(--space-1); }
+.u-mb-2 { margin-bottom: var(--space-2); }
+.u-mb-3 { margin-bottom: var(--space-3); }
+.u-mb-4 { margin-bottom: var(--space-4); }
+.u-mb-0 { margin-bottom: 0; }
+
+.u-m-0 { margin: 0; }
+
+.u-text-muted {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.u-text-error {
+  color: var(--color-error);
+}
+
+.u-text-success {
+  color: var(--color-mpesa-dark);
+}
+
+.u-text-xs { font-size: var(--text-xs); }
+.u-text-sm { font-size: var(--text-sm); }
+.u-text-center { text-align: center; }
+.u-text-right { text-align: right; }
+.u-text-left { text-align: left; }
+.u-text-capitalize { text-transform: capitalize; }
+.u-font-mono { font-family: monospace; }
+.u-font-strong { font-weight: 600; }
+
+.u-inline-block { display: inline-block; }
+.u-hidden { display: none; }
+
+.u-full-width { width: 100%; }
+
+.u-block-center {
+  display: block;
+  margin: 0 auto;
+}
+
+.app-loading-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  color: var(--color-ink-soft);
+}
+
+.u-max-160 { max-width: 160px; }
+.u-max-280 { max-width: 280px; }
+.u-max-380 { max-width: 380px; }
+.u-max-420 { max-width: 420px; }
+
+.u-divider-top {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.u-max-240 { max-width: 240px; }
+.u-max-140 { max-width: 140px; }
+
+.u-label-strong {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.u-divider-top-dashed {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-hairline);
+}
+
+.u-flex-row--end {
+  align-items: flex-end;
+}
+
+.u-flex-col--stretch {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.u-flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.u-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.u-btn-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Tap-to-reveal hint toggle */
+.tap-to-reveal__toggle {
+  background: none;
+  border: 1px dashed var(--color-border, #c9c9c9);
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--color-text-secondary, #6b6b6b);
+  cursor: pointer;
+}
+
+.tap-to-reveal__toggle:hover {
+  background: var(--color-surface-hover, rgba(0, 0, 0, 0.04));
+  color: var(--color-text, #333);
+}
+
+/* Reusable "call" quick-action - tappable phone dialer link on flagged/list rows */
+.admin-table__call-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-surface-raised, #f0f0f0);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.admin-table__call-btn:hover {
+  background: var(--color-primary-soft, #dcecea);
+  transform: scale(1.06);
+}

@@ -1,0 +1,113 @@
+.admin-global-search {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+}
+
+.admin-global-search__input {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.admin-global-search__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e1d8);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+  z-index: 60;
+  max-height: 360px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.admin-global-search__result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border, #e5e1d8);
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-global-search__result:last-child {
+  border-bottom: none;
+}
+
+.admin-global-search__result:hover {
+  background: var(--color-surface-muted, #f7f4ec);
+}
+
+.admin-global-search__result-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.admin-global-search__result-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.admin-global-search__result-meta {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #8a8374);
+}
+
+.admin-global-search__result-context {
+  font-size: 0.74rem;
+  color: var(--color-text-muted, #8a8374);
+  font-style: italic;
+}
+
+.admin-global-search__badge {
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--color-surface-muted, #f0ede3);
+  color: var(--color-text-muted, #6b6455);
+}
+
+.admin-global-search__badge--landlord { background: #e6f0ff; color: #1a4fa0; }
+.admin-global-search__badge--tenant { background: #eaf7ea; color: #1e7a34; }
+.admin-global-search__badge--manager { background: #fff3e0; color: #9a5b00; }
+.admin-global-search__badge--general_manager { background: #f3e8ff; color: #6a2bb5; }
+.admin-global-search__badge--brand_ambassador { background: #ffe9ef; color: #b1235a; }
+.admin-global-search__badge--page { background: #eef2ff; color: #3346a0; }
+
+.admin-global-search__result--page {
+  background: var(--color-surface-muted, #fbfaf6);
+}
+.admin-global-search__result--page .admin-global-search__result-name::before {
+  content: '→ ';
+  color: var(--color-text-muted, #8a8374);
+}
+
+.admin-global-search__empty {
+  padding: 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #8a8374);
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .admin-global-search {
+    width: 100%;
+  }
+}

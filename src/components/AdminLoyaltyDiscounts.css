@@ -1,0 +1,214 @@
+.admin-loyalty__intro {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.9rem;
+  max-width: 760px;
+  margin: 0 0 16px;
+}
+
+.admin-loyalty__scope {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.admin-loyalty__scope select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #d1d5db);
+}
+
+.admin-loyalty__error {
+  color: var(--color-danger, #dc2626);
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+
+.admin-loyalty__note {
+  background: var(--color-bg, #f5f6f8);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+  margin-bottom: 16px;
+}
+
+.admin-loyalty__card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.admin-loyalty__card h3 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+.admin-loyalty__current-rate {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.admin-loyalty__current-rate-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+}
+
+.admin-loyalty__current-rate-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.admin-loyalty__upcoming {
+  margin-bottom: 8px;
+}
+
+.admin-loyalty__upcoming-row {
+  font-size: 0.85rem;
+  color: var(--color-accent, #2563eb);
+  margin: 2px 0;
+}
+
+.admin-loyalty__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+  margin: 0 0 12px;
+}
+
+.admin-loyalty__form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.admin-loyalty__form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.admin-loyalty__form-row input,
+.admin-loyalty__form-row select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #d1d5db);
+  font-size: 0.95rem;
+  min-width: 160px;
+}
+
+.admin-loyalty__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-loyalty__history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.admin-loyalty__history-table th {
+  text-align: left;
+  padding: 6px 10px;
+  color: var(--color-text-muted, #6b7280);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.admin-loyalty__history-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border, #f0f1f3);
+}
+
+.admin-loyalty__history-row--current td {
+  font-weight: 600;
+  color: var(--color-text, #111827);
+}
+
+.admin-loyalty__threshold-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-loyalty__threshold-row input {
+  width: 100px;
+}
+
+.admin-loyalty__table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-loyalty__table {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-bottom: 14px;
+}
+
+.admin-loyalty__table th {
+  text-align: left;
+  padding: 6px 10px;
+  color: var(--color-text-muted, #6b7280);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.admin-loyalty__table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border, #f0f1f3);
+  vertical-align: top;
+}
+
+.admin-loyalty__sub {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.admin-loyalty__success {
+  color: var(--color-success, #16a34a);
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+
+/* P4: discount history status badges */
+.admin-loyalty__status-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.admin-loyalty__status-badge--active {
+  background: #E6F4EA;
+  color: #1a7a3c;
+}
+
+.admin-loyalty__status-badge--consumed {
+  background: #E8EAF6;
+  color: #3949AB;
+}
+
+.admin-loyalty__status-badge--revoked {
+  background: #FBEAE9;
+  color: #B3261E;
+}
+
+.admin-loyalty__status-badge--expired,
+.admin-loyalty__status-badge--inactive {
+  background: #F1F1F1;
+  color: #6b7280;
+}

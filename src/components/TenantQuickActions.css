@@ -1,0 +1,105 @@
+.tenant-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 280px;
+}
+
+.tenant-quick-actions__meta {
+  color: var(--color-ink-soft, #5C6663);
+  margin: 0;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.tenant-quick-actions__status {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.tenant-quick-actions__status--active {
+  color: #1a7a44;
+}
+
+.tenant-quick-actions__status--suspended {
+  color: #A33;
+}
+
+.tenant-quick-actions__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.tenant-quick-actions__field input {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.tenant-quick-actions__error {
+  color: #A33;
+  margin: 0;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.tenant-quick-actions__notice {
+  color: #1a7a44;
+  margin: 0;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.tenant-quick-actions__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tenant-quick-actions__days {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.tenant-quick-actions__days input {
+  width: 56px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.tenant-quick-actions__btn {
+  border: 1px solid var(--color-border, #E4DFD8);
+  background: var(--color-surface, #fff);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: var(--text-sm, 0.9375rem);
+  cursor: pointer;
+}
+
+.tenant-quick-actions__btn--primary {
+  background: var(--color-ink, #22282A);
+  color: #fff;
+  border-color: var(--color-ink, #22282A);
+}
+
+.tenant-quick-actions__btn--warn {
+  border-color: #C88A2A;
+  color: #96641c;
+}
+
+.tenant-quick-actions__btn--danger {
+  border-color: #A33;
+  color: #A33;
+}
+
+.tenant-quick-actions__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

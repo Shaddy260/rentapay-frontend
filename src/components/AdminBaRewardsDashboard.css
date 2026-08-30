@@ -1,0 +1,323 @@
+.admin-ba-rewards__tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-ba-rewards__tab {
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  background: var(--color-surface-raised, #fff);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: var(--text-sm, 0.9375rem);
+  cursor: pointer;
+}
+
+.admin-ba-rewards__tab--active {
+  background: var(--color-primary, #0F3D3E);
+  color: #fff;
+  border-color: var(--color-primary, #0F3D3E);
+}
+
+.admin-ba-rewards__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-rewards__hint {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+  margin: 0;
+  max-width: 520px;
+}
+
+.admin-ba-rewards__error {
+  color: var(--color-error, #B3261E);
+  margin-bottom: 12px;
+}
+
+.admin-ba-rewards__empty {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-ba-rewards__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-ba-rewards__card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--color-surface-raised, #fff);
+  padding: 16px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(15, 61, 62, 0.06));
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-ba-rewards__card--top {
+  border-color: var(--gold, #C9A24B);
+  box-shadow: 0 0 0 1px var(--gold, #C9A24B), var(--shadow-sm, 0 1px 2px rgba(15, 61, 62, 0.06));
+}
+
+.admin-ba-rewards__card--selected {
+  border-color: var(--color-primary, #0F3D3E);
+  box-shadow: 0 0 0 2px var(--color-primary, #0F3D3E);
+}
+
+.admin-ba-rewards__checkbox {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.admin-ba-rewards__card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-ba-rewards__card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-rewards__rank {
+  font-family: var(--font-display, serif);
+  font-weight: 600;
+  color: var(--gold-dark, #8F7226);
+}
+
+.admin-ba-rewards__name {
+  font-weight: 600;
+  color: var(--color-ink, #1B2421);
+}
+
+.admin-ba-rewards__pill {
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: var(--text-xs, 0.8125rem);
+}
+
+.admin-ba-rewards__pill--muted {
+  background: var(--color-hairline, #DCD5C8);
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-ba-rewards__pill--gold {
+  background: var(--gold-soft-bg, rgba(201, 162, 75, 0.12));
+  color: var(--gold-dark, #8F7226);
+}
+
+.admin-ba-rewards__contact {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+  margin: 4px 0 10px;
+}
+
+.admin-ba-rewards__stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-rewards__stats > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-ba-rewards__stat-label {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-ink-soft, #5C6663);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.admin-ba-rewards__stat-value {
+  font-weight: 600;
+  color: var(--color-ink, #1B2421);
+}
+
+.admin-ba-rewards__net {
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-primary, #0F3D3E);
+  margin: 0;
+}
+
+/* Reward history tab */
+.admin-ba-rewards__history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-ba-rewards__history-item {
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  border-radius: var(--radius-md, 10px);
+  padding: 12px 14px;
+  background: var(--color-surface-raised, #fff);
+}
+
+.admin-ba-rewards__history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-ba-rewards__history-name {
+  font-weight: 600;
+}
+
+.admin-ba-rewards__code {
+  color: var(--color-ink-soft, #5C6663);
+  font-weight: 400;
+}
+
+.admin-ba-rewards__history-meta {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+  margin: 6px 0;
+}
+
+.admin-ba-rewards__pdf-btn {
+  padding: 4px 10px !important;
+  font-size: var(--text-xs, 0.8125rem);
+}
+
+/* Reward confirmation modal - dark teal card matching the
+   header/dark-card treatment used elsewhere on admin, per Phase 8's
+   layout spec. */
+.ba-reward-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ba-reward-confirm__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--color-primary, #0F3D3E);
+  border-radius: var(--radius-lg, 16px);
+  padding: 16px;
+}
+
+.ba-reward-confirm__chip {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.ba-reward-confirm__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-ink, #1B2421);
+}
+
+.ba-reward-confirm__field input {
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  border-radius: var(--radius-sm, 6px);
+  padding: 10px 12px;
+  font-size: var(--text-base, 1rem);
+}
+
+.ba-reward-confirm__rate-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ba-reward-confirm__rate-row input {
+  width: 100px;
+}
+
+.ba-reward-confirm__default-hint {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.ba-reward-confirm__date-row {
+  display: flex;
+  gap: 12px;
+}
+
+.ba-reward-confirm__date-row .ba-reward-confirm__field {
+  flex: 1;
+}
+
+.ba-reward-confirm__caption {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-ink-soft, #5C6663);
+  margin: 0;
+}
+
+.ba-reward-confirm__submit {
+  width: 100%;
+}
+
+.ba-reward-confirm__next {
+  border-top: 1px solid var(--color-hairline, #DCD5C8);
+  padding-top: 12px;
+}
+
+.ba-reward-confirm__next-title {
+  font-size: var(--text-sm, 0.9375rem);
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.ba-reward-confirm__next-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ba-reward-confirm__next-card {
+  background: var(--color-surface, #FAF7F2);
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  border-radius: var(--radius-sm, 6px);
+  padding: 8px 10px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.ba-reward-confirm__next-card--done {
+  border-color: var(--color-mpesa, #3DA535);
+  color: var(--color-mpesa-dark, #2D7D27);
+}
+
+.ba-reward-confirm__next-card--failed {
+  border-color: var(--color-error, #B3261E);
+  color: var(--color-error, #B3261E);
+}
+
+.ba-reward-confirm__success {
+  font-weight: 600;
+  color: var(--color-primary, #0F3D3E);
+}
+
+.ba-reward-confirm__done-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}

@@ -1,0 +1,932 @@
+.register-page {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  background: #14201a;
+  overflow: hidden;
+}
+
+.register-page__photo-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.register-page__photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 1.6s ease-in-out;
+}
+
+.register-page__photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 16, 12, 0.55) 0%, rgba(10, 16, 12, 0.7) 60%, rgba(10, 16, 12, 0.85) 100%);
+}
+
+@media (max-width: 800px) {
+  .register-page {
+    grid-template-columns: 1fr;
+  }
+  .register-page__rail {
+    display: none;
+  }
+}
+
+.register-page__rail {
+  position: relative;
+  z-index: 1;
+  /* Frosted glass rail over the photo background, matching the
+     login card treatment, instead of the old solid cream/white
+     sidebar. */
+  background: rgba(20, 30, 24, 0.45);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+  padding: var(--space-8) var(--space-6);
+  color: #fff;
+}
+
+.register-page__brand {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-xl);
+  color: #fff;
+  margin-bottom: var(--space-8);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.register-page__brand span {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.register-page__rail .step-rail__marker {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.register-page__rail .step-rail__item--done .step-rail__marker {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+}
+
+.register-page__rail .step-rail__item--active .step-rail__marker {
+  border-color: #fff;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.register-page__rail .step-rail__title {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.register-page__rail .step-rail__item--active .step-rail__title {
+  color: #fff;
+}
+
+.register-page__rail .step-rail__item--done .step-rail__title {
+  color: #fff;
+}
+
+.register-page__rail .step-rail__subtitle {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.register-page__rail .step-rail__item:not(:last-child)::after {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.register-page__main {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-8) var(--space-6);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.register-page__panel {
+  width: 100%;
+  max-width: 480px;
+  /* FIX (direct request: "should reuse the glass mechanism like the
+     login page") - previously a solid white card (see prior comment
+     below, now superseded). Same frosted-glass treatment as
+     .login-page__panel: translucent dark background + backdrop blur
+     over the rotating photo background, instead of a solid card. */
+  background: rgba(20, 30, 24, 0.45);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.35);
+  padding: var(--space-7, 2.25rem) var(--space-6) var(--space-6);
+  margin: var(--space-4) 0;
+  color: #fff;
+}
+
+/* Text/field color overrides for the glass panel - same approach as
+   Login.css's ".login-page__panel ..." rules, extended to cover the
+   extra content types this multi-step page has (section titles,
+   dividers, referral banner, static values) that the simpler login
+   form doesn't. */
+.register-page__panel h1,
+.register-page__panel h2,
+.register-page__panel h3,
+.register-page__panel .register-page__intro,
+.register-page__panel .register-page__hint,
+.register-page__panel .form-field__label,
+.register-page__panel .register-form-section__title,
+.register-page__panel .register-page__section-header h3 {
+  color: #fff;
+}
+
+.register-page__panel .register-page__intro,
+.register-page__panel .register-page__hint {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.register-page__panel .register-form-section__title {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.register-page__panel .register-form-section,
+.register-page__panel .register-page__section-divider {
+  border-top-color: rgba(255, 255, 255, 0.18);
+}
+
+.register-page__panel .form-field input,
+.register-page__panel .form-field select {
+  color: #fff;
+  border-bottom-color: rgba(255, 255, 255, 0.35);
+}
+
+.register-page__panel .form-field input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.register-page__panel .register-page__referral-banner {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.register-page__panel .form-field__static-value {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.register-page__panel .ghost-link {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* FIX (direct request: "ensure they are visible, nothing should be
+   hidden, whether in light or dark mode"): the glass text-color
+   override above forces white text at the whole-panel level, but
+   later wizard steps (property setup, extra charges) use their own
+   dense data cards - cost-summary, unit-ledger, charge-unit-card,
+   duplicate-units-row - that keep their own light card background
+   (var(--color-surface-raised) etc) intentionally, since they carry
+   tabular data best kept on a plain readable surface. Left alone
+   those would now be white text on a near-white card. Scoping their
+   text back to the site's normal ink colors so they stay legible
+   regardless of the glass panel or the app's light/dark theme. */
+.register-page__panel .cost-summary,
+.register-page__panel .unit-ledger,
+.register-page__panel .charge-unit-card,
+.register-page__panel .duplicate-units-row {
+  color: var(--color-ink);
+}
+
+.register-page__panel .cost-summary *,
+.register-page__panel .unit-ledger *,
+.register-page__panel .charge-unit-card *,
+.register-page__panel .duplicate-units-row * {
+  color: inherit;
+}
+
+.register-page__panel .unit-ledger__row-amount,
+.register-page__panel .charge-unit-card__total {
+  color: var(--color-primary-dark) !important;
+}
+
+.register-page__panel .unit-ledger__code {
+  color: var(--color-ink-soft) !important;
+}
+
+.register-page__panel .mpesa-pending p {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.register-page__panel .btn--ghost {
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.register-page__panel .btn--ghost:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+}
+
+.register-page__panel h1 {
+  /* REDESIGN (Premium Redesign Plan, Phase 7 consistency pass): the
+     global h1 default is the sans body font - override with the same
+     serif display font used on the landing hero and login, so the
+     type scale (serif headings / sans body) is actually consistent
+     across landing, signup, and login rather than just on landing. */
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-5);
+}
+
+.register-page__intro {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-6) 0;
+  line-height: 1.6;
+}
+
+.register-page__referral-banner {
+  background: var(--color-surface-raised, #f0fdf4);
+  border: 1px solid var(--color-border, #bbf7d0);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-6) 0;
+}
+
+.register-page__hint {
+  color: var(--color-ink-soft);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  margin: calc(var(--space-2) * -1) 0 var(--space-4) 0;
+}
+
+/* REDESIGN (Premium Redesign Plan, Phase 5): field groups with
+   spacing/dividers - Personal info / Contact / Account / Plan. */
+.register-form-section {
+  padding-top: var(--space-6);
+  margin-top: var(--space-6);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.register-form-section:first-child {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
+}
+
+.register-form-section__title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.register-page__form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-4);
+}
+
+/* BUG FIX (spec 8.1: "some fields extend beyond the visible viewport
+   and cannot be reached"). Grid items default to min-width: auto, i.e.
+   they won't shrink below their own content's natural intrinsic width
+   (an input's default browser sizing) - on a narrow phone, or at any
+   width once the user's font size is larger than the layout was built
+   for, that forced this two-column grid (and the page around it) wider
+   than the viewport. Since html/body use overflow-x: hidden globally,
+   that overflow wasn't scrollable either - it just clipped the field
+   out of reach entirely. Same fix already used for the extra-charges
+   grid in UnitDetail.css (.add-charge-form). */
+.register-page__form-grid .form-field {
+  min-width: 0;
+  /* REDESIGN (Premium Redesign Plan, Phase 5): consistent breathing
+     room around every field on this page - label/hint text should
+     never crowd or touch a field's own borders. */
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.register-page__form-grid .form-field__label {
+  margin-bottom: 2px;
+}
+
+.register-page__form-grid .form-field__hint,
+.register-page__form-grid .form-field__error {
+  margin-top: var(--space-2);
+}
+
+.register-page__form-grid input,
+.register-page__form-grid select {
+  min-width: 0;
+  width: 100%;
+  /* REDESIGN (Premium Redesign Plan, Phase 5): roughly double the
+     previous field thickness (was 0.85rem 1rem) for a more premium,
+     tappable feel - scoped to this page only, the shared FormField.css
+     tokens used elsewhere in the app are untouched. */
+  padding: 1.5rem 1.15rem;
+  font-size: 1.05rem;
+}
+
+/* CONSISTENCY FIX (follow-up to Phase 5): the rules above only ever
+   applied inside a two-column `.register-page__form-grid` wrapper -
+   in practice that meant only Step 0 (the initial registration form)
+   actually got the doubled field height / consistent breathing room.
+   Every later step of this same wizard (manual M-Pesa fallback,
+   property setup, payment method, single-field groups) quietly fell
+   back to the old, thinner default `.form-field` styling used
+   elsewhere in the app, even though it's the same wizard, same panel,
+   same premium redesign. `.register-page__fields` is the same
+   treatment decoupled from the two-column grid mechanics, so it can
+   be applied to ANY field inside the signup wizard - single field or
+   grid group alike - and Step 0's own grid groups already satisfy it
+   too since register-form wraps `.register-page__form-grid` groups
+   with this class as well. Deliberately NOT applied to `.add-unit-row`
+   (the units ledger row) or `.otp-input` - those are compact,
+   table-like elements by design, not standard form fields, and stay
+   at their existing intentional size. */
+.register-page__fields .form-field {
+  min-width: 0;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.register-page__fields .form-field__label {
+  margin-bottom: 2px;
+}
+
+.register-page__fields .form-field__hint,
+.register-page__fields .form-field__error {
+  margin-top: var(--space-2);
+}
+
+.register-page__fields input,
+.register-page__fields select {
+  min-width: 0;
+  width: 100%;
+  padding: 1.5rem 1.15rem;
+  font-size: 1.05rem;
+}
+
+/* A standalone field (not part of a paired two-column group) should
+   still read as a single, comfortably full-width field rather than
+   only occupying half a grid track. */
+.register-page__fields > .form-field {
+  width: 100%;
+}
+
+/* Below ~560px there isn't room for two comfortably-tappable columns
+   at all, regardless of shrinking - stack to one column so every
+   field gets full width instead of being squeezed. */
+@media (max-width: 560px) {
+  .register-page__form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.register-page__form-grid .form-field--full {
+  grid-column: 1 / -1;
+}
+
+/* REDESIGN (Premium Redesign Plan, Phase 5): the verify-email block
+   needs its own breathing room so it doesn't crowd the field above it
+   or the next section (Account/password) right after it, plus a
+   small fade-in since it only renders once the email looks complete. */
+.register-form__email-verify-wrap {
+  margin-top: calc(var(--space-3) * -1);
+  margin-bottom: var(--space-2);
+  animation: register-form-fade-in 0.25s ease;
+}
+
+@keyframes register-form-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.register-page__actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.register-page__actions .btn--ghost {
+  flex: 0 0 110px;
+}
+
+/* REDESIGN (Premium Redesign Plan, Phase 5): full-width, gold submit
+   button with a clearly muted/disabled state - overrides the
+   Button component's variant="mpesa" styling (kept as-is elsewhere
+   for the actual M-Pesa moment) just on this page's submit action. */
+.register-form__submit {
+  width: 100%;
+  background: linear-gradient(135deg, var(--gold-light, #E8CE8B), var(--gold, #C9A24B) 60%, var(--gold-dark, #8F7226)) !important;
+  color: #2b2210 !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(201, 162, 75, 0.4);
+}
+
+.register-form__submit:not(:disabled):hover {
+  filter: brightness(1.05);
+}
+
+.register-form__submit:disabled {
+  background: #e9e2d3 !important;
+  color: #a89f8c !important;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* Cost summary card */
+.cost-summary {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.cost-summary__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  padding: var(--space-2) 0;
+  color: var(--color-ink-soft);
+}
+
+.cost-summary__row--total {
+  border-top: 1px solid var(--color-hairline);
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  color: var(--color-ink);
+}
+
+.cost-summary__total-value {
+  font-family: var(--font-body);
+  color: var(--color-primary-dark);
+}
+
+/* REDESIGN (Premium Redesign Plan, Phase 5): receipt-style pricing
+   summary - light labels, bold amounts, anchored right above the
+   submit button, dashed divider rows like a physical receipt. */
+.cost-summary--receipt {
+  margin-top: var(--space-2);
+  margin-bottom: 0;
+  background: #FCF6EC;
+  border: 1px dashed var(--gold-dark, #8F7226);
+}
+
+.cost-summary--receipt .cost-summary__row {
+  color: var(--color-ink-soft);
+  font-weight: 500;
+}
+
+.cost-summary--receipt .cost-summary__row span:last-child {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.cost-summary--receipt .cost-summary__row--total {
+  border-top: 1px dashed var(--gold-dark, #8F7226);
+}
+
+.cost-summary--receipt .cost-summary__total-value {
+  font-weight: 800;
+}
+
+/* M-Pesa waiting state */
+.mpesa-pending {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+}
+
+.mpesa-pending__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-success-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-5);
+  font-size: 28px;
+}
+
+.mpesa-pending__pulse {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(61, 165, 53, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-5);
+  position: relative;
+}
+
+.mpesa-pending__pulse::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid var(--color-mpesa);
+  opacity: 0.4;
+  animation: pulse-ring 1.6s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.mpesa-pending h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-2);
+}
+
+.mpesa-pending p {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* Unit ledger preview - the signature element */
+.unit-ledger {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.unit-ledger__header {
+  background: var(--color-primary-dark);
+  color: white;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+}
+
+.unit-ledger__empty {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.unit-ledger__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-hairline);
+  font-size: var(--text-sm);
+  animation: ledger-row-in 0.25s ease;
+}
+
+.unit-ledger__row:last-child {
+  border-bottom: none;
+}
+
+@keyframes ledger-row-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.unit-ledger__row-name {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.unit-ledger__code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.6875rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--color-ink-soft);
+}
+
+.unit-ledger__row-amount {
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.unit-ledger__footer {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.add-unit-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr auto;
+  gap: var(--space-2);
+  align-items: end;
+  margin-bottom: var(--space-4);
+}
+
+.add-unit-row .form-field {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.add-unit-row input,
+.add-unit-row select {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Same off-screen-field bug as .register-page__form-grid above, worse
+   here since it's four columns instead of two - stack to a single
+   column below ~560px so every field (and the add button) gets full,
+   reachable width. */
+@media (max-width: 560px) {
+  .add-unit-row {
+    grid-template-columns: 1fr;
+  }
+  .add-unit-row__btn {
+    width: 100%;
+  }
+}
+
+.add-unit-row__btn {
+  width: auto;
+  padding: 0.7rem 1rem;
+}
+
+.otp-input {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+  margin: var(--space-5) 0;
+}
+
+.otp-input input {
+  width: 44px;
+  height: 52px;
+  text-align: center;
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.success-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-success-bg);
+  color: var(--color-mpesa-dark);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+  margin-bottom: var(--space-4);
+}
+
+.api-error-banner {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-5);
+}
+
+/* Extra charges step - per-unit card with inline charge entry */
+.charge-unit-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.charge-unit-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-3);
+}
+
+.charge-unit-card__name {
+  font-weight: 700;
+  font-size: var(--text-lg);
+  color: var(--color-primary-dark);
+}
+
+.charge-unit-card__rent {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.charge-unit-card__list {
+  margin-bottom: var(--space-3);
+}
+
+.charge-unit-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-hairline);
+  font-size: var(--text-sm);
+}
+
+.charge-unit-card__row span:first-child {
+  flex: 1;
+}
+
+.charge-unit-card__remove {
+  background: transparent;
+  border: none;
+  color: var(--color-error);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.charge-unit-card__duplicate {
+  background: transparent;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary, #6b6455);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.charge-unit-card__duplicate:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.charge-unit-card__add-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr auto;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.charge-unit-card__add-row input {
+  font-size: var(--text-sm);
+  padding: 0.55rem 0.75rem;
+  border: 1.5px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  /* Same off-screen-field bug fixed above for .register-page__form-grid
+     and .add-unit-row - grid items don't shrink below their intrinsic
+     content width by default. */
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 560px) {
+  .charge-unit-card__add-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.charge-unit-card__add-row input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.charge-unit-card__total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-hairline);
+  color: var(--color-primary-dark);
+}
+
+.duplicate-units-row {
+  margin-top: var(--space-2, 8px);
+  padding: var(--space-3, 12px);
+  background: var(--color-surface, #f7f7f5);
+  border: 1px dashed var(--color-border, #d8d8d5);
+  border-radius: var(--radius-md, 8px);
+  flex-wrap: wrap;
+}
+
+.duplicate-units-row__hint {
+  flex-basis: 100%;
+  margin: 4px 0 8px;
+}
+
+.add-unit-row__actions {
+  display: flex;
+  gap: var(--space-2, 8px);
+}
+
+.register-page__section-divider {
+  margin-top: var(--space-6);
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-5);
+}
+
+.register-page__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.register-page__section-header h3 {
+  font-size: var(--text-base);
+  margin: 0;
+}
+
+/* Inline email verification box under the email field on the
+   "Your details" step - same visual pattern as
+   TenantOnboarding.css's .tenant-onboarding-email-verify (styles
+   duplicated here since RegisterFlow doesn't import that stylesheet). */
+.tenant-onboarding-email-verify {
+  margin-top: -0.4rem;
+}
+
+/* DIRECT REQUEST: the OTP box and its Confirm button were too small/
+   easy to miss next to the email field above them - bumped both up
+   to match (roughly) the weight of the main form-field inputs/
+   buttons elsewhere on this page, instead of the compact secondary-
+   action sizing this shared with TenantOnboarding.css's version. */
+.tenant-onboarding-email-verify__btn {
+  padding: 0.85rem 1.1rem;
+  border-radius: 10px;
+  border: 2px solid #2563eb;
+  background: #eef4ff;
+  color: #2563eb;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tenant-onboarding-email-verify__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.tenant-onboarding-email-verify__code-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tenant-onboarding-email-verify__code-row input {
+  width: 160px;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 2px solid #d1d5db;
+  font-size: 1.15rem;
+  letter-spacing: 0.2em;
+}
+
+.tenant-onboarding-email-verify__resend {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tenant-onboarding-email-verify__done {
+  color: #15803d;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin: 0;
+}

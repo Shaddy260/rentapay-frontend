@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- FIX (direct request: deploys should reach every account, not
+         just new ones): a hint to browsers/CDNs not to cache this
+         entry file long-term - it's what points at the current
+         deploy's hashed JS/CSS bundle, so caching it defeats the
+         point of content-hashed filenames. Belt-and-suspenders
+         alongside src/components/UpdateChecker.jsx, which catches it
+         even where a host ignores this. -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO (direct request: "when I search rentapay on Google mine
+         doesn't appear... or when one searches rental/vacant houses
+         sites"). None of this existed before - no description, no
+         Open Graph/Twitter preview, no canonical URL, no structured
+         data. This alone doesn't guarantee ranking (that also needs
+         Search Console submission + inbound links + time - see the
+         chat response), but a page with none of this is close to
+         invisible to search engines regardless of how good the
+         product is. Title/description here are for the general
+         "RentaPay" brand search; the vacant-listings-specific page
+         (PublicListings.jsx, at /find-a-house) has its own
+         document.title set at runtime (see src/pages/PublicListings.jsx)
+         for "vacant houses"/"rental" intent searches specifically. -->
+    <title>RentaPay — Property & Rent Management for Landlords in Kenya | Find Vacant Houses</title>
+    <meta name="description" content="RentaPay is Kenya's property management platform for landlords, property managers, and caretakers — collect rent via M-Pesa (manually or fully automatically with your own Till/Paybill), track tenants and units, and manage every property from one dashboard. Browse vacant houses and rental units for free, no account needed." />
+    <meta name="keywords" content="RentaPay, property management Kenya, rental management software, landlord software Kenya, rent collection M-Pesa, automatic rent collection, M-Pesa STK push landlord, vacant houses Kenya, rental houses Kenya, apartment management system, tenant management" />
+    <link rel="canonical" href="https://rentapay.co.ke/" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RentaPay" />
+    <meta property="og:title" content="RentaPay — Property & Rent Management for Landlords in Kenya" />
+    <meta property="og:description" content="Collect rent via M-Pesa — manually or fully automatically with your own Till/Paybill — manage tenants and units, and browse vacant houses for rent — all in one place." />
+    <meta property="og:url" content="https://rentapay.co.ke/" />
+    <meta property="og:image" content="https://rentapay.co.ke/icon-512.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="RentaPay — Property & Rent Management for Landlords in Kenya" />
+    <meta name="twitter:description" content="Collect rent via M-Pesa — manually or fully automatically with your own Till/Paybill — manage tenants and units, and browse vacant houses for rent — all in one place." />
+    <meta name="twitter:image" content="https://rentapay.co.ke/icon-512.png" />
+
+    <!-- Structured data: helps Google understand what RentaPay IS
+         (a software product/service, not just an unlabeled page),
+         which can also earn a richer search-result snippet. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "RentaPay",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://rentapay.co.ke/",
+        "description": "Property and rent management platform for landlords, property managers, and caretakers in Kenya. Collect rent via M-Pesa manually or fully automatically with your own Till/Paybill, manage tenants and units, and browse vacant rental listings.",
+        "areaServed": "KE",
+        "offers": {
+          "@type": "Offer",
+          "priceCurrency": "KES"
+        }
+      }
+    </script>
+
+    <!-- PWA install support (direct request: "an app I can download") -
+         the manifest + icons below are what let a browser offer
+         "Install app" / "Add to Home Screen", turning this same web
+         app into something with its own icon and standalone window,
+         with zero app-store review needed. -->
+    <link rel="manifest" href="/manifest.json" id="rentapay-manifest-link" />
+    <!-- FEATURE (direct request: admin needs their own separate
+         installable app that opens straight to the admin dashboard,
+         instead of always landing on the regular landlord/tenant
+         login like the main installed app does): a browser reads
+         whichever manifest this <link> points to AT THE MOMENT
+         "Add to Home Screen" / "Install" is tapped, so swapping the
+         href before that happens - based purely on the current
+         path, no build step or separate deploy needed - makes the
+         SAME app installable as two distinct home-screen icons with
+         two different start_urls. This must run synchronously,
+         before the browser evaluates the manifest for an install
+         prompt, so it's an inline script here rather than something
+         in a lazy-loaded React component. Keep this admin path in
+         sync with VITE_ADMIN_PATH (see src/App.jsx) if that's ever
+         overridden away from the default. -->
+    <script>
+      (function () {
+        var ADMIN_PATH = '/admin-portal-access-secret';
+        // The literal value above is written in at build time by
+        // scripts/write-admin-path.js, which reads the VITE_ADMIN_PATH
+        // env var (falling back to the default above if it's unset) and
+        // rewrites this exact line - see that script for details. This
+        // is a plain string replacement done by our own script, not
+        // Vite's built-in HTML token substitution, so nothing here
+        // needs Vite to inject anything at build time.
+        if (ADMIN_PATH && ADMIN_PATH.charAt(0) === '/' && window.location.pathname.indexOf(ADMIN_PATH) === 0) {
+          document.getElementById('rentapay-manifest-link').setAttribute('href', '/manifest-admin.json');
+        }
+        // SECTION 3 (General Manager downloadable app shortcut):
+        // "matching how other account types can download a PWA/APK
+        // shortcut that opens straight to their own login screen,
+        // General Managers get the same." Same mechanism as
+        // ADMIN_PATH above - MANAGER_PATH is written in at build time
+        // by scripts/write-manager-path.js (reads VITE_MANAGER_PATH,
+        // falls back to '/manager-account'), so this can be changed
+        // without touching code, just like the admin path.
+        var MANAGER_PATH = '/manager-account';
+        if (MANAGER_PATH && MANAGER_PATH.charAt(0) === '/' && window.location.pathname.indexOf(MANAGER_PATH) === 0) {
+          document.getElementById('rentapay-manifest-link').setAttribute('href', '/manifest-manager.json');
+        }
+      })();
+    </script>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="theme-color" content="#1f6f5c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+

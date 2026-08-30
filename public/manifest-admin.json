@@ -1,0 +1,36 @@
+{
+  "name": "RentaPay Admin",
+  "short_name": "RentaPay Admin",
+  "description": "RentaPay admin portal — moderation, subscriptions, and platform oversight.",
+  "start_url": "/admin-portal-access-secret",
+  "scope": "/admin-portal-access-secret",
+  "display": "standalone",
+  "background_color": "#faf8f3",
+  "theme_color": "#1f6f5c",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

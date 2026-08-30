@@ -1,0 +1,1821 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAppNavigate as useNavigate } from '../hooks/useAppNavigate.js';
+import { useBadgeAlert } from '../utils/useBadgeAlert.js';
+import Button from '../components/Button.jsx';
+import PasswordInput from '../components/PasswordInput.jsx';
+import Avatar from '../components/Avatar.jsx';
+import TenantContactCard from '../components/TenantContactCard.jsx';
+import ChatThreadList from '../components/ChatThreadList.jsx';
+import ChatConversation from '../components/ChatConversation.jsx';
+import PortalSidebar from '../components/PortalSidebar.jsx';
+import AdminStatistics from '../components/AdminStatistics.jsx';
+import AdminRevenueDashboard from '../components/AdminRevenueDashboard.jsx';
+import AdminCredentialsPanel from '../components/AdminCredentialsPanel.jsx';
+import GeneralManagersPanel from '../components/GeneralManagersPanel.jsx';
+import AdminChangePasswordPanel from '../components/AdminChangePasswordPanel.jsx';
+import AdminHelpContactSettings from '../components/AdminHelpContactSettings.jsx';
+import SupportChatWidget from '../components/SupportChatWidget.jsx';
+import SupportAnalyticsPanel from '../components/SupportAnalyticsPanel.jsx';
+import AdminRatingFlags from '../components/AdminRatingFlags.jsx';
+import AdminReportedAccounts from '../components/AdminReportedAccounts.jsx';
+import AdminBrandAmbassadors from '../components/AdminBrandAmbassadors.jsx';
+import AdminBaRewardsDashboard from '../components/AdminBaRewardsDashboard.jsx';
+import AdminFinancialOverview from '../components/AdminFinancialOverview.jsx';
+import AdminBaPayoutReview from '../components/AdminBaPayoutReview.jsx';
+import AdminBaQualificationDryRun from '../components/AdminBaQualificationDryRun.jsx';
+import AdminBaReconciliation from '../components/AdminBaReconciliation.jsx';
+import AdminBaSecurityReport from '../components/AdminBaSecurityReport.jsx';
+import AdminOnboardedLandlords from '../components/AdminOnboardedLandlords.jsx';
+import AdminLandlordLeads from '../components/AdminLandlordLeads.jsx';
+import AdminSubscriptionPricing from '../components/AdminSubscriptionPricing.jsx';
+import AdminPlatformPaymentSettings from '../components/AdminPlatformPaymentSettings.jsx';
+import AdminLoyaltyDiscounts from '../components/AdminLoyaltyDiscounts.jsx';
+import LandlordEditModal from '../components/LandlordEditModal.jsx';
+import { downloadCsv } from '../utils/downloadCsv.js';
+import Faq from '../components/Faq.jsx';
+import IncomingItemsBanner from '../components/IncomingItemsBanner.jsx';
+import GmPendingActionsPanel from '../components/GmPendingActionsPanel.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import LandlordManualPaymentConfirmations from '../components/LandlordManualPaymentConfirmations.jsx';
+import { api, ApiError } from '../api/client.js';
+import { isStandalone } from '../utils/useInstallPrompt.js';
+import '../components/InstallAppMenuItem.css';
+import NotificationsBell from '../components/NotificationsBell.jsx';
+import AdminGlobalSearch from '../components/AdminGlobalSearch.jsx';
+import TenantQuickActions from '../components/TenantQuickActions.jsx';
+import { ADMIN_PAGE_INDEX } from '../data/pageSearchIndex.js';
+import { initPushSubscription } from '../utils/push.js';
+import { useSharedPoll } from '../utils/sharedPoll.js';
+import './AdminDashboard.css';
+import Skeleton from '../components/Skeleton.jsx';
+import InfoTip from '../components/InfoTip.jsx';
+
+/**
+ * Blueprint section 13: Super Admin Panel. The platform owner's view -
+ * platform-wide metrics (13.1), landlord management with suspend/
+ * activate/delete (13.2), activity log, and emergency lockdown.
+ *
+ * Item B / A from the request tracker: the summary cards used to be
+ * static numbers and there was nowhere to search a long landlord
+ * list. Both are now real: each card opens a drill-down (tenants
+ * list / units list / revenue breakdown / expiring-soon with a
+ * renewal-reminder sender), and the Landlords tab has a live search
+ * box. There's also a new Help Requests tab (item F).
+ */
+// FIX (direct request: "no showing blank white screens with
+// skeletons while loading... should be 100 percent cached"). Metrics
+// reset to null on every mount already stripped the full-page
+// blocker (see the `error && !metrics && !loading` note below), but
+// the overview tab still showed a Skeleton in place of real numbers
+// on every hard refresh, because `metrics` had nothing to seed from.
+// Mirrors Dashboard.jsx's DASHBOARD_CACHE_KEY pattern exactly: read
+// the last-known-good metrics out of sessionStorage synchronously so
+// the very first paint already has real numbers, then load() below
+// still fires immediately and silently swaps in the fresh result.
+const ADMIN_METRICS_CACHE_KEY = 'rentapay_admin_metrics_cache';
+function readAdminMetricsCache() {
+  try {
+    const raw = sessionStorage.getItem(ADMIN_METRICS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+function writeAdminMetricsCache(value) {
+  try {
+    sessionStorage.setItem(ADMIN_METRICS_CACHE_KEY, JSON.stringify(value));
+  } catch {
+    // non-fatal - background refresh still works either way.
+  }
+}
+
+export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const token = localStorage.getItem('rentapay_token');
+  const role = localStorage.getItem('rentapay_role'); // 'admin' | 'general_manager' - GM shares this exact dashboard (Section 5)
+  // FIX ("download the app should be a TWA, not a PWA"): this used to
+  // drive the beforeinstallprompt PWA flow via useInstallPrompt(); now
+  // it just always offers the real signed APK download (unless
+  // already running as the installed standalone app), with iOS's
+  // "Add to Home Screen" as the one platform where a native APK
+  // install isn't possible at all.
+  const canOfferInstall = !isStandalone();
+  const installOnIOS = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  const APK_DOWNLOAD_PATH = '/downloads/app-release-signed.apk';
+  const [showIOSInstallSteps, setShowIOSInstallSteps] = useState(false);
+
+  const [metrics, setMetrics] = useState(() => readAdminMetricsCache());
+  const [landlords, setLandlords] = useState([]);
+  const [activityLog, setActivityLog] = useState([]);
+  // FIX ("admin panel should remember the page I last was at on
+  // refresh"): activeTab used to always reset to 'overview' on every
+  // page load/refresh, no matter which section the admin was actually
+  // on. It's now seeded from localStorage on first render, and every
+  // setActiveTab call below (via the wrapped setter) also writes the
+  // new value back - so a refresh (or reopening the tab later) lands
+  // exactly where the admin left off instead of jumping to Overview.
+  const [activeTab, setActiveTabState] = useState(() => {
+    try {
+      return localStorage.getItem('rentapay_admin_active_tab') || 'overview';
+    } catch {
+      return 'overview';
+    }
+  });
+  const setActiveTab = useCallback((tab) => {
+    setActiveTabState(tab);
+    try {
+      localStorage.setItem('rentapay_admin_active_tab', tab);
+    } catch {
+      // localStorage unavailable (private browsing, etc) - just skip persistence
+    }
+  }, []);
+  const [selectedThread, setSelectedThread] = useState(null);
+  const [replyToHelpRequest, setReplyToHelpRequest] = useState(null);
+  // PHASE 11 - carries a {baId, date} from the BA Security Report's
+  // "Review" links into the Reconciliation tool's form, pre-filled.
+  const [baReconcilePrefill, setBaReconcilePrefill] = useState(null);
+  const [loading, setLoading] = useState(() => !readAdminMetricsCache());
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [showLockdownConfirm, setShowLockdownConfirm] = useState(false);
+  const [lockdownStatus, setLockdownStatus] = useState(null);
+  const [lockdownReason, setLockdownReason] = useState('maintenance');
+  const [customReason, setCustomReason] = useState('');
+
+  const [incompleteSignups, setIncompleteSignups] = useState([]);
+  const [incompleteSignupsLoaded, setIncompleteSignupsLoaded] = useState(false);
+
+  const [landlordSearch, setLandlordSearch] = useState('');
+  const [landlordStatusFilter, setLandlordStatusFilter] = useState('all'); // 'all' | 'active' | 'suspended'
+  const [drillDownHighlightEmail, setDrillDownHighlightEmail] = useState('');
+  // Deep-link support: when a tenant is tapped in global search, we jump to
+  // the units drilldown filtered/highlighted to that tenant's unit (Level A -
+  // see tenant detail view prompt) rather than opening a page built for the
+  // landlord's own portal (UnitDetail.jsx assumes a landlord token).
+  const [drillDownHighlightUnitId, setDrillDownHighlightUnitId] = useState('');
+  // Tenant "account actions" (warn/suspend/unsuspend) opened from a
+  // Global Search result - see TenantQuickActions.jsx.
+  const [tenantQuickActionsTarget, setTenantQuickActionsTarget] = useState(null);
+  const [gmSearchPrefill, setGmSearchPrefill] = useState('');
+  // Global-search deep-link for a Brand Ambassador result - jumps
+  // straight to their roster row (see AdminBrandAmbassadors.jsx).
+  const [baSearchHighlightId, setBaSearchHighlightId] = useState('');
+  // Managers/caretakers live nested under their landlord (same
+  // dashboard/data model as the landlord - see propertyManager
+  // controller's doc comment), rather than getting their own admin
+  // tab. expandedLandlordId tracks which landlord row currently has
+  // its managers/caretakers panel open; landlordManagersById caches
+  // what's been fetched per landlord so re-expanding is instant.
+  const [expandedLandlordId, setExpandedLandlordId] = useState('');
+  const [landlordManagersById, setLandlordManagersById] = useState({});
+  const [landlordManagersLoading, setLandlordManagersLoading] = useState(false);
+  const [landlordManagersError, setLandlordManagersError] = useState('');
+  // When a manager/caretaker is tapped in global search, we expand
+  // their landlord's panel and highlight this specific row in it.
+  const [managerHighlightId, setManagerHighlightId] = useState('');
+  const [expandedActivityDays, setExpandedActivityDays] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [editingLandlord, setEditingLandlord] = useState(null); // { id, name } | null
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcastTargetGroup, setBroadcastTargetGroup] = useState('all');
+  // FIX ("deleting a landlord or locking down the platform should
+  // require the admin password"): both actions now route through this
+  // single confirmation modal, which re-collects the admin's password
+  // and only proceeds once the backend confirms it's correct.
+  const [pendingDangerAction, setPendingDangerAction] = useState(null); // { type: 'delete-landlord' | 'lockdown' | 'set-landlord-status' | 'resume-lockdown', label, landlordId?, status? }
+  const [dangerPassword, setDangerPassword] = useState('');
+  const [dangerError, setDangerError] = useState('');
+  const [broadcastSending, setBroadcastSending] = useState(false);
+
+  function dateKeyOf(dateString) {
+    const d = new Date(dateString);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  // A manager and a caretaker both arrive as requester_type 'manager' -
+  // requester_role_level is what actually tells them apart.
+  function helpCategoryOf(h) {
+    if (h.requester_type === 'manager' && h.requester_role_level === 'caretaker') return 'caretaker';
+    return h.requester_type || 'guest';
+  }
+
+  function toggleHelpDay(dateKey) {
+    setExpandedHelpDays((prev) => (prev.includes(dateKey) ? prev.filter((k) => k !== dateKey) : [...prev, dateKey]));
+  }
+
+  // "Reply" on a help request (direct request: "add a UI to reply
+  // directly - when I tap reply it opens the message to that specific
+  // user"). Rather than a separate reply box, this jumps to the
+  // existing Messages tab with that person's admin<->landlord or
+  // admin<->tenant chat thread already selected - one reply mechanism
+  // for the whole admin portal instead of two.
+  async function handleReplyToHelpRequest(h) {
+    setError('');
+    setReplyBusyId(h.id);
+    try {
+      const res = await api.getHelpReplyThread(h.id, token);
+      if (!res.replyable) {
+        setError(res.reason || 'This request can\u2019t be replied to in-app.');
+        return;
+      }
+      setSelectedThread(res.thread);
+      const replyToHelpRequest = {
+        id: null,
+        sender_name: `Help request from ${h.name} (${helpCategoryOf(h)})`,
+        body: h.message,
+      };
+      setReplyToHelpRequest(replyToHelpRequest);
+      navigate('/messages', { state: { directThread: res.thread, initialReplyTo: replyToHelpRequest } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setReplyBusyId(null);
+    }
+  }
+
+  async function confirmHelpDelete() {
+    if (!pendingHelpDelete) return;
+    setHelpDeleteBusy(true);
+    try {
+      await api.deleteHelpRequest(pendingHelpDelete, token);
+      setHelpRequests((prev) => prev.filter((h) => h.id !== pendingHelpDelete));
+      setPendingHelpDelete(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setHelpDeleteBusy(false);
+    }
+  }
+
+  const activityGroups = useMemo(() => {
+    const todayKey = dateKeyOf(new Date());
+    const yesterdayKey = dateKeyOf(new Date(Date.now() - 86400000));
+
+    const byDay = {};
+    for (const log of activityLog) {
+      const key = dateKeyOf(log.created_at);
+      if (!byDay[key]) byDay[key] = [];
+      byDay[key].push(log);
+    }
+
+    return Object.entries(byDay)
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .map(([dateKey, logs]) => {
+        let label;
+        if (dateKey === todayKey) label = 'Today';
+        else if (dateKey === yesterdayKey) label = 'Yesterday';
+        else label = new Date(logs[0].created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        return { dateKey, label, logs };
+      });
+  }, [activityLog]);
+
+  const [pendingActivityDelete, setPendingActivityDelete] = useState(null); // { type: 'entry' | 'day', id/dateKey }
+  const [activityDeleteBusy, setActivityDeleteBusy] = useState(false);
+
+  function toggleActivityDay(dateKey) {
+    setExpandedActivityDays((prev) => (prev.includes(dateKey) ? prev.filter((k) => k !== dateKey) : [...prev, dateKey]));
+  }
+
+  // FIX ("anywhere anything gets deleted should have a second
+  // confirmation - sometimes they tap them by mistake"): these two
+  // used a bare window.confirm() before, which is one accidental tap
+  // away from wiping activity history. Both now route through the
+  // same styled ConfirmDialog used everywhere else in the app.
+  function handleDeleteActivityEntry(logId) {
+    setPendingActivityDelete({ type: 'entry', id: logId, label: 'Delete this log entry?' });
+  }
+
+  function handleDeleteActivityDay(dateKey) {
+    setPendingActivityDelete({ type: 'day', dateKey, label: `Delete ALL activity logs for ${dateKey}? This cannot be undone.` });
+  }
+
+  async function confirmActivityDelete() {
+    if (!pendingActivityDelete) return;
+    setActivityDeleteBusy(true);
+    try {
+      if (pendingActivityDelete.type === 'entry') {
+        await api.deleteActivityLogEntry(pendingActivityDelete.id, token);
+        setActivityLog((prev) => prev.filter((l) => l.id !== pendingActivityDelete.id));
+      } else {
+        await api.deleteActivityLogsForDay(pendingActivityDelete.dateKey, token);
+        setActivityLog((prev) => prev.filter((l) => dateKeyOf(l.created_at) !== pendingActivityDelete.dateKey));
+      }
+      setPendingActivityDelete(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setActivityDeleteBusy(false);
+    }
+  }
+
+  // Drill-down state for the clickable summary cards
+  const [drillDown, setDrillDown] = useState(null); // 'tenants' | 'units' | 'revenue' | 'expiring' | null
+  const [drillDownLoading, setDrillDownLoading] = useState(false);
+  const [drillDownData, setDrillDownData] = useState(null);
+
+  useEffect(() => {
+    document.body.classList.toggle('admin-drilldown-open', !!drillDown);
+    return () => document.body.classList.remove('admin-drilldown-open');
+  }, [drillDown]);
+  const [selectedExpiring, setSelectedExpiring] = useState([]);
+
+  // Help requests tab
+  const [helpRequests, setHelpRequests] = useState([]);
+  // Sidebar badge counts - polled independently of whichever tab is
+  // active, so "3 open help requests" etc. is visible at a glance
+  // without having to click into each section first.
+  const [sidebarCounts, setSidebarCounts] = useState({ help: 0, landlordPayments: 0, messages: 0, ratingFlags: 0, reportedAccounts: 0, gmPendingActions: 0 });
+  const [helpFilter, setHelpFilter] = useState('open');
+  const [helpLoading, setHelpLoading] = useState(false);
+  // FIX (direct request): "help requests should be categorized under
+  // different users - landlords, tenants, managers and caretakers
+  // under their own ui." requester_type distinguishes landlord/
+  // tenant/guest already; manager vs caretaker both come through as
+  // requester_type 'manager' so requester_role_level (see
+  // help.controller.js submitHelpRequest) splits them further.
+  const [helpCategory, setHelpCategory] = useState('all'); // 'all' | 'tenant' | 'landlord' | 'manager' | 'caretaker' | 'guest'
+  const [expandedHelpDays, setExpandedHelpDays] = useState([]);
+
+  // FIX: these two were previously defined near the top of the
+  // component, BEFORE the helpRequests/helpCategory state they read
+  // even existed - a temporal-dead-zone crash ("Cannot access
+  // 'helpRequests' before initialization") that broke the entire
+  // Admin Dashboard with a white screen, unconditionally, on every
+  // render. Moved down here, after the state they actually depend on.
+  const helpCategoryFiltered = useMemo(
+    () => (helpCategory === 'all' ? helpRequests : helpRequests.filter((h) => helpCategoryOf(h) === helpCategory)),
+    [helpRequests, helpCategory]
+  );
+
+  const helpGroups = useMemo(() => {
+    const todayKey = dateKeyOf(new Date());
+    const yesterdayKey = dateKeyOf(new Date(Date.now() - 86400000));
+
+    const byDay = {};
+    for (const h of helpCategoryFiltered) {
+      const key = dateKeyOf(h.created_at);
+      if (!byDay[key]) byDay[key] = [];
+      byDay[key].push(h);
+    }
+
+    return Object.entries(byDay)
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .map(([dateKey, requests]) => {
+        let label;
+        if (dateKey === todayKey) label = 'Today';
+        else if (dateKey === yesterdayKey) label = 'Yesterday';
+        else label = new Date(requests[0].created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        return { dateKey, label, requests };
+      });
+  }, [helpCategoryFiltered]);
+  const [pendingHelpDelete, setPendingHelpDelete] = useState(null); // help request id | null
+  const [replyBusyId, setReplyBusyId] = useState(null); // help request id currently resolving its reply thread | null
+  const [helpDeleteBusy, setHelpDeleteBusy] = useState(false);
+
+  const LOCKDOWN_REASON_PRESETS = {
+    maintenance: 'The platform is temporarily paused for scheduled technical maintenance. Service will resume shortly.',
+    security: 'The platform has been temporarily suspended as a precaution while we investigate a security concern. Your data is safe.',
+    billing: 'The platform is temporarily paused while we resolve a billing system issue. We apologize for the inconvenience.',
+    custom: null, // uses customReason below
+  };
+
+  const [landlordsLoaded, setLandlordsLoaded] = useState(false);
+  const [activityLoaded, setActivityLoaded] = useState(false);
+
+  // PERFORMANCE FIX (direct request: "dashboards take so long to
+  // load"): this used to eagerly fetch the ENTIRE landlords table and
+  // the ENTIRE activity log on every single admin page load, even
+  // when landing on Overview - which only ever needs the summary
+  // counts already included in getAdminDashboard. As the platform
+  // grows ("someday we're gonna have many people using the
+  // platform"), those two lists only get bigger and slower to fetch,
+  // for tabs the admin might never even open this session. Now only
+  // the actual Overview data loads up front; the Landlords and
+  // Activity Log tabs fetch their own (much heavier) data lazily, the
+  // first time each tab is opened - exactly like the Help Requests
+  // tab already did.
+  function load() {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    setLoading(true);
+    // Named jobs rather than a plain array - conditionally including
+    // landlords/activity would otherwise shift array positions around
+    // depending on which combination is loaded, silently swapping
+    // which result lands in which state setter.
+    const jobs = { metrics: api.getAdminDashboard(token), lockdown: api.getLockdownStatus(token) };
+    if (landlordsLoaded) jobs.landlords = api.listAllLandlords(token);
+    if (activityLoaded) jobs.activity = api.getActivityLog(token);
+
+    const keys = Object.keys(jobs);
+    Promise.all(keys.map((k) => jobs[k]))
+      .then((results) => {
+        const byKey = Object.fromEntries(keys.map((k, i) => [k, results[i]]));
+        setMetrics(byKey.metrics);
+        writeAdminMetricsCache(byKey.metrics);
+        setLockdownStatus(byKey.lockdown);
+        if (byKey.landlords) setLandlords(byKey.landlords.landlords || []);
+        if (byKey.activity) setActivityLog(byKey.activity.logs || []);
+      })
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          localStorage.removeItem('rentapay_token');
+          localStorage.removeItem('rentapay_role');
+          navigate('/login');
+          return;
+        }
+        setError(err.message);
+      })
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // FIX: admin was entirely excluded from the "Live push" pipeline -
+  // no page ever called initPushSubscription for it, so even with the
+  // backend now fully supporting an 'admin' recipient there was no
+  // browser subscription to actually push to. Same pattern as
+  // Dashboard.jsx / TenantPortal.jsx.
+  useEffect(() => {
+    initPushSubscription(token);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const loadSidebarCounts = useCallback(() => {
+    if (!token) return;
+    Promise.allSettled([
+      api.listHelpRequestsAdmin('open', token),
+      api.listManualSubscriptionPayments('pending', token),
+      api.listChatThreads(token),
+      api.listRatingFlags('flagged', token),
+      api.listCommunityReports('open', token),
+      api.getGmPendingActionCount(token),
+    ]).then(([helpRes, landlordPayRes, threadsRes, flagsRes, reportsRes, gmPendingRes]) => {
+      const help = helpRes.status === 'fulfilled' ? (helpRes.value.helpRequests || []).length : 0;
+      const landlordPayments = landlordPayRes.status === 'fulfilled' ? (landlordPayRes.value || []).length : 0;
+      const messages =
+        threadsRes.status === 'fulfilled'
+          ? (threadsRes.value.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0)
+          : 0;
+      const ratingFlags = flagsRes.status === 'fulfilled' ? (flagsRes.value.flags || []).length : 0;
+      const reportedAccounts = reportsRes.status === 'fulfilled' ? (reportsRes.value.reports || []).length : 0;
+      const gmPendingActions = gmPendingRes.status === 'fulfilled' ? gmPendingRes.value.count || 0 : 0;
+      setSidebarCounts({ help, landlordPayments, messages, ratingFlags, reportedAccounts, gmPendingActions });
+    });
+  }, [token]);
+
+  useBadgeAlert(sidebarCounts.help, 'New help request submitted.');
+  useBadgeAlert(sidebarCounts.landlordPayments, 'New subscription payment awaiting confirmation.');
+  useBadgeAlert(sidebarCounts.messages, 'You have a new message.');
+  useBadgeAlert(sidebarCounts.gmPendingActions, 'A General Manager action is awaiting your confirmation.');
+
+  useEffect(() => {
+    loadSidebarCounts();
+  }, [loadSidebarCounts]);
+
+  useSharedPoll(loadSidebarCounts, 20000);
+
+  useEffect(() => {
+    if (activeTab === 'help') loadHelpRequests(helpFilter);
+    if (activeTab === 'landlords' && !landlordsLoaded) {
+      setLandlordsLoaded(true); // set eagerly so a fast double-click doesn't fire two requests
+      api.listAllLandlords(token).then((res) => setLandlords(res.landlords || [])).catch((err) => setError(err.message));
+    }
+    if (activeTab === 'incomplete-signups' && !incompleteSignupsLoaded) {
+      setIncompleteSignupsLoaded(true);
+      api.getIncompleteSignups(token).then((res) => setIncompleteSignups(res.signups || [])).catch((err) => setError(err.message));
+    }
+    if (activeTab === 'activity' && !activityLoaded) {
+      setActivityLoaded(true);
+      api.getActivityLog(token).then((res) => setActivityLog(res.logs || [])).catch((err) => setError(err.message));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  function loadHelpRequests(filter) {
+    setHelpLoading(true);
+    api
+      .listHelpRequestsAdmin(filter === 'all' ? null : filter, token)
+      .then((res) => setHelpRequests(res.helpRequests || []))
+      .catch((err) => setError(err.message))
+      .finally(() => setHelpLoading(false));
+  }
+
+  async function handleResolveHelp(requestId) {
+    setBusy(true);
+    try {
+      await api.resolveHelpRequest(requestId, {}, token);
+      loadHelpRequests(helpFilter);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('rentapay_token');
+    localStorage.removeItem('rentapay_role');
+    navigate('/login');
+  }
+
+  // FIX (direct request): suspending or reactivating a landlord now
+  // requires the admin password, same as deleting one or locking down
+  // the platform - routed through the same confirmation modal instead
+  // of firing on a single click.
+  function handleSetStatus(landlordId, status, landlordName) {
+    setDangerError('');
+    setDangerPassword('');
+    setPendingDangerAction({
+      type: 'set-landlord-status',
+      landlordId,
+      status,
+      label: `${status === 'suspended' ? 'Suspend' : 'Activate'} ${landlordName || 'this landlord'}'s account`,
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Managers/caretakers nested under a landlord row (item: "managers
+  // and caretakers currently they cannot be accessed... build a way
+  // that they are seen under a given landlord and they also have
+  // their own rows and actions like suspend/activate")
+  // ---------------------------------------------------------------
+  async function toggleLandlordManagers(landlordId, forceOpen = false) {
+    if (!forceOpen && expandedLandlordId === landlordId) {
+      setExpandedLandlordId('');
+      return;
+    }
+    setExpandedLandlordId(landlordId);
+    if (!forceOpen) setManagerHighlightId('');
+    if (landlordManagersById[landlordId]) return; // already cached
+    setLandlordManagersLoading(true);
+    setLandlordManagersError('');
+    try {
+      const res = await api.getLandlordManagers(landlordId, token);
+      setLandlordManagersById((prev) => ({ ...prev, [landlordId]: res.managers || [] }));
+    } catch (err) {
+      setLandlordManagersError(err.message);
+    } finally {
+      setLandlordManagersLoading(false);
+    }
+  }
+
+  // Same shape as landlord suspend/activate - just routed to the
+  // manager/caretaker status endpoint and re-fetches that landlord's
+  // manager list (bypassing the cache) instead of the whole page.
+  function handleSetManagerStatus(managerId, status, managerName, landlordId) {
+    setDangerError('');
+    setDangerPassword('');
+    setPendingDangerAction({
+      type: 'set-manager-status',
+      managerId,
+      status,
+      landlordId,
+      label: `${status === 'suspended' ? 'Suspend' : 'Activate'} ${managerName || 'this manager/caretaker'}'s account`,
+    });
+  }
+
+  async function handleDelete(landlordId, landlordName) {
+    setDangerError('');
+    setDangerPassword('');
+    setPendingDangerAction({ type: 'delete-landlord', landlordId, label: `Permanently delete ${landlordName}'s account` });
+  }
+
+  async function handleLockdown() {
+    setDangerError('');
+    setDangerPassword('');
+    const reason = lockdownReason === 'custom' ? customReason : LOCKDOWN_REASON_PRESETS[lockdownReason];
+    setPendingDangerAction({ type: 'lockdown', reason, label: 'Lock down the entire platform' });
+  }
+
+  async function confirmDangerAction() {
+    if (!pendingDangerAction) return;
+    if (!dangerPassword) {
+      setDangerError('Enter the admin password to continue.');
+      return;
+    }
+    setBusy(true);
+    setDangerError('');
+    try {
+      if (pendingDangerAction.type === 'delete-landlord') {
+        await api.deleteLandlordAccount(pendingDangerAction.landlordId, dangerPassword, token);
+        setNotice('Landlord account deleted.');
+        load();
+      } else if (pendingDangerAction.type === 'lockdown') {
+        const res = await api.emergencyLockdown({ reason: pendingDangerAction.reason, password: dangerPassword }, token);
+        setNotice(res.message);
+        setShowLockdownConfirm(false);
+        load();
+      } else if (pendingDangerAction.type === 'set-landlord-status') {
+        await api.setLandlordStatus(pendingDangerAction.landlordId, { status: pendingDangerAction.status, password: dangerPassword }, token);
+        setNotice(`Landlord ${pendingDangerAction.status}.`);
+        load();
+      } else if (pendingDangerAction.type === 'set-manager-status') {
+        await api.setManagerStatus(pendingDangerAction.managerId, { status: pendingDangerAction.status, password: dangerPassword }, token);
+        setNotice(`Manager/caretaker ${pendingDangerAction.status}.`);
+        // Refresh just this landlord's manager list (bypass cache)
+        // rather than the whole page.
+        const landlordId = pendingDangerAction.landlordId;
+        if (landlordId) {
+          try {
+            const res = await api.getLandlordManagers(landlordId, token);
+            setLandlordManagersById((prev) => ({ ...prev, [landlordId]: res.managers || [] }));
+          } catch {
+            // Non-fatal - the panel will just show stale data until
+            // it's collapsed/reopened; the status change itself already
+            // succeeded above.
+          }
+        }
+      } else if (pendingDangerAction.type === 'resume-lockdown') {
+        const res = await api.resumeFromLockdown({ password: dangerPassword }, token);
+        setNotice(res.message);
+        load();
+      }
+      setPendingDangerAction(null);
+      setDangerPassword('');
+    } catch (err) {
+      setDangerError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // FIX (direct request): lifting a platform lockdown now requires the
+  // admin password too, same as triggering one.
+  function handleResume() {
+    setDangerError('');
+    setDangerPassword('');
+    setPendingDangerAction({ type: 'resume-lockdown', label: 'Resume the platform — restore all access' });
+  }
+
+  // ---------------------------------------------------------------
+  // Clickable summary cards -> drill-down (item B)
+  // ---------------------------------------------------------------
+  async function openDrillDown(kind) {
+    setDrillDown(kind);
+    setDrillDownLoading(true);
+    setDrillDownData(null);
+    setSelectedExpiring([]);
+    // Clear any leftover highlight/filter state from a previous drilldown
+    // (e.g. tenant email filter) unless this call is about to set its own.
+    if (kind !== 'tenants') setDrillDownHighlightEmail('');
+    if (kind !== 'units') setDrillDownHighlightUnitId('');
+    try {
+      let data;
+      if (kind === 'tenants') data = (await api.listAllTenantsAdmin(token)).tenants;
+      if (kind === 'units') data = (await api.listAllUnitsAdmin(token)).units;
+      if (kind === 'revenue') data = await api.getRevenueBreakdown('month', token);
+      if (kind === 'revenue-year') data = await api.getRevenueBreakdown('year', token);
+      if (kind === 'expiring') data = (await api.getExpiringLandlords(null, token)).landlords;
+      setDrillDownData(data);
+    } catch (err) {
+      setError(err.message);
+      setDrillDown(null);
+    } finally {
+      setDrillDownLoading(false);
+    }
+  }
+
+  function handleGlobalSearchSelect(result) {
+    if (result.role === 'page') {
+      setActiveTab(result.tab);
+      return;
+    }
+    if (result.role === 'landlord') {
+      setActiveTab('landlords');
+      setLandlordStatusFilter('all');
+      setLandlordSearch(result.email || result.name);
+    } else if (result.role === 'tenant') {
+      // Level A deep-link: jump to the tenant's unit in the units
+      // drilldown (units already has a real identity - unit_id - and
+      // tenants are 1:1 with a unit), instead of the old behaviour of
+      // just filtering the tenants table by email.
+      setActiveTab('overview');
+      if (result.unitId) {
+        setDrillDownHighlightUnitId(result.unitId);
+        openDrillDown('units');
+        setNotice(`Showing ${result.unitName ? `unit ${result.unitName}` : 'the unit'} for tenant ${result.name}${result.landlordName ? ` (landlord: ${result.landlordName})` : ''}.`);
+      } else {
+        // Fallback for a tenant with no unit assigned yet - nothing to
+        // deep-link to, so fall back to the tenant row itself.
+        setDrillDownHighlightEmail(result.email || '');
+        openDrillDown('tenants');
+      }
+      // FEATURE (direct request): a tenant found via Global Search
+      // should get the same activate/deactivate/suspend actions a
+      // landlord result gets - opened right alongside the deep-link
+      // above rather than instead of it.
+      setTenantQuickActionsTarget(result);
+    } else if (result.role === 'manager') {
+      // Managers/caretakers don't get their own tab - they share the
+      // landlord's dashboard, so the deep-link expands that landlord's
+      // row in the landlords table (toggleLandlordManagers) and
+      // highlights this specific manager/caretaker inside it, instead
+      // of the old behaviour of just filtering the landlords table by
+      // the landlord's name.
+      setActiveTab('landlords');
+      setLandlordStatusFilter('all');
+      setLandlordSearch(result.landlordName || '');
+      setManagerHighlightId(result.id);
+      if (result.landlordId) toggleLandlordManagers(result.landlordId, true);
+      setNotice(`Showing ${result.landlordName || 'the landlord'} — ${result.name} is a ${result.roleLevel === 'caretaker' ? 'caretaker' : 'manager'} on their account.`);
+    } else if (result.role === 'general_manager') {
+      setGmSearchPrefill(result.email || '');
+      setActiveTab('general-managers');
+    } else if (result.role === 'brand_ambassador') {
+      setBaSearchHighlightId(result.id);
+      setActiveTab('brand-ambassadors');
+    }
+  }
+
+  function toggleExpiringSelection(landlordId) {
+    setSelectedExpiring((prev) => (prev.includes(landlordId) ? prev.filter((id) => id !== landlordId) : [...prev, landlordId]));
+  }
+
+  async function handleSendReminders() {
+    if (selectedExpiring.length === 0) return;
+    setBusy(true);
+    setError('');
+    try {
+      const res = await api.sendRenewalReminders({ landlordIds: selectedExpiring }, token);
+      const sentCount = res.results.filter((r) => r.sent).length;
+      setNotice(`Renewal reminder sent to ${sentCount} of ${res.results.length} landlord(s).`);
+      setSelectedExpiring([]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const filteredLandlords = useMemo(() => {
+    const q = landlordSearch.trim().toLowerCase();
+    let list = landlords;
+    if (landlordStatusFilter !== 'all') list = list.filter((l) => l.subscription_status === landlordStatusFilter);
+    if (!q) return list;
+    return list.filter((l) =>
+      [l.full_name, l.phone, l.email, l.estate_name, l.location, l.county].filter(Boolean).some((field) => field.toLowerCase().includes(q))
+    );
+  }, [landlords, landlordSearch, landlordStatusFilter]);
+
+  // FIX (direct request - "loading for too long...too much loading has
+  // been raised as an issue"): this used to blank the ENTIRE page,
+  // sidebar and all, until the metrics fetch resolved - so every admin
+  // saw a plain "Loading admin panel..." on every load, even though
+  // the sidebar/header have nothing to wait for and the "overview" tab
+  // below already checks `metrics &&` before rendering. Render the
+  // real shell immediately and let the overview tab show a Skeleton
+  // in metrics' place instead of freezing the whole screen.
+  if (error && !metrics && !loading) {
+    return (
+      <div className="admin-page admin-page--center">
+        <p>{error}</p>
+        <Button variant="ghost" onClick={() => window.location.reload()}>Try again</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-page">
+      <PortalSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        activeKey={activeTab}
+        brandName="RentaPay Admin"
+        items={[
+          {
+            group: 'Overview',
+            items: [
+              { key: 'overview', label: 'Overview', icon: '📊', onClick: () => setActiveTab('overview') },
+              { key: 'statistics', label: 'Financial Statistics', icon: '📈', onClick: () => setActiveTab('statistics') },
+              { key: 'revenue-dashboard', label: 'Revenue Dashboard', icon: '💰', onClick: () => setActiveTab('revenue-dashboard') },
+              { key: 'financial-overview', label: 'Financial Overview', icon: '🧾', onClick: () => setActiveTab('financial-overview') },
+            ],
+          },
+          {
+            group: 'Landlords',
+            items: [
+              { key: 'landlords', label: 'Landlords', icon: '🏢', onClick: () => setActiveTab('landlords') },
+              { key: 'incomplete-signups', label: 'Incomplete Signups', icon: '🚧', onClick: () => setActiveTab('incomplete-signups') },
+              { key: 'onboarded-landlords', label: "Today's Onboarded Landlords", icon: '📋', onClick: () => setActiveTab('onboarded-landlords') },
+              { key: 'landlord-leads', label: 'Landlord Leads', icon: '📥', onClick: () => setActiveTab('landlord-leads') },
+              { key: 'manual-subscription-payments', label: 'Landlord Manual Payments', icon: '💳', badge: sidebarCounts.landlordPayments, onClick: () => setActiveTab('manual-subscription-payments') },
+              { key: 'subscription-pricing', label: 'Subscription Fee', icon: '🏷️', onClick: () => setActiveTab('subscription-pricing') },
+              // Strictly admin only (direct request) - a General
+              // Manager shares this exact dashboard component (see
+              // `role` above) but must not even see this entry,
+              // since it controls where landlords' subscription
+              // money is actually sent.
+              ...(role === 'admin'
+                ? [{ key: 'platform-payment-settings', label: 'Subscription Payment Method', icon: '🏦', onClick: () => setActiveTab('platform-payment-settings') }]
+                : []),
+              { key: 'loyalty-discounts', label: 'Loyalty Discounts', icon: '🎁', onClick: () => setActiveTab('loyalty-discounts') },
+            ],
+          },
+          {
+            group: 'Brand Ambassadors',
+            items: [
+              { key: 'brand-ambassadors', label: 'Brand Ambassadors', icon: '🤝', onClick: () => setActiveTab('brand-ambassadors') },
+              { key: 'ba-rewards', label: 'BA Rewards & Leaderboard', icon: '🏆', onClick: () => setActiveTab('ba-rewards') },
+              { key: 'ba-payout-review', label: 'Payout Run', icon: '💵', onClick: () => setActiveTab('ba-payout-review') },
+              { key: 'ba-reconciliation', label: 'BA Reconciliation', icon: '🔍', onClick: () => setActiveTab('ba-reconciliation') },
+              { key: 'ba-security-report', label: 'BA Security Report', icon: '🛡️', onClick: () => setActiveTab('ba-security-report') },
+            ],
+          },
+          {
+            group: 'General Managers',
+            items: [
+              { key: 'general-managers', label: 'General Managers', icon: '🧑‍💼', onClick: () => setActiveTab('general-managers') },
+              { key: 'gm-pending-actions', label: 'GM Pending Actions', icon: '✅', badge: sidebarCounts.gmPendingActions, onClick: () => setActiveTab('gm-pending-actions') },
+            ],
+          },
+          {
+            group: 'Support',
+            items: [
+              { key: 'help', label: 'Help Requests', icon: '❓', badge: sidebarCounts.help, onClick: () => setActiveTab('help') },
+              { key: 'messages', label: 'Messages', icon: '💬', badge: sidebarCounts.messages, onClick: () => navigate('/messages') },
+              { key: 'broadcast', label: 'Broadcast', icon: '📢', onClick: () => setShowBroadcastModal(true) },
+              { key: 'rating-flags', label: 'Rating Flags', icon: '🚩', badge: sidebarCounts.ratingFlags, onClick: () => setActiveTab('rating-flags') },
+              { key: 'reported-accounts', label: 'Reported Accounts', icon: '⛔', badge: sidebarCounts.reportedAccounts, onClick: () => setActiveTab('reported-accounts') },
+              { key: 'faq', label: 'FAQs', icon: '📚', onClick: () => setActiveTab('faq') },
+              { key: 'help-contact-settings', label: 'Help & Contact Details', icon: '☎️', onClick: () => setActiveTab('help-contact-settings') },
+              { key: 'support-analytics', label: 'Support Analytics', icon: '🎧', onClick: () => setActiveTab('support-analytics') },
+            ],
+          },
+          {
+            group: 'System',
+            items: [
+              { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
+              { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
+            ],
+          },
+          ...(canOfferInstall
+            ? [{
+                group: 'Account',
+                items: [{
+                  key: 'install-app',
+                  label: 'Download the App',
+                  icon: '📲',
+                  onClick: () => {
+                    if (installOnIOS) setShowIOSInstallSteps(true);
+                    else window.location.href = APK_DOWNLOAD_PATH;
+                  },
+                }],
+              }]
+            : []),
+        ]}
+      />
+
+      {showIOSInstallSteps && (
+        <div className="install-app-menu-item__ios-modal" onClick={() => setShowIOSInstallSteps(false)}>
+          <div className="install-app-menu-item__ios-modal-card" onClick={(e) => e.stopPropagation()}>
+            <h4>Install on iPhone/iPad</h4>
+            <ol>
+              <li>Tap the <strong>Share</strong> icon <span aria-hidden="true">⬆️</span> in Safari's toolbar</li>
+              <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+              <li>Tap <strong>Add</strong> in the top right</li>
+            </ol>
+            <button type="button" onClick={() => setShowIOSInstallSteps(false)}>Got it</button>
+          </div>
+        </div>
+      )}
+
+      <header className="admin-header">
+        <div className="admin-header__left">
+          <button type="button" className="portal-topbar__hamburger admin-header__hamburger" aria-label="Menu" onClick={() => setSidebarOpen(true)}>☰</button>
+          <div className="admin-header__brand">RentaPay <span>Admin</span></div>
+        </div>
+        <div className="admin-header__search">
+          <AdminGlobalSearch token={token} onSelect={handleGlobalSearchSelect} pageIndex={ADMIN_PAGE_INDEX} />
+        </div>
+        <div className="admin-header__right">
+          <NotificationsBell token={token} />
+          <button className="admin-header__logout" onClick={handleLogout}>Log out</button>
+        </div>
+      </header>
+
+      {showBroadcastModal && (
+        <div className="modal-overlay" onClick={() => setShowBroadcastModal(false)}>
+          <div className="modal-shell" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <h2>Broadcast</h2>
+            <p style={{ color: '#666', fontSize: '0.9rem' }}>
+              Tagged "RentaPay" everywhere it shows up - not scoped to one landlord's account.
+            </p>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!broadcastMessage.trim()) return;
+                setBroadcastSending(true);
+                setError('');
+                try {
+                  await api.broadcastPlatformAnnouncement(broadcastMessage.trim(), broadcastTargetGroup, token);
+                  setNotice('Announcement sent.');
+                  setBroadcastMessage('');
+                  setShowBroadcastModal(false);
+                } catch (err) {
+                  setError(err instanceof ApiError ? err.message : 'Failed to send broadcast.');
+                } finally {
+                  setBroadcastSending(false);
+                }
+              }}
+            >
+              <div className="form-field">
+                <label className="form-field__label">Send to</label>
+                <select value={broadcastTargetGroup} onChange={(e) => setBroadcastTargetGroup(e.target.value)}>
+                  <option value="all">Everyone (all landlords, managers, caretakers, tenants, and brand ambassadors)</option>
+                  <option value="tenants">Tenants only</option>
+                  <option value="landlord_team">Landlords, managers, and caretakers only</option>
+                  <option value="ba">Brand ambassadors only</option>
+                </select>
+              </div>
+              <div className="form-field">
+                <label className="form-field__label">Message</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={broadcastMessage}
+                  onChange={(e) => setBroadcastMessage(e.target.value)}
+                  placeholder="e.g. RentaPay will be undergoing scheduled maintenance on Saturday from 1am to 3am."
+                  style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', padding: 8, borderRadius: 8, border: '1px solid #ccc' }}
+                />
+              </div>
+              <div className="settings-manager-row__actions">
+                <Button type="submit" variant="primary" loading={broadcastSending}>Send</Button>
+                <button type="button" className="ghost-link" onClick={() => setShowBroadcastModal(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {tenantQuickActionsTarget && (
+        <TenantQuickActions
+          token={token}
+          tenant={tenantQuickActionsTarget}
+          mode="admin"
+          onClose={() => setTenantQuickActionsTarget(null)}
+        />
+      )}
+
+      {pendingDangerAction && (
+        <div className="modal-overlay" onClick={() => { if (!busy) { setPendingDangerAction(null); setDangerPassword(''); setDangerError(''); } }}>
+          <div className="modal-shell" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <h2>Confirm with your admin password</h2>
+            <p style={{ color: '#666', fontSize: '0.9rem' }}>
+              {pendingDangerAction.label}
+              {pendingDangerAction.type === 'delete-landlord'
+                ? '. This is irreversible - re-enter your admin password to proceed.'
+                : '. Re-enter your admin password to proceed.'}
+            </p>
+            <form
+              onSubmit={(e) => { e.preventDefault(); confirmDangerAction(); }}
+            >
+              <div className="form-field">
+                <label className="form-field__label" htmlFor="danger-password">Admin password</label>
+                <PasswordInput
+                  id="danger-password"
+                  autoFocus
+                  required
+                  value={dangerPassword}
+                  onChange={(e) => setDangerPassword(e.target.value)}
+                />
+              </div>
+              {dangerError && <p className="form-error">{dangerError}</p>}
+              <div className="settings-manager-row__actions">
+                <Button type="submit" variant="primary" loading={busy}>Confirm</Button>
+                <button
+                  type="button"
+                  className="ghost-link"
+                  onClick={() => { setPendingDangerAction(null); setDangerPassword(''); setDangerError(''); }}
+                  disabled={busy}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!pendingActivityDelete}
+        title={pendingActivityDelete?.type === 'day' ? 'Delete all logs for this day?' : 'Delete this log entry?'}
+        message={pendingActivityDelete?.label}
+        confirmLabel="Yes, delete"
+        busy={activityDeleteBusy}
+        onConfirm={confirmActivityDelete}
+        onCancel={() => setPendingActivityDelete(null)}
+      />
+
+      <main className="admin-main">
+        {notice && <div className="admin-banner admin-banner--ok">{notice}</div>}
+        {error && <div className="admin-banner admin-banner--error">{error}</div>}
+
+        {activeTab === 'statistics' && <AdminStatistics token={token} />}
+        {activeTab === 'revenue-dashboard' && <AdminRevenueDashboard token={token} />}
+        {activeTab === 'faq' && <Faq audience="admin" />}
+        {activeTab === 'help-contact-settings' && <AdminHelpContactSettings token={token} />}
+        {activeTab === 'support-analytics' && <SupportAnalyticsPanel token={token} />}
+        {activeTab === 'credentials' && (
+          <>
+            <AdminChangePasswordPanel token={token} role={role} />
+            <AdminCredentialsPanel token={token} />
+          </>
+        )}
+        {activeTab === 'general-managers' && <GeneralManagersPanel token={token} initialSearch={gmSearchPrefill} />}
+        {activeTab === 'gm-pending-actions' && <GmPendingActionsPanel token={token} onReviewed={loadSidebarCounts} />}
+        {activeTab === 'rating-flags' && <AdminRatingFlags token={token} />}
+        {activeTab === 'reported-accounts' && <AdminReportedAccounts token={token} />}
+        {activeTab === 'subscription-pricing' && <AdminSubscriptionPricing token={token} />}
+        {activeTab === 'platform-payment-settings' && role === 'admin' && <AdminPlatformPaymentSettings token={token} />}
+        {activeTab === 'loyalty-discounts' && <AdminLoyaltyDiscounts token={token} />}
+        {activeTab === 'brand-ambassadors' && <AdminBrandAmbassadors token={token} initialHighlightId={baSearchHighlightId} />}
+        {activeTab === 'ba-rewards' && <AdminBaRewardsDashboard token={token} />}
+        {activeTab === 'financial-overview' && <AdminFinancialOverview token={token} />}
+        {activeTab === 'ba-payout-review' && (
+          <>
+            <AdminBaQualificationDryRun token={token} />
+            <AdminBaPayoutReview token={token} />
+          </>
+        )}
+        {activeTab === 'ba-reconciliation' && (
+          <AdminBaReconciliation token={token} prefill={baReconcilePrefill} onPrefillConsumed={() => setBaReconcilePrefill(null)} />
+        )}
+        {activeTab === 'ba-security-report' && (
+          <AdminBaSecurityReport
+            token={token}
+            onReview={(target) => {
+              setBaReconcilePrefill(target);
+              setActiveTab('ba-reconciliation');
+            }}
+          />
+        )}
+        {activeTab === 'onboarded-landlords' && <AdminOnboardedLandlords token={token} />}
+        {activeTab === 'landlord-leads' && <AdminLandlordLeads token={token} />}
+        {activeTab === 'manual-subscription-payments' && <LandlordManualPaymentConfirmations token={token} />}
+
+
+        {activeTab === 'overview' && !metrics && <Skeleton rows={6} />}
+        {activeTab === 'overview' && metrics && (
+          <>
+            <section className="admin-metrics">
+              <button type="button" className="admin-metric-card admin-metric-card--clickable" onClick={() => openDrillDown('tenants')}>
+                <span className="admin-metric-card__label">Total tenants</span>
+                <span className="admin-metric-card__value">{metrics.totalTenants}</span>
+                <span className="admin-metric-card__hint">View list →</span>
+              </button>
+              <button type="button" className="admin-metric-card admin-metric-card--clickable" onClick={() => openDrillDown('units')}>
+                <span className="admin-metric-card__label">Total units</span>
+                <span className="admin-metric-card__value">{metrics.totalUnits}</span>
+                <span className="admin-metric-card__hint">View list →</span>
+              </button>
+              <button
+                type="button"
+                className="admin-metric-card admin-metric-card--clickable admin-metric-card--good"
+                onClick={() => openDrillDown('revenue')}
+              >
+                <span className="admin-metric-card__label">Revenue this month</span>
+                <span className="admin-metric-card__value">KES {Number(metrics.revenueThisMonth || 0).toLocaleString()}</span>
+                <span className="admin-metric-card__hint">View breakdown →</span>
+              </button>
+              <button
+                type="button"
+                className="admin-metric-card admin-metric-card--clickable admin-metric-card--good"
+                onClick={() => openDrillDown('revenue-year')}
+              >
+                <span className="admin-metric-card__label">Revenue this year</span>
+                <span className="admin-metric-card__value">KES {Number(metrics.revenueThisYear || 0).toLocaleString()}</span>
+                <span className="admin-metric-card__hint">View breakdown →</span>
+              </button>
+              <button type="button" className="admin-metric-card admin-metric-card--clickable" onClick={() => setActiveTab('landlords')}>
+                <span className="admin-metric-card__label">Total landlords</span>
+                <span className="admin-metric-card__value">{metrics.totalLandlords}</span>
+                <span className="admin-metric-card__sub">{metrics.activeLandlords} active · {metrics.suspendedLandlords} suspended</span>
+                <span className="admin-metric-card__hint">View details →</span>
+              </button>
+              <button
+                type="button"
+                className="admin-metric-card admin-metric-card--clickable admin-metric-card--warn"
+                onClick={() => { setLandlordStatusFilter('suspended'); setLandlordSearch(''); setActiveTab('landlords'); }}
+              >
+                <span className="admin-metric-card__label">Suspended landlords</span>
+                <span className="admin-metric-card__value">{metrics.suspendedLandlords}</span>
+                <span className="admin-metric-card__hint">View list →</span>
+              </button>
+              <button
+                type="button"
+                className="admin-metric-card admin-metric-card--clickable admin-metric-card--warn"
+                onClick={() => openDrillDown('expiring')}
+              >
+                <span className="admin-metric-card__label">Expiring soon (≤7 days)</span>
+                <span className="admin-metric-card__value">{metrics.expiringSoon?.length || 0}</span>
+                <span className="admin-metric-card__hint">Contact & remind →</span>
+              </button>
+            </section>
+
+            {drillDown && (
+              <section className="admin-section admin-drilldown">
+                <div className="admin-drilldown__header">
+                  <h2>
+                    {drillDown === 'tenants' && 'All tenants'}
+                    {drillDown === 'units' && 'All units'}
+                    {drillDown === 'revenue' && 'Revenue this month — breakdown'}
+                    {drillDown === 'revenue-year' && 'Revenue this year — breakdown'}
+                    {drillDown === 'expiring' && 'Subscriptions expiring soon'}
+                  </h2>
+                  <div className="admin-drilldown__header-actions">
+                    {!drillDownLoading && drillDownData && (
+                      <button
+                        className="ghost-link"
+                        onClick={() => {
+                          if (drillDown === 'tenants') {
+                            downloadCsv(
+                              'rentapay-tenants',
+                              ['Name', 'Phone', 'Landlord', 'Unit', 'Location', 'Balance (KES)', 'Status'],
+                              (drillDownData || []).map((t) => [
+                                t.full_name,
+                                t.primary_phone,
+                                t.landlords?.full_name || '',
+                                t.units?.unit_name || '',
+                                [t.units?.properties?.location || t.landlords?.location, t.units?.properties?.county || t.landlords?.county].filter(Boolean).join(', '),
+                                t.balance_due,
+                                t.is_active ? 'Active' : 'Inactive',
+                              ])
+                            );
+                          } else if (drillDown === 'units') {
+                            downloadCsv(
+                              'rentapay-units',
+                              ['Unit', 'Type', 'Landlord', 'Location', 'Rent (KES)', 'Status'],
+                              (drillDownData || []).map((u) => [
+                                u.unit_name,
+                                u.unit_type || '',
+                                u.landlords?.full_name || '',
+                                [u.properties?.location || u.landlords?.location, u.properties?.county || u.landlords?.county].filter(Boolean).join(', '),
+                                u.rent_amount,
+                                u.status,
+                              ])
+                            );
+                          } else if (drillDown === 'revenue' || drillDown === 'revenue-year') {
+                            downloadCsv(
+                              `rentapay-revenue-${drillDown === 'revenue-year' ? 'year' : 'month'}`,
+                              ['Date', 'Landlord', 'Amount (KES)'],
+                              (drillDownData.payments || []).map((p) => [
+                                p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '',
+                                p.landlords?.full_name || '',
+                                p.amount,
+                              ])
+                            );
+                          } else if (drillDown === 'expiring') {
+                            downloadCsv(
+                              'rentapay-expiring-subscriptions',
+                              ['Landlord', 'Estate', 'Phone', 'Email', 'Location', 'Expires'],
+                              (drillDownData || []).map((l) => [
+                                l.full_name,
+                                l.estate_name || '',
+                                l.phone,
+                                l.email || '',
+                                [l.location, l.county].filter(Boolean).join(', '),
+                                l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '',
+                              ])
+                            );
+                          }
+                        }}
+                      >
+                        Download
+                      </button>
+                    )}
+                    <button className="admin-drilldown__close" onClick={() => { setDrillDown(null); setDrillDownHighlightEmail(''); setDrillDownHighlightUnitId(''); }}>Close ✕</button>
+                  </div>
+                </div>
+
+                {drillDownLoading && <Skeleton rows={5} />}
+
+                {!drillDownLoading && drillDown === 'tenants' && (
+                  <>
+                    {drillDownHighlightEmail && (
+                      <div className="admin-section__header-row">
+                        <input
+                          type="search"
+                          className="admin-search-input"
+                          placeholder="Filter by name, phone, or email…"
+                          value={drillDownHighlightEmail}
+                          onChange={(e) => setDrillDownHighlightEmail(e.target.value)}
+                        />
+                        <button className="ghost-link" onClick={() => setDrillDownHighlightEmail('')}>Clear</button>
+                      </div>
+                    )}
+                    <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead><tr><th></th><th>Name</th><th>Phone</th><th>Landlord</th><th>Unit</th><th>Location</th><th>Balance</th><th>Status</th></tr></thead>
+                      <tbody>
+                        {(drillDownData || [])
+                          .filter((t) => {
+                            const q = drillDownHighlightEmail.trim().toLowerCase();
+                            if (!q) return true;
+                            return [t.full_name, t.email, t.primary_phone].some((v) => (v || '').toLowerCase().includes(q));
+                          })
+                          .map((t) => (
+                          <tr key={t.id} className={t.email && drillDownHighlightEmail && t.email.toLowerCase() === drillDownHighlightEmail.trim().toLowerCase() ? 'admin-table__row--highlight' : ''}>
+                            <td><TenantContactCard tenant={{ ...t, unit_name: t.units?.unit_name }} size={30} /></td>
+                            <td>{t.full_name}</td>
+                            <td>{t.primary_phone}</td>
+                            <td>{t.landlords?.full_name || '—'}</td>
+                            <td>{t.units?.unit_name || '—'}</td>
+                            <td>{[t.units?.properties?.location || t.landlords?.location, t.units?.properties?.county || t.landlords?.county].filter(Boolean).join(', ') || '—'}</td>
+                            <td className={Number(t.balance_due) > 0 ? 'admin-balance--owing' : ''}>
+                              KES {Number(t.balance_due || 0).toLocaleString()}
+                            </td>
+                            <td>{t.is_active ? 'Active' : 'Inactive'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    </div>
+                  </>
+                )}
+
+                {!drillDownLoading && drillDown === 'units' && (
+                  <>
+                    {drillDownHighlightUnitId && (
+                      <div className="admin-section__header-row">
+                        <p className="admin-section__hint" style={{ margin: 0 }}>
+                          Jumped here from a tenant search result — their unit is highlighted below.
+                        </p>
+                        <button className="ghost-link" onClick={() => setDrillDownHighlightUnitId('')}>Clear highlight</button>
+                      </div>
+                    )}
+                    <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead><tr><th>Unit</th><th>Type</th><th>Landlord</th><th>Location</th><th>Rent</th><th>Status</th></tr></thead>
+                      <tbody>
+                        {(drillDownHighlightUnitId
+                          ? [...(drillDownData || [])].sort((a, b) => (b.id === drillDownHighlightUnitId) - (a.id === drillDownHighlightUnitId))
+                          : (drillDownData || [])
+                        ).map((u) => (
+                          <tr key={u.id} className={drillDownHighlightUnitId && u.id === drillDownHighlightUnitId ? 'admin-table__row--highlight' : ''}>
+                            <td>{u.unit_name}</td>
+                            <td>{u.unit_type || '—'}</td>
+                            <td>{u.landlords?.full_name || '—'}</td>
+                            <td>{[u.properties?.location || u.landlords?.location, u.properties?.county || u.landlords?.county].filter(Boolean).join(', ') || '—'}</td>
+                            <td>KES {Number(u.rent_amount || 0).toLocaleString()}</td>
+                            <td>{u.status}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    </div>
+                  </>
+                )}
+
+                {!drillDownLoading && (drillDown === 'revenue' || drillDown === 'revenue-year') && drillDownData && (
+                  <>
+                    <p className="admin-section__hint">Total: KES {Number(drillDownData.total || 0).toLocaleString()} from {drillDownData.payments?.length || 0} payment(s) this {drillDown === 'revenue-year' ? 'year' : 'month'}.</p>
+                    <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead><tr><th>Date</th><th>Landlord</th><th>Amount</th></tr></thead>
+                      <tbody>
+                        {(drillDownData.payments || []).map((p) => (
+                          <tr key={p.id}>
+                            <td>{new Date(p.paid_at).toLocaleDateString('en-GB')}</td>
+                            <td>{p.landlords?.full_name || '—'}</td>
+                            <td>KES {Number(p.amount).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    </div>
+                  </>
+                )}
+
+                {!drillDownLoading && drillDown === 'expiring' && (
+                  <>
+                    {(drillDownData || []).length === 0 && <p>No subscriptions expiring soon.</p>}
+                    {(drillDownData || []).length > 0 && (
+                      <>
+                        <div className="admin-drilldown__actions">
+                          <Button variant="primary" loading={busy} disabled={selectedExpiring.length === 0} onClick={handleSendReminders}>
+                            Send renewal reminder to {selectedExpiring.length || ''} selected
+                          </Button>
+                        </div>
+                        <div className="admin-table-wrapper">
+                        <table className="admin-table">
+                          <thead><tr><th></th><th>Landlord</th><th>Contact</th><th>Property location</th><th>Expires</th><th>Draft reminder</th></tr></thead>
+                          <tbody>
+                            {drillDownData.map((l) => (
+                              <tr key={l.id}>
+                                <td>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedExpiring.includes(l.id)}
+                                    onChange={() => toggleExpiringSelection(l.id)}
+                                  />
+                                </td>
+                                <td>{l.full_name} <span className="admin-table__estate-name">{l.estate_name}</span></td>
+                                <td>{l.phone}{l.email ? ` · ${l.email}` : ''}</td>
+                                <td>{[l.location, l.county].filter(Boolean).join(', ') || '—'}</td>
+                                <td>{l.daysLeft} day{l.daysLeft === 1 ? '' : 's'}</td>
+                                <td className="admin-table__draft-message">{l.draftMessage}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              </section>
+            )}
+
+            {/* FEATURE (direct request - payments banner separate and
+                prioritized, own dismiss state, not mixed into the
+                general list): same split as the landlord/manager/
+                caretaker Dashboard.jsx. */}
+            <IncomingItemsBanner
+              variant="priority"
+              items={[
+                { key: 'landlord-payments', icon: '💳', label: 'Pending landlord manual payments awaiting confirmation', count: sidebarCounts.landlordPayments, onClick: () => setActiveTab('manual-subscription-payments') },
+                { key: 'gm-pending-actions', icon: '✅', label: 'General Manager actions awaiting your confirmation', count: sidebarCounts.gmPendingActions, onClick: () => setActiveTab('gm-pending-actions') },
+              ]}
+            />
+
+            <IncomingItemsBanner
+              items={[
+                { key: 'help', icon: '❓', label: 'Open help requests', count: sidebarCounts.help, onClick: () => setActiveTab('help') },
+                { key: 'messages', icon: '💬', label: 'Unread messages', count: sidebarCounts.messages, onClick: () => navigate('/messages') },
+                { key: 'rating-flags', icon: '🚩', label: 'Rating flags awaiting review', count: sidebarCounts.ratingFlags, onClick: () => setActiveTab('rating-flags') },
+                { key: 'reported-accounts', icon: '⛔', label: 'Open account reports', count: sidebarCounts.reportedAccounts, onClick: () => setActiveTab('reported-accounts') },
+              ]}
+            />
+
+            <section className="admin-section admin-section--danger">
+              <h2>Emergency lockdown</h2>
+
+              {lockdownStatus?.is_locked_down ? (
+                <div className="lockdown-active">
+                  <span className="lockdown-active__badge">⚠ PLATFORM CURRENTLY LOCKED DOWN</span>
+                  <p className="lockdown-active__reason">"{lockdownStatus.lockdown_reason}"</p>
+                  <p className="admin-section__hint">
+                    Locked down since {new Date(lockdownStatus.lockdown_started_at).toLocaleString('en-GB')}. No landlord, property manager, caretaker, or tenant can access the platform until you resume.
+                  </p>
+                  <Button variant="primary" loading={busy} onClick={handleResume}>Resume platform — restore all access</Button>
+                </div>
+              ) : (
+                <>
+                  <p className="admin-section__hint">Blocks every landlord, property manager, caretaker, and tenant platform-wide — including anyone already logged in right now. Use only in a genuine emergency.</p>
+                  {!showLockdownConfirm ? (
+                    <Button variant="ghost" onClick={() => setShowLockdownConfirm(true)}>Lock down platform</Button>
+                  ) : (
+                    <div className="lockdown-confirm">
+                      <label className="form-field__label">Reason to show anyone trying to log in</label>
+                      <select className="lockdown-reason-select" value={lockdownReason} onChange={(e) => setLockdownReason(e.target.value)}>
+                        <option value="maintenance">Scheduled technical maintenance</option>
+                        <option value="security">Security precaution</option>
+                        <option value="billing">Billing system issue</option>
+                        <option value="custom">Custom reason…</option>
+                      </select>
+                      {lockdownReason === 'custom' && (
+                        <textarea
+                          className="lockdown-custom-reason"
+                          placeholder="Type the exact message landlords/tenants will see"
+                          value={customReason}
+                          onChange={(e) => setCustomReason(e.target.value)}
+                          rows={2}
+                        />
+                      )}
+                      <p><strong>Are you sure?</strong> This immediately blocks every landlord, manager, caretaker, and tenant — including anyone currently logged in. You'll be asked to confirm your admin password on the next step.</p>
+                      <div className="lockdown-confirm__actions">
+                        <button className="lockdown-confirm__cancel" onClick={() => setShowLockdownConfirm(false)}>Cancel</button>
+                        <button
+                          className="lockdown-confirm__confirm"
+                          disabled={busy || (lockdownReason === 'custom' && !customReason.trim())}
+                          onClick={handleLockdown}
+                        >
+                          Yes, lock down now
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          </>
+        )}
+
+        {activeTab === 'landlords' && (
+          <section className="admin-section">
+            <div className="admin-section__header-row">
+              <h2>All landlords</h2>
+              <select
+                className="admin-search-input"
+                style={{ maxWidth: 160 }}
+                value={landlordStatusFilter}
+                onChange={(e) => setLandlordStatusFilter(e.target.value)}
+              >
+                <option value="all">All statuses</option>
+                <option value="active">Active only</option>
+                <option value="suspended">Suspended only</option>
+              </select>
+              <input
+                type="search"
+                className="admin-search-input"
+                placeholder="Search by name, phone, email, or location…"
+                value={landlordSearch}
+                onChange={(e) => setLandlordSearch(e.target.value)}
+              />
+              {filteredLandlords.length > 0 && (
+                <button
+                  className="ghost-link"
+                  onClick={() =>
+                    downloadCsv(
+                      'rentapay-landlords',
+                      ['Name', 'Estate', 'Phone', 'Email', 'Location', 'County', 'Plan', 'Unit Limit', 'Status', 'Expires'],
+                      filteredLandlords.map((l) => [
+                        l.full_name,
+                        l.estate_name || '',
+                        l.phone,
+                        l.email || '',
+                        l.location || '',
+                        l.county || '',
+                        l.subscription_plan,
+                        l.unit_limit,
+                        l.subscription_status,
+                        l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '',
+                      ])
+                    )
+                  }
+                >
+                  Download
+                </button>
+              )}
+            </div>
+            {filteredLandlords.length === 0 && <p className="admin-section__hint">No landlords match "{landlordSearch}".</p>}
+            <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr><th></th><th>Name</th><th>Contact</th><th>Location</th><th>Plan</th><th>Units</th><th>Status</th><th>Expires</th><th></th></tr>
+              </thead>
+              <tbody>
+                {filteredLandlords.map((l) => (
+                  <React.Fragment key={l.id}>
+                  <tr className={expandedLandlordId === l.id ? 'admin-table__row--expanded' : ''}>
+                    <td><Avatar name={l.full_name} photoUrl={l.photo_url} size={32} /></td>
+                    <td>
+                      <div className="admin-table__name-cell">
+                        <span>{l.full_name}</span>
+                        {l.estate_name && <span className="admin-table__estate-name">{l.estate_name}</span>}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="admin-table__contact-cell">
+                        <span>{l.phone}</span>
+                        {l.email && <span className="admin-table__email">{l.email}</span>}
+                      </div>
+                    </td>
+                    <td>{[l.location, l.county].filter(Boolean).join(', ') || '—'}</td>
+                    <td>{l.subscription_plan}</td>
+                    <td>{l.unit_limit}</td>
+                    <td><span className={`admin-status admin-status--${l.subscription_status}`}>{l.subscription_status}</span></td>
+                    <td>{l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '—'}</td>
+                    <td className="admin-table__actions">
+                      {/* Managers/caretakers share this landlord's dashboard
+                          rather than having their own admin tab, so they're
+                          surfaced here as an expandable "Team" panel with
+                          their own suspend/activate actions - see
+                          toggleLandlordManagers. */}
+                      <button disabled={busy} onClick={() => toggleLandlordManagers(l.id)}>
+                        {expandedLandlordId === l.id ? 'Team ▾' : 'Team ▸'}
+                      </button>
+                      <button disabled={busy} onClick={() => setEditingLandlord({ id: l.id, name: l.full_name })}>Edit</button>
+                      {l.subscription_status === 'suspended' ? (
+                        <button disabled={busy} onClick={() => handleSetStatus(l.id, 'active', l.full_name)}>Activate</button>
+                      ) : (
+                        <button disabled={busy} onClick={() => handleSetStatus(l.id, 'suspended', l.full_name)}>Suspend</button>
+                      )}
+                      <button disabled={busy} className="admin-table__delete" onClick={() => handleDelete(l.id, l.full_name)}>Delete</button>
+                    </td>
+                  </tr>
+                  {expandedLandlordId === l.id && (
+                    <tr className="admin-table__subrow">
+                      <td colSpan={9}>
+                        <div className="admin-managers-panel">
+                          <p className="admin-managers-panel__title">Managers &amp; caretakers — {l.full_name}</p>
+                          {landlordManagersLoading && !landlordManagersById[l.id] && <Skeleton rows={2} />}
+                          {landlordManagersError && <p className="admin-section__hint admin-section__hint--error">{landlordManagersError}</p>}
+                          {landlordManagersById[l.id] && landlordManagersById[l.id].length === 0 && (
+                            <p className="admin-section__hint">No managers or caretakers have been added for this landlord.</p>
+                          )}
+                          {landlordManagersById[l.id] && landlordManagersById[l.id].length > 0 && (
+                            <div className="admin-table-wrapper">
+                              <table className="admin-table admin-table--nested">
+                                <thead>
+                                  <tr><th></th><th>Name</th><th>Role</th><th>Contact</th><th>Assigned properties</th><th>Status</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                  {landlordManagersById[l.id].map((m) => (
+                                    <tr
+                                      key={m.id}
+                                      className={m.id === managerHighlightId ? 'admin-table__row--highlight' : ''}
+                                    >
+                                      <td><Avatar name={m.full_name} photoUrl={m.photo_url} size={26} /></td>
+                                      <td>{m.full_name}</td>
+                                      <td>{m.role_level === 'caretaker' ? 'Caretaker' : 'Manager'}</td>
+                                      <td>
+                                        <div className="admin-table__contact-cell">
+                                          <span>{m.phone}</span>
+                                          {m.email && <span className="admin-table__email">{m.email}</span>}
+                                        </div>
+                                      </td>
+                                      <td>{(m.assignedProperties || []).map((p) => p.name).filter(Boolean).join(', ') || '—'}</td>
+                                      <td><span className={`admin-status admin-status--${m.is_active ? 'active' : 'suspended'}`}>{m.is_active ? 'Active' : 'Suspended'}</span></td>
+                                      <td className="admin-table__actions">
+                                        {m.is_active ? (
+                                          <button disabled={busy} onClick={() => handleSetManagerStatus(m.id, 'suspended', m.full_name, l.id)}>Suspend</button>
+                                        ) : (
+                                          <button disabled={busy} onClick={() => handleSetManagerStatus(m.id, 'active', m.full_name, l.id)}>Activate</button>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'incomplete-signups' && (
+          <section className="admin-section">
+            <div className="admin-section__header-row">
+              <h2>Incomplete signups</h2>
+              {incompleteSignups.length > 0 && (
+                <button
+                  className="ghost-link"
+                  onClick={() =>
+                    downloadCsv(
+                      'rentapay-incomplete-signups',
+                      ['Name', 'Phone', 'Email', 'Stopped at', 'Started'],
+                      incompleteSignups.map((s) => [
+                        s.fullName,
+                        s.phone,
+                        s.email || '',
+                        s.stepLabel,
+                        new Date(s.createdAt).toLocaleString('en-GB'),
+                      ])
+                    )
+                  }
+                >
+                  Download
+                </button>
+              )}
+            </div>
+            <InfoTip text={<>
+              Landlords who started creating an account but haven't finished the setup wizard yet, and which step they stopped at.
+            </>} />
+            {incompleteSignups.length === 0 && <p className="admin-section__hint">No incomplete signups right now.</p>}
+            {incompleteSignups.length > 0 && (
+              <div className="admin-table-wrapper">
+                <table className="admin-table">
+                  <thead>
+                    <tr><th>Name</th><th>Contact</th><th>Stopped at</th><th>Started</th><th></th></tr>
+                  </thead>
+                  <tbody>
+                    {incompleteSignups.map((s) => (
+                      <tr key={s.id}>
+                        <td>{s.fullName}</td>
+                        <td>
+                          <div className="admin-table__contact-cell">
+                            <span>{s.phone}</span>
+                            {s.email && <span className="admin-table__email">{s.email}</span>}
+                          </div>
+                        </td>
+                        <td><span className="admin-status">{s.stepLabel}</span></td>
+                        <td>{new Date(s.createdAt).toLocaleString('en-GB')}</td>
+                        <td className="admin-table__actions">
+                          {/* FEATURE: follow up with a drop-off lead straight from
+                              here - taps into the phone's own dialer, same tap-to-call
+                              pattern already used for tenants (see Dashboard.jsx). */}
+                          <a className="ghost-link" href={`tel:${s.phone}`}>📞 Call</a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeTab === 'help' && (
+          <section className="admin-section">
+            <div className="admin-section__header-row">
+              <h2>Help requests</h2>
+              <select
+                className="lockdown-reason-select"
+                value={helpFilter}
+                onChange={(e) => {
+                  setHelpFilter(e.target.value);
+                  loadHelpRequests(e.target.value);
+                }}
+              >
+                <option value="open">Open</option>
+                <option value="resolved">Resolved</option>
+                <option value="all">All</option>
+              </select>
+              {helpCategoryFiltered.length > 0 && (
+                <button
+                  className="ghost-link"
+                  onClick={() =>
+                    downloadCsv(
+                      'rentapay-help-requests',
+                      ['When', 'From', 'Type', 'Phone', 'Message', 'Status'],
+                      helpCategoryFiltered.map((h) => [
+                        new Date(h.created_at).toLocaleString('en-GB'),
+                        h.name,
+                        helpCategoryOf(h),
+                        h.phone || '',
+                        h.message,
+                        h.status,
+                      ])
+                    )
+                  }
+                >
+                  Download
+                </button>
+              )}
+            </div>
+
+            {/* Categorized under their own tab, per direct request -
+                landlords, tenants, managers, and caretakers are easy
+                to mix up when they're all in one flat list. */}
+            <div className="ppc-status-tabs" style={{ marginBottom: 16 }}>
+              {['all', 'tenant', 'landlord', 'manager', 'caretaker', 'guest'].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`ppc-status-tabs__item ${helpCategory === c ? 'is-active' : ''}`}
+                  onClick={() => setHelpCategory(c)}
+                >
+                  {c.charAt(0).toUpperCase() + c.slice(1)}
+                  {c !== 'all' && ` (${helpRequests.filter((h) => helpCategoryOf(h) === c).length})`}
+                </button>
+              ))}
+            </div>
+
+            {helpLoading && <Skeleton rows={3} />}
+            {!helpLoading && helpGroups.length === 0 && (
+              <p className="admin-section__hint">No {helpFilter !== 'all' ? helpFilter : ''} help requests{helpCategory !== 'all' ? ` from ${helpCategory}s` : ''}.</p>
+            )}
+            {!helpLoading && helpGroups.map((group) => (
+              <div key={group.dateKey} className="activity-day">
+                <div className="activity-day__header" onClick={() => toggleHelpDay(group.dateKey)}>
+                  <span className="activity-day__toggle">{expandedHelpDays.includes(group.dateKey) ? '▾' : '▸'}</span>
+                  <span className="activity-day__label">{group.label}</span>
+                  <span className="activity-day__count">{group.requests.length} request{group.requests.length === 1 ? '' : 's'}</span>
+                </div>
+                {expandedHelpDays.includes(group.dateKey) && (
+                  <div className="admin-table-wrapper">
+                  <table className="admin-table">
+                    <thead><tr><th>When</th><th>From</th><th>Phone</th><th>Message</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                      {group.requests.map((h) => (
+                        <tr key={h.id}>
+                          <td>{new Date(h.created_at).toLocaleString('en-GB')}</td>
+                          <td>{h.name} <span className="admin-table__estate-name">{helpCategoryOf(h)}</span></td>
+                          <td>{h.phone || '—'}</td>
+                          <td className="admin-table__draft-message">{h.message}</td>
+                          <td><span className={`admin-status admin-status--${h.status === 'resolved' ? 'active' : 'suspended'}`}>{h.status}</span></td>
+                          <td className="admin-table__actions">
+                            <button
+                              disabled={busy || replyBusyId === h.id}
+                              onClick={() => handleReplyToHelpRequest(h)}
+                            >
+                              {replyBusyId === h.id ? 'Opening…' : 'Reply'}
+                            </button>
+                            {h.status !== 'resolved' && (
+                              <button disabled={busy} onClick={() => handleResolveHelp(h.id)}>Mark resolved</button>
+                            )}
+                            <button disabled={busy} className="admin-table__delete" onClick={() => setPendingHelpDelete(h.id)}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <ConfirmDialog
+              open={!!pendingHelpDelete}
+              title="Delete this help request?"
+              message="This permanently removes the help request. This cannot be undone."
+              confirmLabel="Yes, delete"
+              danger
+              busy={helpDeleteBusy}
+              onConfirm={confirmHelpDelete}
+              onCancel={() => setPendingHelpDelete(null)}
+            />
+          </section>
+        )}
+
+        {activeTab === 'activity' && (
+          <section className="admin-section">
+            <div className="admin-section__header-row">
+              <h2>Platform activity log</h2>
+              {activityGroups.length > 0 && (
+                <button
+                  className="ghost-link"
+                  onClick={() =>
+                    downloadCsv(
+                      'rentapay-activity-log',
+                      ['Date', 'Time', 'Actor', 'Action', 'Target'],
+                      activityGroups.flatMap((group) =>
+                        group.logs.map((log) => [
+                          group.label,
+                          new Date(log.created_at).toLocaleTimeString('en-GB'),
+                          log.actor_type,
+                          log.action,
+                          log.target_type || '',
+                        ])
+                      )
+                    )
+                  }
+                >
+                  Download
+                </button>
+              )}
+            </div>
+            {activityGroups.length === 0 && <p className="admin-section__hint">No activity recorded yet.</p>}
+            {activityGroups.map((group) => (
+              <div key={group.dateKey} className="activity-day">
+                <div className="activity-day__header" onClick={() => toggleActivityDay(group.dateKey)}>
+                  <span className="activity-day__toggle">{expandedActivityDays.includes(group.dateKey) ? '▾' : '▸'}</span>
+                  <span className="activity-day__label">{group.label}</span>
+                  <span className="activity-day__count">{group.logs.length} event{group.logs.length === 1 ? '' : 's'}</span>
+                  <button
+                    className="activity-day__delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteActivityDay(group.dateKey);
+                    }}
+                  >
+                    Delete this day
+                  </button>
+                </div>
+                {expandedActivityDays.includes(group.dateKey) && (
+                  <div className="admin-table-wrapper">
+                  <table className="admin-table">
+                    <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th></th></tr></thead>
+                    <tbody>
+                      {group.logs.map((log) => (
+                        <tr key={log.id}>
+                          <td>{new Date(log.created_at).toLocaleTimeString('en-GB')}</td>
+                          <td>{log.actor_type}</td>
+                          <td>{log.action}</td>
+                          <td>{log.target_type || '—'}</td>
+                          <td><button onClick={() => handleDeleteActivityEntry(log.id)}>Delete</button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  </div>
+                )}
+              </div>
+            ))}
+          </section>
+        )}
+      </main>
+
+      {editingLandlord && (
+        <LandlordEditModal
+          landlordId={editingLandlord.id}
+          landlordName={editingLandlord.name}
+          token={token}
+          onClose={() => setEditingLandlord(null)}
+          onSaved={() => {
+            setEditingLandlord(null);
+            setNotice('Landlord details updated.');
+            load();
+          }}
+        />
+      )}
+      <SupportChatWidget token={token} />
+    </div>
+  );
+}

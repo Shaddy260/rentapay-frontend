@@ -1,0 +1,21 @@
+.mini-line-chart {
+  width: 100%;
+}
+
+.mini-line-chart__svg {
+  width: 100%;
+  height: 140px;
+  display: block;
+}
+
+.mini-line-chart__labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  margin-top: 4px;
+}
+
+.mini-line-chart__label {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
