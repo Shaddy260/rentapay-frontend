@@ -8,6 +8,19 @@ import UpdateChecker from './components/UpdateChecker.jsx';
 import ForceUpdateGate from './components/ForceUpdateGate.jsx';
 import VacancyAlertOptIn from './components/VacancyAlertOptIn.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+// FIX (direct request: "when i open the login page, it also loads
+// instead of taking me to the login page directly... nothing should
+// load while a user sees"). Landing (/) and Login (/login) were
+// React.lazy-loaded along with every other page, which is right for
+// pages most people never visit in a given session (code-splitting's
+// whole point), but wrong for the two screens that are almost always
+// the very first thing that loads - lazy-loading them just guarantees
+// the Suspense fallback ("Loading…", see RouteFallback below) flashes
+// on the one visit that matters most, every time, for everyone. Eager,
+// regular imports put them in the main bundle instead, so they render
+// immediately with no chunk to wait for and no fallback ever shown.
+import Landing from './pages/Landing.jsx';
+import Login from './pages/Login.jsx';
 import DownloadEffect from './components/DownloadEffect.jsx';
 
 // DIRECT REQUEST: "random browser popups... to receive browser
@@ -50,8 +63,6 @@ function PublicEngagementWidgets() {
 // tenant portal's code. As the app keeps growing this keeps every
 // individual page load small instead of it all getting slower and
 // slower together.
-const Landing = lazy(() => import('./pages/Landing.jsx'));
-const Login = lazy(() => import('./pages/Login.jsx'));
 const VerifyAccount = lazy(() => import('./pages/VerifyAccount.jsx'));
 const VerifyLoginTotp = lazy(() => import('./pages/VerifyLoginTotp.jsx'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword.jsx'));

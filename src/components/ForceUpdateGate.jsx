@@ -46,6 +46,28 @@ export default function ForceUpdateGate({ children }) {
   const [status, setStatus] = useState('ok'); // 'ok' | 'checking' | 'blocked'
   const [info, setInfo] = useState(null);
   const inFlight = useRef(false);
+  // FIX (direct request: "when a landlord navigates from dashboard to
+  // settings and back... it shows an orange screen and loads... it
+  // should transition without the skeletons at all"). The gate's own
+  // full-screen "checking" state was designed for exactly one moment -
+  // the first check right after login, before the dashboard has ever
+  // painted. But because runCheck() re-fires on every location.pathname
+  // change (see the effect below - that part is still correct and
+  // needed, it's how a stale app gets caught even when Login.jsx
+  // navigates instead of a hard reload), status was flipping back to
+  // 'checking' on every single in-app navigation thereafter too - an
+  // orange, z-index:999999 overlay unmounting the entire app tree
+  // (including whatever page-level cache/data was already on screen)
+  // for a routine tap between Dashboard and Settings, not just login.
+  // hasCheckedOnce draws the line: the very first check after mount
+  // still shows the full-screen holding state (correct - nothing has
+  // painted yet at that point anyway), but every check after that runs
+  // silently in the background. It can still flip status to 'blocked'
+  // at any time if the person's version genuinely falls below the
+  // floor - that hard block is real and intended, and stays instant
+  // and unmissable when it happens. It just can no longer flash
+  // 'checking' over content that's already legitimately on screen.
+  const hasCheckedOnce = useRef(false);
 
   const runCheck = useCallback(() => {
     const token = localStorage.getItem('rentapay_token');
@@ -55,11 +77,16 @@ export default function ForceUpdateGate({ children }) {
     // effect below.
     if (!standalone || !token) {
       setStatus((prev) => (prev === 'blocked' ? 'ok' : prev));
+      // No token (logged out) - reset so the *next* login gets its own
+      // branded checking screen again, same as a fresh app open would.
+      hasCheckedOnce.current = false;
       return;
     }
     if (inFlight.current) return;
     inFlight.current = true;
-    setStatus((prev) => (prev === 'blocked' ? prev : 'checking'));
+    if (!hasCheckedOnce.current) {
+      setStatus((prev) => (prev === 'blocked' ? prev : 'checking'));
+    }
     api
       .getAppVersionCheck()
       .then((res) => {
@@ -76,6 +103,7 @@ export default function ForceUpdateGate({ children }) {
       })
       .finally(() => {
         inFlight.current = false;
+        hasCheckedOnce.current = true;
       });
   }, [standalone]);
 

@@ -10,7 +10,7 @@
 }
 
 .force-update-gate--checking {
-  background: var(--color-accent, #2b6777);
+  background: #dbb396;
 }
 
 .force-update-gate__spinner {
