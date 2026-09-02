@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Skeleton from './Skeleton.jsx';
 import './GmActivityLogView.css';
 
-// RentaPay — General Manager Sectioned Build Spec, Section 8.
+// RentaPay - General Manager Sectioned Build Spec, Section 8.
 //
 // Shared log-browsing UI reused by both:
 //   - AdminGeneralManagerLogs.jsx (admin viewing a specific manager's
@@ -29,9 +29,9 @@ export default function GmActivityLogView({ fetchLogs, onRevert, canRevert = fal
   const [revertingId, setRevertingId] = useState(null);
   const today = new Date().toISOString().slice(0, 10);
 
-  // SECTION 10 — bulk revert: "Admin selects a date range... Revert
+  // SECTION 10 - bulk revert: "Admin selects a date range... Revert
   // all actions in that range at once." Only rendered when the caller
-  // passes onRevertRange (AdminGeneralManagerLogs.jsx) — same
+  // passes onRevertRange (AdminGeneralManagerLogs.jsx) - same
   // admin-only gating as the individual Revert button below, and
   // reuses the same from/to inputs pattern as the PDF export toolbar.
   const [revertFrom, setRevertFrom] = useState(today);
@@ -56,7 +56,7 @@ export default function GmActivityLogView({ fetchLogs, onRevert, canRevert = fal
     }
   }
 
-  // SECTION 9 — Styled PDF Export of Logs. Only rendered when a
+  // SECTION 9 - Styled PDF Export of Logs. Only rendered when a
   // caller passes onExportPdf (AdminGeneralManagerLogs.jsx) - a
   // General Manager's own "My Activity" tab never gets an export
   // button, same as it never gets revert.
@@ -171,7 +171,7 @@ export default function GmActivityLogView({ fetchLogs, onRevert, canRevert = fal
       {!loading && !error && data && (
         <>
           <p className="gm-log-view__range">
-            {new Date(data.rangeStart).toLocaleDateString('en-GB')} – {new Date(new Date(data.rangeEnd).getTime() - 1).toLocaleDateString('en-GB')}
+            {new Date(data.rangeStart).toLocaleDateString('en-GB')} - {new Date(new Date(data.rangeEnd).getTime() - 1).toLocaleDateString('en-GB')}
             {' · '}{data.logs.length} action{data.logs.length === 1 ? '' : 's'}
           </p>
 
@@ -189,7 +189,7 @@ export default function GmActivityLogView({ fetchLogs, onRevert, canRevert = fal
 }
 
 function fmtValue(v) {
-  if (v === null || v === undefined) return '—';
+  if (v === null || v === undefined) return '-';
   if (typeof v === 'object') return JSON.stringify(v);
   return String(v);
 }
@@ -213,9 +213,9 @@ function GmLogEntry({ log, canRevert, reverting, onRevert }) {
               also does one-by-one/bulk from the dedicated "GM Pending
               Actions" page - shown here too so a manager's full log
               always reflects whether admin has signed off yet. */}
-          {log.admin_review_status === 'pending' && <span className="gm-log-entry__badge" style={{ background: '#FFF4E0', color: '#8A5A00' }}>Awaiting admin review</span>}
-          {log.admin_review_status === 'confirmed' && <span className="gm-log-entry__badge" style={{ background: '#E6F4EA', color: '#1A7A3C' }}>Admin confirmed</span>}
-          {log.admin_review_status === 'rejected' && <span className="gm-log-entry__badge" style={{ background: '#FBEAE9', color: '#B3261E' }}>Admin rejected</span>}
+          {log.admin_review_status === 'pending' && <span className="gm-log-entry__badge" style={{ background: 'var(--color-accent-soft)', color: 'var(--color-warning)' }}>Awaiting admin review</span>}
+          {log.admin_review_status === 'confirmed' && <span className="gm-log-entry__badge" style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)' }}>Admin confirmed</span>}
+          {log.admin_review_status === 'rejected' && <span className="gm-log-entry__badge" style={{ background: 'var(--color-error-bg)', color: 'var(--color-error)' }}>Admin rejected</span>}
           {log.reverted_at ? (
             <span className="gm-log-entry__badge gm-log-entry__badge--reverted">Reverted</span>
           ) : (

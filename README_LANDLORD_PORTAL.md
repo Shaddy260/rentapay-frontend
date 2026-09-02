@@ -1,4 +1,4 @@
-# RentaPay — Landlord Portal Build (this pass)
+# RentaPay - Landlord Portal Build (this pass)
 
 You asked for a lot in one message. This delivery covers the **landlord
 portal** fully, reviewed line-by-line against blueprint sections 6, 7,

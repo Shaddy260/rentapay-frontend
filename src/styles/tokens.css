@@ -109,6 +109,49 @@
   --glass-bg: rgba(255, 255, 255, 0.55);
   --glass-border: rgba(255, 255, 255, 0.6);
   --glass-shadow: rgba(15, 61, 62, 0.18);
+
+  /* GLOW CARD DESIGN SYSTEM (RentaPay-Glow-Dashboard-Build-Spec.md §1.2):
+     section accent colors for the Admin/GM "Glow Card" dashboard
+     redesign. Each accent has a low-opacity "-a" variant for
+     shadows/borders, and a "-text" variant for anywhere the accent is
+     used as text color (some raw accents, e.g. amber, don't hit
+     4.5:1 against --color-surface-raised in light mode - the -text
+     variant is a darkened stand-in used only for text). Light-mode
+     values here are tuned against the warm off-white surface; dark
+     mode below reuses the reel-accurate saturated hues since the dark
+     surface is what the reference reels were designed against. */
+  --glow-blue: #2F63C9;
+  --glow-blue-a: rgba(76, 141, 255, 0.25);
+  --glow-blue-text: #2650A0;
+  --glow-teal: #1F9C82;
+  --glow-teal-a: rgba(47, 217, 180, 0.25);
+  --glow-teal-text: #187C68;
+  --glow-amber: #B87F1E;
+  --glow-amber-a: rgba(232, 169, 61, 0.25);
+  --glow-amber-text: #8F6216;
+  --glow-purple: #7454D6;
+  --glow-purple-a: rgba(155, 124, 240, 0.25);
+  --glow-purple-text: #5C3FB0;
+  --glow-green: #2E9350;
+  --glow-green-a: rgba(79, 201, 122, 0.25);
+  --glow-green-text: #23763F;
+  --glow-red: var(--color-error);
+  --glow-red-a: rgba(229, 118, 109, 0.25);
+  --glow-red-text: #A0342C;
+}
+
+/* Very subtle graph-paper grid texture behind Glow Card dashboards,
+   dark mode only per spec (§1.1) - opacity kept low enough to read as
+   a faint backdrop, never competing with card content. Applied via a
+   class on the dashboard's page wrapper, not globally, so pages that
+   don't use the Glow Card treatment are untouched. */
+.glow-dashboard-bg {
+  background-image: none;
+}
+[data-theme='dark'] .glow-dashboard-bg {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(241, 238, 231, 0.05) 0px, rgba(241, 238, 231, 0.05) 1px, transparent 1px, transparent 32px),
+    repeating-linear-gradient(90deg, rgba(241, 238, 231, 0.05) 0px, rgba(241, 238, 231, 0.05) 1px, transparent 1px, transparent 32px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -178,4 +221,28 @@
   --glass-bg: rgba(30, 34, 32, 0.55);
   --glass-border: rgba(255, 255, 255, 0.14);
   --glass-shadow: rgba(0, 0, 0, 0.45);
+
+  /* Glow Card accents, dark mode - the reel-accurate saturated hues
+     from the spec, since the dark near-black surface is what they
+     were designed to glow against. -text variants are close to the
+     raw accent here since contrast against the dark surface is
+     already comfortable. */
+  --glow-blue: #4C8DFF;
+  --glow-blue-a: rgba(76, 141, 255, 0.35);
+  --glow-blue-text: #7FACFF;
+  --glow-teal: #2FD9B4;
+  --glow-teal-a: rgba(47, 217, 180, 0.35);
+  --glow-teal-text: #5EE6C8;
+  --glow-amber: #E8A93D;
+  --glow-amber-a: rgba(232, 169, 61, 0.35);
+  --glow-amber-text: #F0C374;
+  --glow-purple: #9B7CF0;
+  --glow-purple-a: rgba(155, 124, 240, 0.35);
+  --glow-purple-text: #B6A0F5;
+  --glow-green: #4FC97A;
+  --glow-green-a: rgba(79, 201, 122, 0.35);
+  --glow-green-text: #78D89B;
+  --glow-red: #E5766D;
+  --glow-red-a: rgba(229, 118, 109, 0.35);
+  --glow-red-text: #EE9A93;
 }

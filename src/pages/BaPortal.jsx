@@ -93,7 +93,7 @@ function OnboardedLandlordsPanel({ token }) {
       <h2>My Onboarded Landlords</h2>
       <InfoTip text={<>
         Every landlord who signed up using your referral link or code is listed here automatically, the moment
-        they complete registration — no need to log them yourself.
+        they complete registration - no need to log them yourself.
       </>} />
 
       <div className="ba-claim-panel__list-header">
@@ -392,12 +392,12 @@ function BaEarningsPanel({ token }) {
               {(statement?.claims || []).map((c) => (
                 <tr key={c.id}>
                   <td>{c.landlordName}</td>
-                  <td>{c.qualifiedAt ? new Date(c.qualifiedAt).toLocaleDateString('en-GB') : '—'}</td>
+                  <td>{c.qualifiedAt ? new Date(c.qualifiedAt).toLocaleDateString('en-GB') : '-'}</td>
                   <td>
                     {money(c.payoutAmount)}
                     {c.breakdown?.unitBracket && (
                       <div className="ba-earnings-panel__why">
-                        {c.breakdown.unitBracket.minUnits}–{c.breakdown.unitBracket.maxUnits ?? '+'} units bracket
+                        {c.breakdown.unitBracket.minUnits}-{c.breakdown.unitBracket.maxUnits ?? '+'} units bracket
                         {c.breakdown.unitCount != null ? ` (had ${c.breakdown.unitCount})` : ''}
                       </div>
                     )}
@@ -578,7 +578,7 @@ function BaDashboardStats({ token }) {
       </section>
 
       <section className="ba-portal-stub-card ba-trend-card">
-        <h3>Landlords onboarded — last 14 days</h3>
+        <h3>Landlords onboarded - last 14 days</h3>
         <MiniLineChart data={stats?.trend || []} unitLabel=" landlords" />
       </section>
 
@@ -587,7 +587,7 @@ function BaDashboardStats({ token }) {
         <p className="ba-tier-card__current">
           {stats?.currentCommissionPercent
             ? `You currently earn ${stats.currentCommissionPercent}% of every qualifying landlord's subscription payment, recurring for as long as they stay subscribed.`
-            : 'No commission rate has been set yet — check back soon.'}
+            : 'No commission rate has been set yet - check back soon.'}
         </p>
         <div className="ba-tier-card__earnings-row">
           <div>
@@ -899,6 +899,7 @@ export default function BaPortal() {
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) {
           localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
           localStorage.removeItem('rentapay_role');
           if (err.message) localStorage.setItem('rentapay_logout_message', err.message);
           navigate('/login');

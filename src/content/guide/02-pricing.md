@@ -67,7 +67,7 @@ what a period already paid for cost.
 ## Prepaying for longer periods
 
 Paying for three, six, or twelve months at once, rather than one month at a time,
-unlocks a discounted effective monthly rate — the longer the prepaid period, the
+unlocks a discounted effective monthly rate - the longer the prepaid period, the
 larger the discount. The exact rate and discount percentages in force at the moment
 a subscription payment is calculated are the ones recorded against that payment
 permanently, even if the standard rate changes afterward.
@@ -77,6 +77,6 @@ permanently, even if the standard rate changes afterward.
 If a subscription isn't renewed by its due date, the account enters a short grace
 period during which existing data stays visible but some features may be limited.
 If it still isn't renewed after that, the account moves into a locked state.
-Renewing at any point, including after lapsing, restores full access immediately —
+Renewing at any point, including after lapsing, restores full access immediately -
 RentaPay does not delete a landlord's property, unit, tenant, or payment history
 just because a subscription lapsed.

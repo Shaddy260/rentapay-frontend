@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import './Resources.css';
 
-// Guide content — single source of truth also used to build the
+// Guide content - single source of truth also used to build the
 // downloadable PDF (see scripts/build_guide_pdf.py). Editing a section
 // here and only here keeps the webpage and PDF in sync.
 import intro from '../content/guide/01-intro.md?raw';
@@ -124,7 +124,7 @@ export default function Resources() {
           <h1>Understand RentaPay</h1>
           <p>
             How RentaPay works for landlords, property managers and caretakers, and
-            tenants — pricing, setup, and what each portal looks like. Read it here,
+            tenants - pricing, setup, and what each portal looks like. Read it here,
             or download it as a PDF using the button above.
           </p>
         </div>

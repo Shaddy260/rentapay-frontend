@@ -35,7 +35,7 @@ A landlord who owns their own Safaricom Business Paybill or Till can connect it 
 RentaPay under Settings. Once connected and verified, a tenant tapping "Pay Rent"
 gets a real M-Pesa STK prompt sent straight to their phone; the moment Safaricom
 confirms it, the balance updates itself and the landlord or manager is notified
-automatically — with no manual review step in this path. RentaPay still never
+automatically - with no manual review step in this path. RentaPay still never
 touches, holds, or custodies the money at any point: the push is triggered using
 the landlord's own credentials, straight into the landlord's own Paybill/Till.
 A landlord can switch back to manual confirmation at any time; doing so doesn't
@@ -91,7 +91,7 @@ that code is the starting point for checking what actually happened.
 ## What happens if a payment fails partway through
 
 If an STK push prompt is sent but the payer cancels it, enters the wrong PIN, or
-the request times out, no payment is recorded — the balance is unaffected and the
+the request times out, no payment is recorded - the balance is unaffected and the
 payer can simply try again. RentaPay never records a payment as confirmed based on
 the prompt being sent; only an actual confirmation, automatic or manual, moves a
 balance.

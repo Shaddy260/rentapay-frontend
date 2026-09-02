@@ -49,14 +49,14 @@ export default function ReceiptVerify() {
       {loading && <p style={{ marginTop: 24 }}>Verifying receipt…</p>}
 
       {!loading && error && (
-        <div style={{ marginTop: 24, padding: 16, background: '#fff3f3', border: '1px solid #f3c9c9', borderRadius: 10 }}>
+        <div style={{ marginTop: 24, padding: 16, background: 'var(--color-error-bg)', border: '1px solid var(--color-hairline)', borderRadius: 10 }}>
           <p style={{ margin: 0, color: '#a33' }}>{error}</p>
         </div>
       )}
 
       {!loading && !error && data && (
         <div style={{ marginTop: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#f7fbf8', border: '1px solid #dceee1', borderRadius: 12, marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: 'var(--color-success-bg)', border: '1px solid var(--color-hairline)', borderRadius: 12, marginBottom: 20 }}>
             <span style={{ width: 28, height: 28, borderRadius: '50%', background: '#2e7d32', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>✓</span>
             <div>
               <div style={{ fontWeight: 700, color: '#1f7a3f' }}>Receipt verified</div>
@@ -69,20 +69,20 @@ export default function ReceiptVerify() {
             <div style={{ fontSize: 34, fontWeight: 700, color: '#2e7d32' }}>{KES(data.amount)}</div>
           </div>
 
-          <div style={{ padding: '10px 14px', background: '#fafafa', fontSize: 14, borderRadius: 10, border: '1px solid #eee', marginBottom: 8 }}>
+          <div style={{ padding: '10px 14px', background: 'var(--color-surface-subtle)', fontSize: 14, borderRadius: 10, border: '1px solid var(--color-hairline)', marginBottom: 8 }}>
             <div style={{ color: '#666', marginBottom: 4 }}>Rent period</div>
-            <strong style={{ lineHeight: 1.5 }}>{data.rentPeriod || '—'}</strong>
+            <strong style={{ lineHeight: 1.5 }}>{data.rentPeriod || '-'}</strong>
           </div>
 
           <div style={{ display: 'grid', gap: 1, borderRadius: 10, overflow: 'hidden', border: '1px solid #eee' }}>
             {[
-              ['Date paid', data.paidAt ? new Date(data.paidAt).toLocaleString('en-GB') : '—'],
-              ['Payment method', PAYMENT_METHOD_LABELS[data.paymentMethod] || data.paymentMethod || '—'],
-              ['Tenant', data.tenantName || '—'],
-              ['Unit', data.unitName || '—'],
-              ['Property', data.propertyName || '—'],
+              ['Date paid', data.paidAt ? new Date(data.paidAt).toLocaleString('en-GB') : '-'],
+              ['Payment method', PAYMENT_METHOD_LABELS[data.paymentMethod] || data.paymentMethod || '-'],
+              ['Tenant', data.tenantName || '-'],
+              ['Unit', data.unitName || '-'],
+              ['Property', data.propertyName || '-'],
             ].map(([label, value]) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#fafafa', fontSize: 14 }}>
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--color-surface-subtle)', fontSize: 14 }}>
                 <span style={{ color: '#666' }}>{label}</span>
                 <strong>{value}</strong>
               </div>

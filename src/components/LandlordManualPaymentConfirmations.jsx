@@ -97,7 +97,7 @@ export default function LandlordManualPaymentConfirmations({ token, onConfirmReq
   }
 
   function timeAgo(iso) {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const diffMs = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diffMs / 60000);
     if (mins < 1) return 'just now';
@@ -151,12 +151,12 @@ export default function LandlordManualPaymentConfirmations({ token, onConfirmReq
           <div key={item.id} className="ppc-card">
             {item.duplicate_of && (
               <div className="ppc-card__duplicate-banner">
-                ⚠️ Duplicate — this transaction code was already used for a confirmed payment. Contact this account holder to clarify before confirming.
+                ⚠️ Duplicate - this transaction code was already used for a confirmed payment. Contact this account holder to clarify before confirming.
               </div>
             )}
             {item.amount_mismatch && (
               <div className="ppc-card__mismatch-banner">
-                ⚠️ Amount mismatch — expected KES {Number(item.expected_amount).toLocaleString()} but KES {Number(item.amount_paid).toLocaleString()} was submitted. Double-check before confirming.
+                ⚠️ Amount mismatch - expected KES {Number(item.expected_amount).toLocaleString()} but KES {Number(item.amount_paid).toLocaleString()} was submitted. Double-check before confirming.
               </div>
             )}
             <div className="ppc-card__row">
@@ -224,6 +224,7 @@ export default function LandlordManualPaymentConfirmations({ token, onConfirmReq
         confirmLabel="Yes, confirm"
         danger={false}
         busy={busyId === confirmTarget?.id}
+        error={error}
         onConfirm={() => handleConfirm(confirmTarget)}
         onCancel={() => setConfirmTarget(null)}
       />
@@ -235,6 +236,7 @@ export default function LandlordManualPaymentConfirmations({ token, onConfirmReq
         confirmLabel="Yes, delete"
         danger
         busy={busyId === deleteTarget?.id}
+        error={error}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

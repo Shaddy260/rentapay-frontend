@@ -105,7 +105,7 @@ export default function UtilityReviewScreen({ token, readingId, onClose, onFinal
   return (
     <section className="statistics-panel utility-meters-panel">
       <div className="tenant-section__header-row">
-        <h2>Review — {meter?.label} · {reading?.month_key}</h2>
+        <h2>Review - {meter?.label} · {reading?.month_key}</h2>
         <button type="button" className="ghost-link" onClick={onClose}>Back</button>
       </div>
 
@@ -117,7 +117,7 @@ export default function UtilityReviewScreen({ token, readingId, onClose, onFinal
 
       <p className="tenant-portal-hint">
         Total usage this month: {Number(run.total_usage).toLocaleString()} units.
-        <InfoTip label="About this screen" text="This is a working draft. Nothing is sent to any tenant until you finalize below — override any unit's occupied-days or amount as many times as you need first." />
+        <InfoTip label="About this screen" text="This is a working draft. Nothing is sent to any tenant until you finalize below - override any unit's occupied-days or amount as many times as you need first." />
       </p>
 
       {error && <p className="modal-error">{error}</p>}
@@ -225,7 +225,7 @@ function OverrideModal({ token, runId, runUnit, isShared, onClose, onApplied }) 
   return (
     <div className="modal-overlay" onClick={() => !saving && onClose()}>
       <div className="modal-shell" onClick={(e) => e.stopPropagation()}>
-        <h2>Override — {runUnit.units?.unit_name || 'Unit'}</h2>
+        <h2>Override - {runUnit.units?.unit_name || 'Unit'}</h2>
 
         <div className="form-field">
           <label className="form-field__label">What are you overriding?</label>

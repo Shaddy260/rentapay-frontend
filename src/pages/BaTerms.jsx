@@ -22,7 +22,7 @@ export default function BaTerms() {
         <h2>1. What Being a Brand Ambassador Means</h2>
         <p>
           A Brand Ambassador introduces prospective landlords to RentaPay and logs each landlord they
-          onboard through their own BA portal. You do not create landlord accounts yourself — every
+          onboard through their own BA portal. You do not create landlord accounts yourself - every
           landlord you introduce must register their own account independently through RentaPay's normal
           signup flow, either directly or via your personal referral link.
         </p>
@@ -47,7 +47,7 @@ export default function BaTerms() {
         <p>
           RentaPay may change payout amounts, qualification thresholds, or commission tiers at any time
           for future qualifications. Any such change will never retroactively alter the amount owed for a
-          landlord who has already qualified for payout before the change took effect — what you've
+          landlord who has already qualified for payout before the change took effect - what you've
           already earned is what you keep.
         </p>
 
@@ -74,7 +74,7 @@ export default function BaTerms() {
           Data you collect about a landlord while onboarding them (name, phone, location, and similar
           details) is handled under RentaPay's existing <Link to="/privacy">Privacy Policy</Link>. A
           landlord's own dashboard, settings, and account never reveal which Brand Ambassador onboarded
-          them — this relationship is internal RentaPay bookkeeping used only for payout tracking.
+          them - this relationship is internal RentaPay bookkeeping used only for payout tracking.
         </p>
 
         <h2>8. Changes to These Terms</h2>

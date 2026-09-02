@@ -245,7 +245,7 @@ export default function AddUnit() {
               <label className="form-field__label">Property</label>
               <p className="form-field__static-value">
                 {properties.find((p) => p.id === propertyId)?.name || 'This property'}
-                {properties.find((p) => p.id === propertyId)?.location ? ` — ${properties.find((p) => p.id === propertyId).location}` : ''}
+                {properties.find((p) => p.id === propertyId)?.location ? ` - ${properties.find((p) => p.id === propertyId).location}` : ''}
               </p>
               <p className="form-field__hint">Adding to the apartment currently open on your dashboard. Switch properties from the dashboard first if you meant a different one.</p>
             </div>
@@ -255,7 +255,7 @@ export default function AddUnit() {
               <select value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
                 <option value="">Unassigned</option>
                 {properties.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}{p.location ? ` — ${p.location}` : ''}</option>
+                  <option key={p.id} value={p.id}>{p.name}{p.location ? ` - ${p.location}` : ''}</option>
                 ))}
               </select>
             </div>

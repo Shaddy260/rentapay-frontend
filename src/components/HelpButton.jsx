@@ -182,11 +182,11 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
               <div className="help-channels help-channels--landlord">
                 <p className="help-modal-or u-mt-0">For rent/unit issues, contact directly:</p>
                 <a href={`tel:${landlordContact.phone}`} className="help-channel">
-                  {landlordContact.label || 'Landlord'}: {landlordContact.name} — {landlordContact.phone}
+                  {landlordContact.label || 'Landlord'}: {landlordContact.name} - {landlordContact.phone}
                 </a>
                 {landlordContact.managerPhone && (
                   <a href={`tel:${landlordContact.managerPhone}`} className="help-channel">
-                    Property manager: {landlordContact.managerName} — {landlordContact.managerPhone}
+                    Property manager: {landlordContact.managerName} - {landlordContact.managerPhone}
                   </a>
                 )}
               </div>
@@ -221,7 +221,7 @@ export default function HelpButton({ role, token, renderAs, landlordContact, onO
 
             <p className="help-modal-or">
               {token && chatSupported
-                ? "Or chat directly with an agent — your message lands in our team's inbox instantly and replies come straight back here:"
+                ? "Or chat directly with an agent - your message lands in our team's inbox instantly and replies come straight back here:"
                 : token
                   ? 'You can reach us directly through WhatsApp, phone, or email above.'
                   : 'Log in to chat directly with an agent, or reach us through WhatsApp or email above.'}

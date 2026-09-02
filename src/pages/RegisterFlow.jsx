@@ -9,7 +9,7 @@ import HeroPhotoBackground from '../components/HeroPhotoBackground.jsx';
 import PaymentDetailsCard from '../components/PaymentDetailsCard.jsx';
 import ManualPaymentHelp from '../components/ManualPaymentHelp.jsx';
 import InfoTip from '../components/InfoTip.jsx';
-import { api } from '../api/client.js';
+import { api, storeSessionTokens } from '../api/client.js';
 import { KENYA_COUNTIES } from '../constants/kenyaCounties.js';
 import { KENYA_CONSTITUENCIES } from '../constants/kenyaConstituencies.js';
 import './RegisterFlow.css';
@@ -192,6 +192,7 @@ export default function RegisterFlow() {
   // calls) can leak into what's meant to be a brand-new signup.
   if (!persisted && !resumingLoggedInLandlord && typeof localStorage !== 'undefined') {
     localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
     localStorage.removeItem('rentapay_role');
     localStorage.removeItem('rentapay_role_level');
     localStorage.removeItem('rentapay_phone');
@@ -428,14 +429,14 @@ export default function RegisterFlow() {
           const res = await api.checkSubscriptionPaymentStatus(checkoutRequestId);
           if (cancelled) return;
           if (res.status === 'completed') {
-            await proceedAfterVerification(res.token);
+            await proceedAfterVerification(res.token, res.refreshToken);
             return;
           }
         }
         const manualRes = await api.checkRegistrationManualPaymentStatus(landlordId);
         if (cancelled) return;
         if (manualRes.status === 'completed') {
-          await proceedAfterVerification(manualRes.token);
+          await proceedAfterVerification(manualRes.token, manualRes.refreshToken);
           return;
         }
         if (manualRes.status === 'rejected') {
@@ -557,7 +558,7 @@ export default function RegisterFlow() {
     // applies to manual entry; a link-based code is authoritative
     // regardless of resolution state (see the effect above).
     if (!referralFromLink && referralCode.trim() && referralNotFound) {
-      setError('No such referral code exists — please check with your BA or leave this field blank.');
+      setError('No such referral code exists - please check with your BA or leave this field blank.');
       return;
     }
     // DIRECT REQUEST: block submission (same as the tenant onboarding
@@ -639,7 +640,7 @@ export default function RegisterFlow() {
         const res = await api.checkSubscriptionPaymentStatus(checkoutRequestId);
         if (res.status === 'completed') {
           setPaymentPolling(false);
-          await proceedAfterVerification(res.token);
+          await proceedAfterVerification(res.token, res.refreshToken);
           return;
         }
         if (res.status === 'failed') {
@@ -791,7 +792,7 @@ export default function RegisterFlow() {
         const res = await api.checkRegistrationManualPaymentStatus(landlordId);
         if (res.status === 'completed') {
           setManualPolling(false);
-          await proceedAfterVerification(res.token);
+          await proceedAfterVerification(res.token, res.refreshToken);
           return;
         }
         if (res.status === 'rejected') {
@@ -852,12 +853,12 @@ export default function RegisterFlow() {
   // below only fires now as a last-resort fallback, if a token is
   // somehow missing from the response.
   // -----------------------------------------------------------------
-  async function proceedAfterVerification(tokenFromPoll) {
+  async function proceedAfterVerification(tokenFromPoll, refreshTokenFromPoll) {
     setError('');
 
     if (tokenFromPoll) {
       clearStaleAccountCaches();
-      localStorage.setItem('rentapay_token', tokenFromPoll);
+      storeSessionTokens(tokenFromPoll, refreshTokenFromPoll);
       localStorage.setItem('rentapay_role', 'landlord');
       setStepIndex(2);
       return;
@@ -883,7 +884,7 @@ export default function RegisterFlow() {
     try {
       const loginRes = await api.login({ accountType: 'landlord', phone: form.phone, password: form.password });
       clearStaleAccountCaches();
-      localStorage.setItem('rentapay_token', loginRes.token);
+      storeSessionTokens(loginRes.token, loginRes.refreshToken);
       localStorage.setItem('rentapay_role', 'landlord');
     } catch (loginErr) {
       // Don't hard-fail progress over this - worst case the wizard's
@@ -1335,11 +1336,11 @@ export default function RegisterFlow() {
                       />
                       {referralFromLink ? (
                         <p className="form-field__hint">
-                          Applied from your referral link{referredByName ? ` — referred by ${referredByName}` : ''}. This can&apos;t be changed.
+                          Applied from your referral link{referredByName ? ` - referred by ${referredByName}` : ''}. This can&apos;t be changed.
                         </p>
                       ) : referralNotFound ? (
                         <p className="form-field__error">
-                          No such referral code exists — please check with your BA or leave this field blank.
+                          No such referral code exists - please check with your BA or leave this field blank.
                         </p>
                       ) : null}
                     </div>
@@ -1575,12 +1576,12 @@ export default function RegisterFlow() {
             </div>
           )}
 
-          {/* STEP 2: Setup Wizard Step 1 — Property */}
+          {/* STEP 2: Setup Wizard Step 1 - Property */}
           {stepIndex === 2 && (
             <>
               <span className="success-badge">✓ Payment confirmed</span>
               <h1>Tell us about your property</h1>
-              <p className="register-page__intro">Setup Wizard — Step 1 of 4</p>
+              <p className="register-page__intro">Setup Wizard - Step 1 of 4</p>
               <form onSubmit={handlePropertySubmit} className="register-page__fields">
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="estateName">Estate name</label>
@@ -1680,11 +1681,11 @@ export default function RegisterFlow() {
             </>
           )}
 
-          {/* STEP 3: Setup Wizard Step 2 — Payment method */}
+          {/* STEP 3: Setup Wizard Step 2 - Payment method */}
           {stepIndex === 3 && (
             <>
               <h1>How will rent reach you?</h1>
-              <p className="register-page__intro">Setup Wizard — Step 2 of 4</p>
+              <p className="register-page__intro">Setup Wizard - Step 2 of 4</p>
               <form onSubmit={handlePaymentMethodSubmit} className="register-page__fields">
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="method">Method</label>
@@ -1730,12 +1731,12 @@ export default function RegisterFlow() {
             </>
           )}
 
-          {/* STEP 4: Setup Wizard Step 3 — Units (signature ledger element) */}
+          {/* STEP 4: Setup Wizard Step 3 - Units (signature ledger element) */}
           {stepIndex === 4 && (
             <>
               <h1>Add your units</h1>
               <p className="register-page__intro">
-                Setup Wizard — Step 3 of 4. Each unit gets a permanent payment code automatically.
+                Setup Wizard - Step 3 of 4. Each unit gets a permanent payment code automatically.
                 {' '}
                 {(unitLimit ?? form.unitsCount) != null && (
                   <strong>
@@ -1826,7 +1827,7 @@ export default function RegisterFlow() {
                   <span>Monthly rent</span>
                 </div>
                 {units.length === 0 ? (
-                  <div className="unit-ledger__empty">No units added yet — add your first one above.</div>
+                  <div className="unit-ledger__empty">No units added yet - add your first one above.</div>
                 ) : (
                   units.map((u, i) => (
                     <div className="unit-ledger__row" key={i}>
@@ -1857,7 +1858,7 @@ export default function RegisterFlow() {
             </>
           )}
 
-          {/* STEP 5: Setup Wizard Step 4 — Done */}
+          {/* STEP 5: Setup Wizard Step 4 - Done */}
           {stepIndex === 5 && (
             <div className="mpesa-pending">
               <div className="mpesa-pending__icon">🎉</div>

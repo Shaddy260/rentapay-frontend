@@ -24,6 +24,10 @@ const FAQ_ITEMS = [
         q: 'Can rent collection be fully automatic?',
         a: "Yes. A landlord who owns a genuine Safaricom Business Paybill or Till can connect it under Settings, in a handful of guided steps - RentaPay verifies it automatically with a small real test push to the landlord's own phone, no waiting on RentaPay staff. Once it's on, every tenant payment triggers a real M-Pesa prompt and confirms itself the moment Safaricom reports it back, with nobody checking a transaction code by hand - set it up once and it keeps running for as long as the account is active. It's entirely optional and reversible: manual confirmation stays available to switch back to at any time, without affecting any payment history already on record. Pochi la Biashara and a bank's own paybill don't qualify, since Safaricom can't issue API access for either.",
       },
+      {
+        q: 'Who can set up or change automatic rent collection?',
+        a: "Only the landlord account itself - never a property manager or caretaker, regardless of how much other access they've been given. Because this section holds the landlord's own Daraja/banking credentials, it's also locked behind the landlord's own login password every time it's opened, even within an already signed-in session, to prevent it being edited or turned off by mistake or on a shared device. Managers and caretakers can still see a read-only status banner showing whether it's currently working - they just can't open or change the credentials themselves.",
+      },
     ],
   },
   {
@@ -74,7 +78,7 @@ const FAQ_ITEMS = [
     items: [
       {
         q: "What's the difference between a Property Manager and a Caretaker?",
-        a: 'A Property Manager gets their own login and shares almost all of your access (units, tenants, day-to-day operations, payments, even subscription management), scoped to the properties you assign them - except they can\'t add/remove other managers or touch billing. A Caretaker gets a lighter login: the same portal, but blocked from removing tenants, transferring tenants, changing rent or due dates, or adding/removing units. Both are added from Settings, the same way you add a tenant.',
+        a: 'A Property Manager gets their own login and shares almost all of your access (units, tenants, day-to-day operations, payments, even subscription management), scoped to the properties you assign them - except they can\'t add/remove other managers, touch billing, or set up/change automatic rent collection (that stays locked to the landlord\'s own login, password-protected). A Caretaker gets a lighter login: the same portal, but blocked from removing tenants, transferring tenants, changing rent or due dates, or adding/removing units. Both are added from Settings, the same way you add a tenant.',
       },
       {
         q: 'How do I add a property manager or caretaker?',

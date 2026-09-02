@@ -34,6 +34,7 @@ export default function InactivityLogout() {
     function expireSession() {
       if (!hasSession()) return;
       localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
       localStorage.removeItem('rentapay_role');
       localStorage.removeItem('rentapay_role_level');
       localStorage.removeItem('rentapay_phone');

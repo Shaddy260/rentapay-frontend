@@ -118,8 +118,8 @@ export default function AdminSubscriptionPricing({ token }) {
     <div className="admin-sub-pricing">
       <InfoTip text={<>
         This is the fee every landlord pays: a base rate per unit per month, discounted for longer commitment
-        periods. It applies everywhere a subscription is charged — signup, adding a property, adding units
-        mid-period, and renewals. Saving never overwrites the current rate — it schedules a new one from a chosen
+        periods. It applies everywhere a subscription is charged - signup, adding a property, adding units
+        mid-period, and renewals. Saving never overwrites the current rate - it schedules a new one from a chosen
         effective date, so past rates are always kept for reference.
       </>} />
 
@@ -246,7 +246,7 @@ export default function AdminSubscriptionPricing({ token }) {
                         {Object.entries(row.period_discounts || {})
                           .sort((a, b) => Number(a[0]) - Number(b[0]))
                           .map(([m, d]) => `${m}mo: ${Math.round(Number(d) * 100)}%`)
-                          .join(', ') || '—'}
+                          .join(', ') || '-'}
                       </td>
                       <td>{new Date(row.effective_from).toLocaleString('en-GB')}</td>
                     </tr>

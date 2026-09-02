@@ -50,6 +50,39 @@
   min-height: var(--rp-touch-min);
 }
 
+/* DIRECT REQUEST: same "border draw" hover animation as the settings
+   cards (see Settings.css) - a thin accent border draws in from the
+   top-right corner and the bottom-left corner on hover, meeting at the
+   other two corners. One shared pseudo-element rule on .unit-tile
+   covers every unit card on every dashboard (landlord, manager,
+   caretaker all render the same UnitTile component), no per-status
+   variant needed. Skipped for the frozen/placeholder tiles, which
+   render a plain <div>, not this <Link>, so they're naturally
+   unaffected. */
+.unit-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--color-accent, #C1622D) 0 0),
+    linear-gradient(to bottom, var(--color-accent, #C1622D) 0 0),
+    linear-gradient(to left, var(--color-accent, #C1622D) 0 0),
+    linear-gradient(to top, var(--color-accent, #C1622D) 0 0);
+  background-repeat: no-repeat;
+  background-size: 0% 2px, 2px 0%, 0% 2px, 2px 0%;
+  background-position: top right, top right, bottom left, bottom left;
+  transition: background-size 0.5s ease;
+}
+.unit-tile:hover::after,
+.unit-tile:focus-visible::after {
+  background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .unit-tile::after { transition: none; }
+}
+
 /* Section 4: the small coloured status square, fixed top-left near the
    unit code, replacing the old full-tile colour fill. */
 .unit-tile__status-square {

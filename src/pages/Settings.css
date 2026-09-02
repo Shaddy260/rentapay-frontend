@@ -28,11 +28,72 @@
 }
 
 .settings-card {
+  position: relative;
   background: var(--color-surface-raised);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   margin-bottom: var(--space-5);
+  overflow: visible;
+}
+
+/* DIRECT REQUEST: "border draw" hover animation on every settings
+   card, matching the reference clip - on hover, a thin accent border
+   draws itself in from the top-right corner (top edge + right edge
+   growing outward together) and the bottom-left corner (bottom edge +
+   left edge growing outward together), meeting at the two remaining
+   corners. Pure CSS via one pseudo-element with four background
+   layers animated on background-size - no extra markup needed, so it
+   applies to every existing settings-card across the landlord, tenant,
+   and manager/caretaker portals (all three reuse this same class) with
+   this one rule. Disabled entirely for anyone who has asked their
+   system for reduced motion.
+   Sits on ::after (not ::before) and pointer-events: none, so it never
+   interferes with any button/link inside the card. */
+.settings-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--color-accent) 0 0),
+    linear-gradient(to bottom, var(--color-accent) 0 0),
+    linear-gradient(to left, var(--color-accent) 0 0),
+    linear-gradient(to top, var(--color-accent) 0 0);
+  background-repeat: no-repeat;
+  background-size: 0% 2px, 2px 0%, 0% 2px, 2px 0%;
+  background-position: top right, top right, bottom left, bottom left;
+  transition: background-size 0.5s ease;
+}
+.settings-card:hover::after,
+.settings-card:focus-within::after {
+  background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-card::after { transition: none; }
+}
+
+.settings-error {
+  color: var(--color-error);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-3);
+}
+
+.danger-zone {
+  border: 1px solid var(--color-error, #c0392b);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.danger-zone h3 {
+  color: var(--color-error, #c0392b);
+  margin-top: 0;
+}
+
+.danger-zone ul {
+  margin: var(--space-3) 0;
+  padding-left: 1.25rem;
 }
 
 /* Settings/Financial Statistics spec, section 2.1: cluster headers

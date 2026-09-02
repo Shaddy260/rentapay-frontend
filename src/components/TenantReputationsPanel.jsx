@@ -62,8 +62,8 @@ export default function TenantReputationsPanel({ token }) {
           {reputations.map((r) => (
             <tr key={r.tenantId}>
               <td>{r.fullName}</td>
-              <td>{r.unitName || '—'}</td>
-              <td>{r.propertyName || '—'}</td>
+              <td>{r.unitName || '-'}</td>
+              <td>{r.propertyName || '-'}</td>
               <td><Stars average={r.averageRating} /></td>
               <td>{r.totalRatings}</td>
               <td>{r.priorLandlordCount}</td>

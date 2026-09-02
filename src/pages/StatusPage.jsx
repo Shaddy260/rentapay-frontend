@@ -28,8 +28,8 @@ const CHECK_LABELS = {
   backgroundJobs: { label: 'Background jobs', description: 'Rent reminders, monthly billing, subscription reminders, and vacating notice processing that run on a schedule.', group: 'Core platform' },
   errorTracking: { label: 'Error tracking', description: "Behind-the-scenes monitoring that alerts RentaPay's team to unexpected errors.", group: 'Core platform' },
 
-  payments: { label: 'Payments (M-Pesa)', description: 'RentaPay\u2019s own M-Pesa STK push, used for landlord subscription billing.', group: 'Payments & billing' },
-  landlordAutomaticCollection: { label: 'Automatic rent collection', description: 'The optional, landlord-owned STK push some landlords have enabled for tenant rent collection. Reported separately from Payments (M-Pesa) above because it depends on each landlord\u2019s own Safaricom Till/Paybill and Daraja app, which can have an issue independent of RentaPay itself.', group: 'Payments & billing' },
+  payments: { label: 'RentaPay subscription payments (M-Pesa)', description: 'RentaPay\u2019s own M-Pesa STK push, used only for landlords paying or renewing their RentaPay subscription fee. This is separate from tenant rent collection - see "Automatic rent collection (landlord-owned)" below.', group: 'Payments & billing' },
+  landlordAutomaticCollection: { label: 'Automatic rent collection (landlord-owned)', description: 'The optional STK push some landlords have enabled for collecting rent from tenants, using each landlord\u2019s own Safaricom Till/Paybill and Daraja app credentials - not RentaPay\u2019s. Only reported as an issue here if the encryption that protects those landlord-entered credentials is unavailable platform-wide; whether one specific landlord\u2019s own credentials are working is shown separately, on their dashboard.', group: 'Payments & billing' },
   exportQueue: { label: 'Report & export downloads', description: 'Annual reports, tax summaries, financial CSVs, and receipt ZIPs generated for download.', group: 'Payments & billing' },
   utilitySubmetering: { label: 'Utility submetering', description: 'Shared water and electricity meter readings, and the invoices generated from them.', group: 'Payments & billing' },
   disputesAndComplaints: { label: 'Disputes & complaints', description: 'Disputing a charge and the help/complaints inbox available to every role.', group: 'Payments & billing' },
@@ -56,7 +56,8 @@ const AREA_OF_IMPACT = {
   api: 'the whole app',
   database: 'the whole app',
   authentication: 'signing in',
-  payments: 'making or confirming a payment',
+  payments: 'landlords paying or renewing their RentaPay subscription (not tenant rent collection)',
+  landlordAutomaticCollection: "landlord-configured automatic rent collection (each landlord's own Daraja credentials)",
   email: 'emailed codes, receipts, and reminders',
   smsWhatsapp: 'SMS/WhatsApp alerts',
   pushNotifications: 'browser/device push alerts',
@@ -144,7 +145,7 @@ export default function StatusPage() {
               {brokenKeys.map((key) => (
                 <li key={key}>
                   <span className="status-page__broken-name">{CHECK_LABELS[key].label}</span>
-                  {' — '}affects {AREA_OF_IMPACT[key] || 'part of the app'}
+                  {' - '}affects {AREA_OF_IMPACT[key] || 'part of the app'}
                 </li>
               ))}
             </ul>

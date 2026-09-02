@@ -54,7 +54,7 @@ export default function SharedReputation() {
       {loading && <p style={{ marginTop: 24 }}>Loading reputation…</p>}
 
       {!loading && error && (
-        <div style={{ marginTop: 24, padding: 16, background: '#fff3f3', border: '1px solid #f3c9c9', borderRadius: 10 }}>
+        <div style={{ marginTop: 24, padding: 16, background: 'var(--color-error-bg)', border: '1px solid var(--color-hairline)', borderRadius: 10 }}>
           <p style={{ margin: 0, color: '#a33' }}>{error}</p>
         </div>
       )}
@@ -65,12 +65,12 @@ export default function SharedReputation() {
           <p style={{ color: '#666', fontSize: 14, marginTop: 0 }}>Portable tenancy score, shared by the tenant.</p>
 
           {data.reputation.totalRatings === 0 ? (
-            <div style={{ padding: 20, background: '#f7f7f7', borderRadius: 10, textAlign: 'center' }}>
+            <div style={{ padding: 20, background: 'var(--color-surface-subtle)', borderRadius: 10, textAlign: 'center' }}>
               <p style={{ margin: 0 }}>No ratings yet - this tenant is new to RentaPay.</p>
             </div>
           ) : (
             <>
-              <div style={{ textAlign: 'center', padding: 24, background: '#f7fbf8', border: '1px solid #dceee1', borderRadius: 12, marginBottom: 16 }}>
+              <div style={{ textAlign: 'center', padding: 24, background: 'var(--color-success-bg)', border: '1px solid var(--color-hairline)', borderRadius: 12, marginBottom: 16 }}>
                 <div style={{ fontSize: 40, fontWeight: 700, color: '#1f7a3f' }}>{data.reputation.averageRating} / 5</div>
                 <div style={{ color: '#666', fontSize: 13 }}>
                   from {data.reputation.totalRatings} rating(s) across {data.reputation.priorLandlordCount} landlord(s)
@@ -81,7 +81,7 @@ export default function SharedReputation() {
                 {Object.entries(data.reputation.byRole || {})
                   .filter(([, v]) => v.count > 0)
                   .map(([role, v]) => (
-                    <div key={role} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#fafafa', borderRadius: 8 }}>
+                    <div key={role} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--color-surface-subtle)', borderRadius: 8 }}>
                       <span>{ROLE_LABELS[role] || role}</span>
                       <strong>{v.average} / 5 ({v.count})</strong>
                     </div>
@@ -95,7 +95,7 @@ export default function SharedReputation() {
                     {Object.entries(data.reputation.byCategory || {})
                       .filter(([, v]) => v.count > 0)
                       .map(([category, v]) => (
-                        <div key={category} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: '#fafafa', borderRadius: 8 }}>
+                        <div key={category} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--color-surface-subtle)', borderRadius: 8 }}>
                           <span>{CATEGORY_LABELS[category] || category}</span>
                           <strong>{v.average} / 5 ({v.count})</strong>
                         </div>

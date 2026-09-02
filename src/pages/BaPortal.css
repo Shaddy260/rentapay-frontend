@@ -690,3 +690,51 @@
   font-size: 0.88rem;
   font-weight: 600;
 }
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .ba-portal-banner--error {
+  background: #650101;
+  color: #e8a6a6;
+}
+
+[data-theme='dark'] .ba-claim-result--matched {
+  background: #016536;
+  color: #9cf2da;
+}
+
+[data-theme='dark'] .ba-claim-result--unmatched {
+  background: #665200;
+  color: #f0bd9e;
+}
+
+[data-theme='dark'] .ba-claim-result--conflict {
+  background: #650101;
+  color: #e8a6a6;
+}
+
+[data-theme='dark'] .ba-claim-list__status {
+  background: var(--color-surface-raised);
+}
+
+[data-theme='dark'] .ba-claim-list__status--qualified, .ba-claim-list__status--paid {
+  background: #016536;
+  color: #9cf2da;
+}

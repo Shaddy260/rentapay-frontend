@@ -9,25 +9,12 @@
   padding: 1.25rem;
 }
 
-.force-update-gate--checking {
-  background: #dbb396;
-}
-
-.force-update-gate__spinner {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
-  animation: force-update-gate-spin 0.8s linear infinite;
-}
-
-@keyframes force-update-gate-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
+/* FIX (direct request: no blocking full-screen loading states -
+   .force-update-gate--checking and its spinner used to render here
+   before content ever painted; removed along with the JS branch that
+   set it in ForceUpdateGate.jsx. The 'blocked' state below is the
+   only one that still shows a full-screen interrupt, and only when
+   the version check genuinely comes back outdated. */
 .force-update-gate__card {
   max-width: 340px;
   width: 100%;
@@ -75,8 +62,24 @@
   color: var(--color-ink-soft, #8a8374);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .force-update-gate__spinner {
-    animation: none;
-  }
-}
+
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+

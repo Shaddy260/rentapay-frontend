@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAppNavigate as useNavigate } from '../hooks/useAppNavigate.js';
 import Avatar from './Avatar.jsx';
 import ThemeToggleItem from './ThemeToggle.jsx';
-import { api, ApiError } from '../api/client.js';
+import { api, ApiError, logoutSession } from '../api/client.js';
 import './AccountMenu.css';
 
 /**
@@ -39,7 +39,11 @@ export default function AccountMenu({ name, photoUrl, role, token, onPhotoChange
   }, []);
 
   function handleLogout() {
-    localStorage.removeItem('rentapay_token');
+    // Revokes the refresh-token family server-side (best-effort, see
+    // logoutSession) on top of clearing both tokens client-side - a
+    // real logout button should mean this session can't silently
+    // renew itself via /auth/refresh afterwards.
+    logoutSession();
     localStorage.removeItem('rentapay_role');
     localStorage.removeItem('rentapay_role_level');
     navigate('/login');

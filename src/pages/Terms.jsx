@@ -652,7 +652,7 @@ export default function Terms() {
           To make these Terms easier to apply to a real situation, here is what several recurring
           words mean when used in this document. Account means a registered RentaPay profile in
           any role. Confirmed payment means a payment submission that has been accepted as
-          received — either manually, by a landlord, manager, or caretaker who has reviewed it, or
+          received - either manually, by a landlord, manager, or caretaker who has reviewed it, or
           automatically, where Section 4.1b's optional automatic rent collection applies and
           Safaricom has reported the payment back directly. Digest email means the optional
           periodic email summarising a landlord's portfolio, sent only to landlords who have opted
@@ -662,7 +662,7 @@ export default function Terms() {
           before certain sensitive actions. Portable reputation means a tenant's aggregate rating
           record, tied to that tenant's email address rather than to any one landlord, which the
           tenant can choose to share with a new landlord. Submission means proof of payment,
-          whether of rent or of a subscription, entered into RentaPay for review — this term
+          whether of rent or of a subscription, entered into RentaPay for review - this term
           applies to the manual flow described in Section 4.1; where Section 4.1b's automatic
           collection applies instead, no submission is made or needed, since Safaricom's report to
           RentaPay serves the equivalent function. These definitions are provided for clarity only
@@ -674,7 +674,7 @@ export default function Terms() {
         <p>
           Because the payment flow described in Section 4 is central to how RentaPay works, here
           are two concrete, step by step examples of how it plays out in practice, purely to help
-          you picture it — one for each of the two flows Section 4.1 and 4.1b describe.
+          you picture it - one for each of the two flows Section 4.1 and 4.1b describe.
         </p>
         <p>
           <strong>Manual confirmation (the default).</strong> A tenant's rent of a given amount
@@ -701,7 +701,7 @@ export default function Terms() {
           this landlord has connected their own Safaricom Business Paybill or Till and Daraja
           credentials, RentaPay uses those credentials to trigger a real M Pesa STK push prompt on
           the tenant's phone. The tenant enters their M Pesa PIN, and Safaricom processes the
-          transfer directly between tenant and landlord, exactly as in the manual flow — RentaPay
+          transfer directly between tenant and landlord, exactly as in the manual flow - RentaPay
           is still never in the middle of the money itself. The difference is what happens next:
           the moment Safaricom reports that confirmation back to RentaPay, the tenant's balance
           updates and a receipt is generated automatically, with no submission created and no

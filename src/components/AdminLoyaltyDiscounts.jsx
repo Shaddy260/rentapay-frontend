@@ -161,7 +161,7 @@ export default function AdminLoyaltyDiscounts({ token, readOnly = false, onGrant
       <InfoTip text={<>
         Landlords who've paid for consecutive subscription periods without a gap show up below once they hit the
         threshold. Select who to reward, set a discount %, and it's applied automatically on that landlord's next
-        subscription charge — no need to remember or re-apply it later.
+        subscription charge - no need to remember or re-apply it later.
       </>} />
 
       <section className="admin-loyalty__card">
@@ -233,7 +233,7 @@ export default function AdminLoyaltyDiscounts({ token, readOnly = false, onGrant
                       <div className="admin-loyalty__sub">{c.email || c.phone}</div>
                     </td>
                     <td>{c.consecutiveMonths}</td>
-                    <td>{c.alreadyHasDiscount ? 'Yes (streak grew — eligible again)' : 'No'}</td>
+                    <td>{c.alreadyHasDiscount ? 'Yes (streak grew - eligible again)' : 'No'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -343,7 +343,7 @@ export default function AdminLoyaltyDiscounts({ token, readOnly = false, onGrant
           </Button>
         </div>
         <InfoTip text={<>
-          Every grant this landlord base has ever received — active, consumed, revoked, or lapsed unused — including
+          Every grant this landlord base has ever received - active, consumed, revoked, or lapsed unused - including
           which payment consumed it and whether the reminder popup is currently snoozed.
         </>} />
 
@@ -411,7 +411,7 @@ export default function AdminLoyaltyDiscounts({ token, readOnly = false, onGrant
                           ? (h.currentlySnoozed
                             ? `Snoozed until ${new Date(h.reminderSnoozedUntil).toLocaleString('en-GB')}`
                             : 'Not snoozed')
-                          : '—'}
+                          : '-'}
                       </td>
                     </tr>
                   ))}

@@ -20,6 +20,16 @@ means RentaPay itself cannot see or recover your actual password even if it want
 to. When you log in, what you type is hashed the same way and compared to the
 stored hash, rather than the original ever being stored anywhere.
 
+## A landlord's own Daraja credentials
+
+If a landlord connects their own Safaricom Business Paybill or Till for automatic
+rent collection, the Consumer Secret and passkey they enter are encrypted before
+being stored, not kept in plain text. That section of Settings is also visible
+only to the landlord account itself, never a property manager or caretaker, and
+is locked behind the landlord's own login password every time it is opened, even
+within a session that is already signed in, so it cannot be viewed, edited, or
+turned off by mistake or by someone else using an unlocked device.
+
 ## Guarding against brute force attempts
 
 Repeated failed login attempts against an account trigger a temporary lockout, and
@@ -86,12 +96,12 @@ or who it claims to be from, should be treated as fraudulent and reported.
 Sign-in attempts are rate limited more strictly than other requests, meaning that
 after a number of incorrect attempts in a short window, further attempts are
 automatically slowed. This is aimed at making automated password guessing
-impractical, not at locking out a genuine user for long — normal access resumes
+impractical, not at locking out a genuine user for long - normal access resumes
 once the short window passes.
 
 ## Error monitoring
 
 Where a deployment has error monitoring configured, unexpected server errors are
 reported to that tool so bugs can be found and fixed quickly. This is about the
-platform's own reliability, not about tracking what you personally do — it is not
+platform's own reliability, not about tracking what you personally do - it is not
 used to build a profile of your activity.

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAppNavigate as useNavigate } from '../hooks/useAppNavigate.js';
 import { api, ApiError } from '../api/client.js';
 import Button from '../components/Button.jsx';
@@ -15,6 +15,8 @@ import BottomNav from '../components/BottomNav.jsx';
 import GlobalSearch from '../components/GlobalSearch.jsx';
 import Skeleton from '../components/Skeleton.jsx';
 import OnboardingChecklist from '../components/OnboardingChecklist.jsx';
+import OwnershipVerificationBanner from '../components/OwnershipVerificationBanner.jsx';
+import DarajaHealthBanner from '../components/DarajaHealthBanner.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { MissingPhotosBanner, MissingPhotosBadge } from '../components/MissingPhotosNudge.jsx';
 import { downloadCsv } from '../utils/downloadCsv.js';
@@ -59,6 +61,7 @@ import MyOwnRatingPanel from '../components/MyOwnRatingPanel.jsx';
 import PropertyReputationPanel from '../components/PropertyReputationPanel.jsx';
 import AttentionFeed from '../components/AttentionFeed.jsx';
 import AtAGlanceSummary from '../components/AtAGlanceSummary.jsx';
+import InvestorSnapshotPanel from '../components/InvestorSnapshotPanel.jsx';
 import MaintenanceManagePanel from '../components/MaintenanceManagePanel.jsx';
 import ExpensesPanel from '../components/ExpensesPanel.jsx';
 import DueDatesCalendar from '../components/DueDatesCalendar.jsx';
@@ -467,6 +470,7 @@ export default function Dashboard() {
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) {
           localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
           localStorage.removeItem('rentapay_role');
           localStorage.removeItem('rentapay_role_level');
           if (err.accountRevoked) {
@@ -588,7 +592,7 @@ export default function Dashboard() {
     const rows = [];
     for (const unit of units) {
       const activeTenant = (unit.tenants || []).find((t) => t.is_active);
-      rows.push([unit.unit_name, unit.status, activeTenant?.full_name || '—', unit.rent_amount, activeTenant?.balance_due || 0]);
+      rows.push([unit.unit_name, unit.status, activeTenant?.full_name || '-', unit.rent_amount, activeTenant?.balance_due || 0]);
     }
     downloadCsv('rentapay-report', headers, rows);
   }
@@ -604,6 +608,15 @@ export default function Dashboard() {
   // Once it's loaded once, a re-fetch just updates in place with zero
   // loading screen - the data that's already there stays visible the
   // whole time instead of being wiped and redrawn.
+  // FIX (direct request: "it loads like this before showing the login
+  // page"): SubscriptionLockGate above this component now redirects
+  // before ever mounting Dashboard when there's no token (see that
+  // file), so in practice this should never render - but if this
+  // page is ever reached directly with no token, redirect immediately
+  // rather than painting the "Loading your dashboard…" skeleton below
+  // for even one frame just to redirect away from it a tick later.
+  if (!token) return <Navigate to="/login" replace />;
+
   if (loading && !summary) {
     return (
       <div className="dashboard-page dashboard-page--loading">
@@ -705,6 +718,7 @@ export default function Dashboard() {
               className="ghost-link"
               onClick={() => {
                 localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
                 localStorage.removeItem('rentapay_role');
                 localStorage.removeItem('rentapay_role_level');
                 navigate('/login');
@@ -838,7 +852,7 @@ export default function Dashboard() {
         items={[
           { key: 'dashboard', label: 'Home', icon: '🏠', onClick: () => setActiveView('dashboard') },
           { key: 'pending-confirmations', label: 'Payments', icon: '✅', onClick: () => setActiveView('pending-confirmations') },
-          { key: 'maintenance', label: 'Maintenance', icon: '🔧', onClick: () => setActiveView('maintenance') },
+          { key: 'settings', label: 'Settings', icon: '⚙️', onClick: () => navigate('/settings') },
           { key: 'messages', label: 'Messages', icon: '💬', onClick: () => navigate('/messages') },
         ]}
       />
@@ -956,6 +970,16 @@ export default function Dashboard() {
           { key: 'community', icon: '📣', label: 'New activity on your community board', count: communityBadge, onClick: () => setActiveView('community') },
         ]}
       />
+
+      {!isCaretaker && <OwnershipVerificationBanner token={token} />}
+      {/* DIRECT REQUEST: unlike the ownership banner above, this one
+          IS shown to caretakers - they can't set up or edit Daraja
+          credentials, but they still need to know whether the
+          automatic M-Pesa popup their tenants rely on is currently
+          working, same as the landlord and any manager. Renders
+          nothing on its own if the landlord never set up Daraja
+          credentials. */}
+      <DarajaHealthBanner token={token} />
 
       {!isManager && (
         <OnboardingChecklist
@@ -1122,6 +1146,19 @@ export default function Dashboard() {
           onOpenSubscription={() => navigate('/subscription')}
         />
 
+        {/* Glow Dashboard Phase 5 - "Solo Investor Snapshot": landlord
+            portfolio-owner view only. Caretakers/managers don't own the
+            portfolio's financials (collection rate, late payers), so
+            this stays scoped to the actual landlord, matching how
+            PaymentHistoryPanel/DisputesPanel above already gate
+            edit/delete actions off isCaretaker. */}
+        {!isManager && (
+          <InvestorSnapshotPanel
+            token={token}
+            onOpenLatePayer={() => { setShowFullDetails(true); openDrillDown('overdue'); }}
+          />
+        )}
+
         <MissingPhotosBanner
           units={units}
           scopeKey={`dashboard:${activePropertyId || 'all'}`}
@@ -1151,7 +1188,7 @@ export default function Dashboard() {
           {isUrgent && (
             <div className="subscription-bar__warning-row">
               <span className={`subscription-bar__warning ${isCritical ? 'subscription-bar__warning--critical' : ''}`}>
-                {isCritical ? `⚠️ Only ${daysLeft} day${daysLeft === 1 ? '' : 's'} left — renew now to avoid losing access` : 'Renew soon to avoid losing access'}
+                {isCritical ? `⚠️ Only ${daysLeft} day${daysLeft === 1 ? '' : 's'} left - renew now to avoid losing access` : 'Renew soon to avoid losing access'}
               </span>
               <Link to="/subscription" className="subscription-bar__renew-link">Renew now →</Link>
             </div>
@@ -1296,8 +1333,8 @@ export default function Dashboard() {
                         <tr key={p.id}>
                           <td><TenantContactCard tenant={{ ...p.tenants, unit_name: p.units?.unit_name }} size={28} token={token} canRate /></td>
                           <td>{new Date(p.paid_at).toLocaleDateString('en-GB')}</td>
-                          <td>{p.tenants?.full_name || '—'}</td>
-                          <td>{p.units?.unit_name || '—'}</td>
+                          <td>{p.tenants?.full_name || '-'}</td>
+                          <td>{p.units?.unit_name || '-'}</td>
                           <td>KES {Number(p.amount).toLocaleString()}</td>
                           <td>{p.payment_method}</td>
                         </tr>
@@ -1321,7 +1358,7 @@ export default function Dashboard() {
                         <td>{activeTenant && <TenantContactCard tenant={{ ...activeTenant, unit_name: u.unit_name }} size={28} token={token} canRate />}</td>
                         <td>{u.unit_name}</td>
                         <td>{STATUS_LABELS[u.status]?.label || u.status}</td>
-                        <td>{activeTenant?.full_name || '—'}</td>
+                        <td>{activeTenant?.full_name || '-'}</td>
                         <td>KES {Number(u.rent_amount).toLocaleString()}</td>
                       </tr>
                     );
@@ -1386,7 +1423,7 @@ export default function Dashboard() {
                         <tr key={u.id}>
                           <td>{activeTenant && <TenantContactCard tenant={{ ...activeTenant, unit_name: u.unit_name }} size={28} token={token} canRate />}</td>
                           <td>{u.unit_name}</td>
-                          <td>{activeTenant?.full_name || '—'}</td>
+                          <td>{activeTenant?.full_name || '-'}</td>
                         </tr>
                       );
                     })}
@@ -1486,11 +1523,11 @@ export default function Dashboard() {
           {whatsappBulkQueue && (
             <div className="quick-actions__status quick-actions__whatsapp-progress">
               <p>
-                Reminder {whatsappBulkIndex + 1} of {whatsappBulkQueue.length} — {whatsappBulkQueue[whatsappBulkIndex].name}.
+                Reminder {whatsappBulkIndex + 1} of {whatsappBulkQueue.length} - {whatsappBulkQueue[whatsappBulkIndex].name}.
                 {' '}WhatsApp opened with the message ready to send.
               </p>
               <button type="button" className="ghost-link" onClick={handleNextBulkWhatsAppRemind}>
-                {whatsappBulkIndex + 1 >= whatsappBulkQueue.length ? 'Finish' : 'Sent — next tenant'}
+                {whatsappBulkIndex + 1 >= whatsappBulkQueue.length ? 'Finish' : 'Sent - next tenant'}
               </button>
               <button type="button" className="ghost-link" onClick={handleCancelBulkWhatsAppRemind}>Cancel</button>
             </div>

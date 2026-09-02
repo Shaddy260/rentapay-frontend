@@ -234,8 +234,8 @@ export default function TenantListExport({ token, propertyId, propertyName }) {
               <span>{t.unitName}</span>
               <span>{t.phone}</span>
               <span>
-                {listType === 'joined' && (t.moveInDate || '—')}
-                {(listType === 'left' || listType === 'left_all') && (t.leftAt ? t.leftAt.slice(0, 10) : '—')}
+                {listType === 'joined' && (t.moveInDate || '-')}
+                {(listType === 'left' || listType === 'left_all') && (t.leftAt ? t.leftAt.slice(0, 10) : '-')}
                 {listType === 'current' && (t.isActive ? 'Active' : 'Left')}
               </span>
             </div>

@@ -91,9 +91,9 @@ export default function PaymentHistoryPanel({ token, role = 'landlord', property
       'rentapay-payment-history',
       ['Date', 'Tenant', 'Unit', 'Amount (KES)', 'Method', 'Status'],
       payments.map((p) => [
-        p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '—',
-        p.tenants?.full_name || '—',
-        p.units?.unit_name || '—',
+        p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '-',
+        p.tenants?.full_name || '-',
+        p.units?.unit_name || '-',
         p.amount,
         (p.payment_method || '').replace('_', ' '),
         p.status,
@@ -184,9 +184,9 @@ export default function PaymentHistoryPanel({ token, role = 'landlord', property
             <tbody>
               {payments.map((p) => (
                 <tr key={p.id}>
-                  <td>{p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '—'}</td>
-                  <td>{p.tenants?.full_name || '—'}</td>
-                  <td>{p.units?.unit_name || '—'}</td>
+                  <td>{p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '-'}</td>
+                  <td>{p.tenants?.full_name || '-'}</td>
+                  <td>{p.units?.unit_name || '-'}</td>
                   <td>KES {Number(p.amount).toLocaleString()}</td>
                   <td>{(p.payment_method || '').replace('_', ' ')}</td>
                   <td><span className={`payment-status payment-status--${p.status}`}>{p.status}</span></td>

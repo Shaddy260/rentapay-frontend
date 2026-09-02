@@ -8,7 +8,7 @@ import './Login.css';
 const MANAGER_PATH = import.meta.env.VITE_MANAGER_PATH || '/manager-account';
 
 /**
- * RentaPay — General Manager Sectioned Build Spec, Section 4.
+ * RentaPay - General Manager Sectioned Build Spec, Section 4.
  *
  * "At account onboarding (first login / initial setup), the General
  * Manager sets their Operations PIN." Reached right after the forced
@@ -85,7 +85,7 @@ export default function ManagerAccountPinSetup() {
         <h1>Set your Operations PIN</h1>
         <p className="login-page__intro">
           This 4-digit PIN is separate from your login password. You'll be asked for it whenever you confirm
-          an edit, along with a short reason — every action is logged for admin. Choose something you won't forget.
+          an edit, along with a short reason - every action is logged for admin. Choose something you won't forget.
         </p>
 
         {error && (

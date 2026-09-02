@@ -9,7 +9,7 @@ individual rating a landlord, manager, or caretaker has given them, tied to the
 tenant's own email address rather than to any one landlord's account.
 
 **Confirmed payment.** A payment submission that has been accepted as genuinely
-received — either manually, by a landlord, manager, or caretaker reviewing it, or
+received - either manually, by a landlord, manager, or caretaker reviewing it, or
 automatically, the moment Safaricom reports it back for a landlord who has
 connected their own Paybill/Till.
 
@@ -72,20 +72,20 @@ visible only to the tenant it is about, never to another landlord.
 
 ## A few additional terms
 
-**Grace period** — the short window after a subscription's due date, before it
+**Grace period** - the short window after a subscription's due date, before it
 locks, during which existing data stays visible but some features may be limited.
 
-**Signed URL** — a time-limited download link generated for a report or export,
+**Signed URL** - a time-limited download link generated for a report or export,
 currently valid for one hour, after which it stops working and a fresh one must be
 requested.
 
-**Session** — the signed token your device holds after signing in, valid for seven
+**Session** - the signed token your device holds after signing in, valid for seven
 days by default, that proves who you are without asking for your password again on
 every screen.
 
-**Status page** — RentaPay's public page, reachable without signing in, reporting
+**Status page** - RentaPay's public page, reachable without signing in, reporting
 in real time whether each part of the platform is working normally.
 
-**Background job** — work RentaPay does behind the scenes on a schedule or a queue
+**Background job** - work RentaPay does behind the scenes on a schedule or a queue
 rather than instantly within a single page load, such as sending rent reminders or
 assembling a large report.

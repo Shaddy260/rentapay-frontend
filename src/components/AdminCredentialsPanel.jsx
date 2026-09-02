@@ -196,13 +196,13 @@ export default function AdminCredentialsPanel({ token }) {
                               </td>
                               <td>{c.full_name}</td>
                               <td>{c.phone}</td>
-                              {isFirstLogin && activeRole === 'tenant' && <td>{c.unit_name || '—'}</td>}
-                              {isFirstLogin && <td>{c.property_name || '—'}</td>}
-                              <td>{c.landlord_name || '—'}</td>
+                              {isFirstLogin && activeRole === 'tenant' && <td>{c.unit_name || '-'}</td>}
+                              {isFirstLogin && <td>{c.property_name || '-'}</td>}
+                              <td>{c.landlord_name || '-'}</td>
                               {isFirstLogin && <td><code>{c.temp_password}</code></td>}
                               {(!isFirstLogin || activeRole === 'tenant') && <td><code>{c.otp}</code></td>}
                               <td>{new Date(c.created_at || c.requested_at).toLocaleString()}</td>
-                              <td>{c.expires_at ? new Date(c.expires_at).toLocaleString() : 'No expiry — verified automatically'}</td>
+                              <td>{c.expires_at ? new Date(c.expires_at).toLocaleString() : 'No expiry - verified automatically'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -231,7 +231,7 @@ export default function AdminCredentialsPanel({ token }) {
             {selectedPerson.property_name && <p><strong>Property:</strong> {selectedPerson.property_name}</p>}
             {selectedPerson.landlord_name && <p><strong>Landlord:</strong> {selectedPerson.landlord_name}</p>}
             <p><strong>{isFirstLogin ? 'Created' : 'Requested'}:</strong> {new Date(selectedPerson.created_at || selectedPerson.requested_at).toLocaleString()}</p>
-            <p><strong>Expires:</strong> {selectedPerson.expires_at ? new Date(selectedPerson.expires_at).toLocaleString() : 'No expiry — verified automatically'}</p>
+            <p><strong>Expires:</strong> {selectedPerson.expires_at ? new Date(selectedPerson.expires_at).toLocaleString() : 'No expiry - verified automatically'}</p>
             <InfoTip text={<>This picture is pulled live from their profile, so it always reflects their most recent update.</>} />
             <button type="button" className="modal-card__close" onClick={() => setSelectedPerson(null)}>Close</button>
           </div>

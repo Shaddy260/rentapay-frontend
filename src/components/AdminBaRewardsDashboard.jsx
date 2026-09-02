@@ -3,10 +3,13 @@ import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
 import ModalShell from './ModalShell.jsx';
+import GlowCard from './GlowCard.jsx';
+import HeroStat from './HeroStat.jsx';
+import KpiMiniGrid from './KpiMiniGrid.jsx';
 import './AdminBaRewardsDashboard.css';
 
 const KES = (n) => `KES ${Number(n || 0).toLocaleString('en-KE', { maximumFractionDigits: 0 })}`;
-const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB') : '—');
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB') : '-');
 
 /**
  * Premium Redesign Plan - Phase 8: Admin BA Performance & Rewards
@@ -62,8 +65,28 @@ export default function AdminBaRewardsDashboard({ token }) {
 
   const selectedBas = (leaderboard || []).filter((b) => selectedIds.includes(b.baId));
 
+  // Phase 3 - Glow Card summary header (RentaPay-Glow-Dashboard-Build-
+  // Spec.md §4 Phase 3), sourced entirely from `leaderboard`, which is
+  // already loaded for this component - no new fetch added.
+  const totalNetContribution = (leaderboard || []).reduce((sum, b) => sum + Number(b.netContribution || 0), 0);
+  const rewardedCount = (leaderboard || []).filter((b) => !b.neverRewarded).length;
+
   return (
     <div className="admin-ba-rewards">
+      {leaderboard && leaderboard.length > 0 && (
+        <GlowCard accent="green" title="BA performance summary" className="admin-ba-rewards__glow-summary">
+          <HeroStat eyebrow="Net revenue contribution (all BAs)" value={KES(totalNetContribution)} />
+          <KpiMiniGrid
+            accent="green"
+            items={[
+              { label: 'Active Brand Ambassadors', value: leaderboard.length },
+              { label: 'Currently rewarded', value: rewardedCount },
+              { label: 'Not yet rewarded', value: leaderboard.length - rewardedCount },
+            ]}
+          />
+        </GlowCard>
+      )}
+
       <div className="admin-ba-rewards__tabs">
         <button className={`admin-ba-rewards__tab${view === 'leaderboard' ? ' admin-ba-rewards__tab--active' : ''}`} onClick={() => setView('leaderboard')}>
           Leaderboard
@@ -154,7 +177,7 @@ export default function AdminBaRewardsDashboard({ token }) {
                 </div>
                 <p className="admin-ba-rewards__history-meta">
                   {r.previous_percentage != null ? `${r.previous_percentage}% → ` : ''}
-                  <strong>{r.new_percentage}%</strong> · {fmtDate(r.start_at)} – {fmtDate(r.end_at)}
+                  <strong>{r.new_percentage}%</strong> · {fmtDate(r.start_at)} - {fmtDate(r.end_at)}
                 </p>
                 <Button
                   variant="ghost"
@@ -271,7 +294,7 @@ function RewardConfirmModal({ token, selectedBas, onClose, onDone }) {
             </label>
           </div>
           <p className="ba-reward-confirm__caption">
-            The reward automatically reverts to the universal default commission rate once the end date passes — no manual step needed.
+            The reward automatically reverts to the universal default commission rate once the end date passes - no manual step needed.
           </p>
 
           {error && <p className="admin-ba-rewards__error">{error}</p>}

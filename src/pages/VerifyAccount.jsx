@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppNavigate as useNavigate } from '../hooks/useAppNavigate.js';
 import Button from '../components/Button.jsx';
-import { api, ApiError } from '../api/client.js';
+import { api, ApiError, storeSessionTokens } from '../api/client.js';
 import { clearStaleAccountCaches } from '../utils/clearStaleCaches.js';
 import './Login.css';
 
@@ -82,7 +82,7 @@ export default function VerifyAccount() {
       if (res.token) {
         setMessage('Account verified! Taking you in…');
         clearStaleAccountCaches();
-        localStorage.setItem('rentapay_token', res.token);
+        storeSessionTokens(res.token, res.refreshToken);
         localStorage.setItem('rentapay_role', res.role || accountType);
         localStorage.setItem('rentapay_phone', res.phone || phone);
         if (res.roleLevel) localStorage.setItem('rentapay_role_level', res.roleLevel);

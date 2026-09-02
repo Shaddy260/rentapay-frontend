@@ -114,7 +114,7 @@ export default function GmPendingActionsPanel({ token, onReviewed }) {
   }
 
   function timeAgo(iso) {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const diffMs = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diffMs / 60000);
     if (mins < 1) return 'just now';
@@ -138,7 +138,7 @@ export default function GmPendingActionsPanel({ token, onReviewed }) {
     <section className="statistics-panel">
       <div className="tenant-section__header-row">
         <h2>
-          General Manager — Pending Actions
+          General Manager - Pending Actions
           {items && items.length > 0 && (
             <span style={{ marginLeft: 8, fontSize: '0.65em', background: '#B3261E', color: '#fff', borderRadius: 10, padding: '2px 8px', verticalAlign: 'middle' }}>
               {items.length} awaiting review

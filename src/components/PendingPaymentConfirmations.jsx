@@ -222,7 +222,7 @@ export default function PendingPaymentConfirmations({ token, canConfirmReject = 
   }
 
   function timeAgo(iso) {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const diffMs = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diffMs / 60000);
     if (mins < 1) return 'just now';
@@ -356,7 +356,7 @@ export default function PendingPaymentConfirmations({ token, canConfirmReject = 
                 )}
                 {record.duplicate_of && (
                   <div className="ppc-card__duplicate-banner">
-                    ⚠️ Duplicate — this transaction code was already used for a confirmed payment. Contact the tenant to clarify, then delete this submission.
+                    ⚠️ Duplicate - this transaction code was already used for a confirmed payment. Contact the tenant to clarify, then delete this submission.
                   </div>
                 )}
                 <div className="ppc-card__row">
@@ -378,7 +378,7 @@ export default function PendingPaymentConfirmations({ token, canConfirmReject = 
                     </div>
                     <div className="ppc-card__unit">
                       {record.units?.properties?.name ? `${record.units.properties.name} · ` : ''}
-                      {record.units?.unit_name || '—'}
+                      {record.units?.unit_name || '-'}
                     </div>
                   </div>
                   <div className="ppc-card__submitted">{timeAgo(record.submitted_at)}</div>
@@ -489,6 +489,7 @@ export default function PendingPaymentConfirmations({ token, canConfirmReject = 
         confirmLabel="Yes, confirm"
         danger={false}
         busy={actioningId === confirmTarget?.id}
+        error={error}
         onConfirm={() => handleConfirm(confirmTarget)}
         onCancel={() => setConfirmTarget(null)}
       />
@@ -500,6 +501,7 @@ export default function PendingPaymentConfirmations({ token, canConfirmReject = 
         confirmLabel="Yes, remove"
         danger
         busy={actioningId === deleteTarget?.id}
+        error={error}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
@@ -511,6 +513,7 @@ export default function PendingPaymentConfirmations({ token, canConfirmReject = 
         confirmLabel="Yes, remove selected"
         danger
         busy={bulkBusy}
+        error={error}
         onConfirm={handleBulkDeleteSelected}
         onCancel={() => setBulkAction(null)}
       />
@@ -522,6 +525,7 @@ export default function PendingPaymentConfirmations({ token, canConfirmReject = 
         confirmLabel="Yes, remove all"
         danger
         busy={bulkBusy}
+        error={error}
         onConfirm={handleBulkDeleteAll}
         onCancel={() => setBulkAction(null)}
       />

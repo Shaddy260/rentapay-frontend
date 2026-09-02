@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, ApiError } from '../api/client.js';
 import Button from './Button.jsx';
 import Skeleton from './Skeleton.jsx';
+import GlowCard from './GlowCard.jsx';
+import HeroStat from './HeroStat.jsx';
+import KpiMiniGrid from './KpiMiniGrid.jsx';
 import './AdminFinancialOverview.css';
 
 const KES = (n) => `KES ${Number(n || 0).toLocaleString('en-KE', { maximumFractionDigits: 0 })}`;
@@ -81,39 +84,22 @@ export default function AdminFinancialOverview({ token }) {
 
       {overview && (
         <>
-          <div className="admin-financial-overview__stat-row">
-            <div className="admin-financial-overview__stat-card admin-financial-overview__stat-card--positive">
-              <span className="admin-financial-overview__stat-label">Earned this month</span>
-              <span className="admin-financial-overview__stat-value">{KES(overview.earned)}</span>
-            </div>
-            <div className="admin-financial-overview__stat-card admin-financial-overview__stat-card--caution">
-              <span className="admin-financial-overview__stat-label">Owed to BAs</span>
-              <span className="admin-financial-overview__stat-value">{KES(overview.owedToBas)}</span>
-            </div>
-          </div>
-
-          <div className="admin-financial-overview__breakdown">
-            <div className="admin-financial-overview__breakdown-row">
-              <span>Earned</span>
-              <span>{KES(overview.earned)}</span>
-            </div>
-            <div className="admin-financial-overview__breakdown-row">
-              <span>Owed to BAs</span>
-              <span className="admin-financial-overview__negative">− {KES(overview.owedToBas)}</span>
-            </div>
-            <div className="admin-financial-overview__breakdown-row">
-              <span>Remaining</span>
-              <span>{KES(overview.remaining)}</span>
-            </div>
-            <div className="admin-financial-overview__breakdown-row">
-              <span>Expenses</span>
-              <span className="admin-financial-overview__negative">− {KES(overview.totalExpenses)}</span>
-            </div>
-            <div className="admin-financial-overview__breakdown-row admin-financial-overview__breakdown-row--total">
-              <span>Profit</span>
-              <span>{KES(overview.profit)}</span>
-            </div>
-          </div>
+          <GlowCard accent="purple" title="Financial summary" className="admin-financial-overview__glow-summary">
+            <HeroStat
+              eyebrow="Earned this month"
+              value={KES(overview.earned)}
+              delta={{ value: `− ${KES(overview.owedToBas)} owed to BAs`, positive: false }}
+            />
+            <KpiMiniGrid
+              accent="purple"
+              items={[
+                { label: 'Owed to BAs', value: KES(overview.owedToBas) },
+                { label: 'Remaining', value: KES(overview.remaining) },
+                { label: 'Expenses', value: KES(overview.totalExpenses) },
+                { label: 'Profit', value: KES(overview.profit), caption: overview.profit >= 0 ? 'In the black' : 'Running at a loss' },
+              ]}
+            />
+          </GlowCard>
 
           <div className="admin-financial-overview__expenses">
             {overview.expenses.length === 0 && <p className="admin-financial-overview__empty">No expenses logged for this month.</p>}

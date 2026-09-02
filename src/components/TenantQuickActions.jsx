@@ -103,7 +103,7 @@ export default function TenantQuickActions({ token, tenant, mode = 'admin', requ
   const { isSuspended } = status;
 
   return (
-    <ModalShell title={`Account actions — ${tenant.name}`} onClose={onClose}>
+    <ModalShell title={`Account actions - ${tenant.name}`} onClose={onClose}>
       <div className="tenant-quick-actions">
         <p className="tenant-quick-actions__meta">
           {[tenant.email, tenant.phone].filter(Boolean).join(' · ')}
@@ -116,7 +116,7 @@ export default function TenantQuickActions({ token, tenant, mode = 'admin', requ
           {isSuspended
             ? status.suspendedPermanently
               ? 'Suspended indefinitely'
-              : `Suspended until ${status.suspendedUntil ? new Date(status.suspendedUntil).toLocaleString() : '—'}`
+              : `Suspended until ${status.suspendedUntil ? new Date(status.suspendedUntil).toLocaleString() : '-'}`
             : 'Active'}
           {status.warningCount ? ` · ${status.warningCount} warning(s)` : ''}
         </p>

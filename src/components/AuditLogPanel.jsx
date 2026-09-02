@@ -80,7 +80,7 @@ export default function AuditLogPanel({ token, propertyId, targetType }) {
                 <li key={log.id} className="audit-log-panel__item">
                   <span className="audit-log-panel__line">
                     <strong>{log.actorName}</strong> {ACTION_LABELS[log.action] || log.action}
-                    {describeLog(log) && <> — {describeLog(log)}</>}
+                    {describeLog(log) && <> - {describeLog(log)}</>}
                   </span>
                   <span className="audit-log-panel__time">{new Date(log.created_at).toLocaleString('en-GB')}</span>
                 </li>

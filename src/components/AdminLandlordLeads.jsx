@@ -87,7 +87,7 @@ export default function AdminLandlordLeads({ token }) {
                 <tr key={l.id}>
                   <td>{l.full_name}</td>
                   <td>{l.phone}</td>
-                  <td>{[l.house_name, l.location].filter(Boolean).join(', ') || '—'}</td>
+                  <td>{[l.house_name, l.location].filter(Boolean).join(', ') || '-'}</td>
                   <td>{new Date(l.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                   <td><span className={`admin-status admin-status--${l.status === 'converted' ? 'active' : l.status === 'contacted' ? 'warning' : 'pending'}`}>{l.status}</span></td>
                   <td className="admin-table__actions">

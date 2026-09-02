@@ -38,7 +38,7 @@ export default function AtAGlanceSummary({
 
   if (overdueCount > 0) {
     tone = 'warn';
-    headline = `${overdueCount} tenant${overdueCount === 1 ? '' : 's'} overdue — KES ${Number(overdueTotal).toLocaleString()} owed`;
+    headline = `${overdueCount} tenant${overdueCount === 1 ? '' : 's'} overdue - KES ${Number(overdueTotal).toLocaleString()} owed`;
     action = { label: 'View overdue tenants', onClick: onOpenOverdue };
   } else if (subscriptionExpired) {
     tone = 'critical';
@@ -49,7 +49,7 @@ export default function AtAGlanceSummary({
     headline = `Subscription renews in ${subscriptionDaysLeft} day${subscriptionDaysLeft === 1 ? '' : 's'}`;
     action = { label: 'Renew now', onClick: onOpenSubscription };
   } else {
-    headline = 'All caught up — nothing needs your attention right now';
+    headline = 'All caught up - nothing needs your attention right now';
   }
 
   return (

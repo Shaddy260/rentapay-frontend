@@ -72,6 +72,7 @@ export default function TenantSettings() {
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem('rentapay_token');
+  const refreshToken = localStorage.getItem('rentapay_refresh_token');
 
   const [profile, setProfile] = useState(() => readTenantSettingsCache());
   const [loading, setLoading] = useState(() => !readTenantSettingsCache());
@@ -171,6 +172,7 @@ export default function TenantSettings() {
         email={profile?.email}
         role="tenant"
         token={token}
+        refreshToken={refreshToken}
         label={profile?.full_name}
       />
 

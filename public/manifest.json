@@ -1,7 +1,7 @@
 {
-  "name": "RentaPay — Management & Operations",
+  "name": "RentaPay - Management & Operations",
   "short_name": "RentaPay",
-  "description": "Manage properties, tenants, units, and operations in one place — for landlords, managers, caretakers, and tenants.",
+  "description": "Manage properties, tenants, units, and operations in one place - for landlords, managers, caretakers, and tenants.",
   "start_url": "/login",
   "scope": "/",
   "display": "standalone",

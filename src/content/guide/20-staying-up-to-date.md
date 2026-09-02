@@ -38,7 +38,7 @@ told only that "something, somewhere" is wrong.
 
 When a check reports an issue, the status page also shows a short summary naming
 exactly which components are affected and which everyday feature each one touches,
-for example "Payments (M-Pesa) — affects making or confirming a payment." This means
+for example "Payments (M-Pesa) - affects making or confirming a payment." This means
 that if, say, only email delivery is affected, you can trust that signing in, making
 a payment, and everything else is working normally, and only emailed codes and
 receipts are delayed. If the whole page cannot be reached at all, and other websites

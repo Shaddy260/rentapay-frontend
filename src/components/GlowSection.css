@@ -1,0 +1,45 @@
+.glow-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.glow-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.glow-section__title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.glow-section__body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.glow-section__main,
+.glow-section__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* 640-1023px (§1.9): hero full width, KPI grid below, trend full
+   width below that - this is just the default single-column stack
+   above, so no extra rule needed here beyond the >=1024px override. */
+
+/* >=1024px (§1.9): hero+KPI in a 2-col span, trend+recent-list in the
+   3rd column. */
+@media (min-width: 1024px) {
+  .glow-section__body {
+    grid-template-columns: 2fr 1fr;
+    align-items: start;
+  }
+}

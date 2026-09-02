@@ -9,7 +9,7 @@ import { buildWaMeLink } from '../utils/whatsapp.js';
 import './StatisticsPanel.css';
 import './AdminBrandAmbassadors.css';
 
-// RentaPay — General Manager Accounts spec, Section 2. Admin-only
+// RentaPay - General Manager Accounts spec, Section 2. Admin-only
 // account creation for the General Manager role - named this way
 // specifically to avoid confusion with the existing Property Manager
 // role, which is unrelated. There is no self-signup path for this
@@ -31,7 +31,7 @@ export default function GeneralManagersPanel({ token, initialSearch }) {
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
   const [permBusyId, setPermBusyId] = useState(null); // `${managerId}:${field}` while a toggle PATCH is in flight
 
-  // FIX — onboarding-link submissions now sit here for admin review
+  // FIX - onboarding-link submissions now sit here for admin review
   // instead of activating immediately. Mirrors AdminBrandAmbassadors's
   // Pending Applications queue.
   const [applications, setApplications] = useState(null);
@@ -78,7 +78,7 @@ export default function GeneralManagersPanel({ token, initialSearch }) {
     }
   }
 
-  // Prompt 7 — self-service onboarding link, same rotating-24h pattern
+  // Prompt 7 - self-service onboarding link, same rotating-24h pattern
   // as the Brand Ambassador roster's link card (AdminBrandAmbassadors.jsx).
   const [gmLink, setGmLink] = useState(null); // { link, expiresAt, expired } | null while loading
   const [linkBusy, setLinkBusy] = useState(false);
@@ -132,7 +132,7 @@ export default function GeneralManagersPanel({ token, initialSearch }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, token, search]);
 
-  // Suspend / reactivate this General Manager's own account (admin-only —
+  // Suspend / reactivate this General Manager's own account (admin-only -
   // a General Manager can never manage another General Manager's account,
   // same as they can't create one). Suspending blocks their next login;
   // it doesn't touch anything they've already done (see Section 7-10's
@@ -187,7 +187,7 @@ export default function GeneralManagersPanel({ token, initialSearch }) {
         <p className="admin-ba__link-card-title">Onboard a new General Manager</p>
         <InfoTip text={<>
           Generate a link and send it to the person you want to onboard as a General Manager. They'll fill in their
-          own details (name, ID number, email — verified via code, phone, gender) and submit — you approve or reject
+          own details (name, ID number, email - verified via code, phone, gender) and submit - you approve or reject
           it from Pending Applications below, same as Brand Ambassador applications. The link expires 24 hours after
           it's generated; after that (or once you generate a new one) the old one stops working.
         </>} />
@@ -196,7 +196,7 @@ export default function GeneralManagersPanel({ token, initialSearch }) {
           <p className="admin-ba__meta">Loading…</p>
         ) : !gmLink.link || gmLink.expired ? (
           <div className="admin-ba__link-row">
-            <p className="admin-ba__meta">No live link right now — generate one to share.</p>
+            <p className="admin-ba__meta">No live link right now - generate one to share.</p>
             <Button variant="primary" loading={linkBusy} onClick={generateOnboardingLink}>Generate Link</Button>
           </div>
         ) : (
@@ -241,7 +241,7 @@ export default function GeneralManagersPanel({ token, initialSearch }) {
         <div className="admin-ba__approved-banner">
           <p>
             Approved. Login credentials were sent to {approvedInfo.phone} / {approvedInfo.email}. If delivery fails,
-            share manually — temp password: <code>{approvedInfo.tempPassword}</code>
+            share manually - temp password: <code>{approvedInfo.tempPassword}</code>
           </p>
           <button type="button" onClick={() => setApprovedInfo(null)}>Dismiss</button>
         </div>
@@ -260,7 +260,7 @@ export default function GeneralManagersPanel({ token, initialSearch }) {
                   <strong>{a.full_name}</strong>
                   <span>{a.phone}</span>
                   <span>{a.email}</span>
-                  <span>ID: {a.national_id || '—'}</span>
+                  <span>ID: {a.national_id || '-'}</span>
                   <span>Submitted {new Date(a.created_at).toLocaleString()}</span>
                 </div>
                 <div className="onboarding-request-card__actions">
@@ -357,7 +357,7 @@ export default function GeneralManagersPanel({ token, initialSearch }) {
                     </label>
                   </div>
                   <div className="admin-ba__actions">
-                    {/* SECTION 8 — this manager's own dedicated log page. */}
+                    {/* SECTION 8 - this manager's own dedicated log page. */}
                     <Button
                       variant="ghost"
                       onClick={() => navigate(`/admin-dashboard/general-managers/${m.id}/logs`, { state: { managerName: m.full_name } })}

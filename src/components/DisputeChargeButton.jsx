@@ -76,7 +76,7 @@ export default function DisputeChargeButton({
     return (
       <>
         <button type="button" className="dispute-charge-btn dispute-charge-btn--active" onClick={() => setChatOpen(true)}>
-          🚩 Disputed — view conversation
+          🚩 Disputed - view conversation
         </button>
         <ChatWidget
           token={token}

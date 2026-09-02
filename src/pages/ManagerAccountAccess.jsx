@@ -3,14 +3,14 @@ import { useAppNavigate as useNavigate } from '../hooks/useAppNavigate.js';
 import Button from '../components/Button.jsx';
 import PasswordInput from '../components/PasswordInput.jsx';
 import InstallAppMenuItem from '../components/InstallAppMenuItem.jsx';
-import { api, ApiError } from '../api/client.js';
+import { api, ApiError, storeSessionTokens } from '../api/client.js';
 import { getDeviceTrustToken, setDeviceTrustToken } from '../utils/deviceTrust.js';
 import { clearStaleAccountCaches } from '../utils/clearStaleCaches.js';
 import '../components/FormField.css';
 import './Login.css'; // reuses the same card styling as every other login screen - no need to fork it (see Section 3's "same layout pattern and styling" design note)
 
 /**
- * RentaPay — General Manager Sectioned Build Spec, Section 3.
+ * RentaPay - General Manager Sectioned Build Spec, Section 3.
  *
  * General Manager's own dedicated login screen, at its own URL
  * (rentapay.co.ke/manager-account - see App.jsx) - deliberately
@@ -56,7 +56,7 @@ export default function ManagerAccountAccess() {
     // session, so no page can seed itself from a previous account's
     // stale cached dashboard data.
     clearStaleAccountCaches();
-    localStorage.setItem('rentapay_token', res.token);
+    storeSessionTokens(res.token, res.refreshToken);
     localStorage.setItem('rentapay_role', 'general_manager');
     localStorage.setItem('rentapay_gm_pin_set', res.operationsPinSet ? '1' : '0');
     localStorage.setItem('rentapay_gm_can_grant_loyalty_discounts', res.canGrantLoyaltyDiscounts ? '1' : '0');

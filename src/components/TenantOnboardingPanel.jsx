@@ -362,7 +362,7 @@ export default function TenantOnboardingPanel({ token, propertyId, propertyName,
                   <>
                     <div className="onboarding-request-card__summary">
                       <strong>{req.full_name}</strong>
-                      <span>Unit {req.units?.unit_name || '—'}</span>
+                      <span>Unit {req.units?.unit_name || '-'}</span>
                       <span>{req.primary_phone}</span>
                       <span>{req.email}</span>
                       <span>ID {req.id_number}</span>
@@ -434,7 +434,7 @@ export default function TenantOnboardingPanel({ token, propertyId, propertyName,
                     )}
                     <div className="onboarding-request-card__summary">
                       <strong>{req.full_name}</strong>
-                      <span>Unit {req.units?.unit_name || '—'}</span>
+                      <span>Unit {req.units?.unit_name || '-'}</span>
                       {req.status === 'confirmed' && (
                         <span className="onboarding-request-card__status">
                           Confirmed by {req.confirmed_by_name} at {new Date(req.confirmed_at).toLocaleString()}
@@ -466,7 +466,7 @@ export default function TenantOnboardingPanel({ token, propertyId, propertyName,
       <ConfirmDialog
         open={!!deleteTarget}
         title="Delete this onboarding request?"
-        message={`This removes ${deleteTarget?.full_name || 'this'}'s pending onboarding request for Unit ${deleteTarget?.units?.unit_name || '—'}. Use this for spam or mistaken submissions - the unit stays vacant and open to a real submission afterward. This cannot be undone.`}
+        message={`This removes ${deleteTarget?.full_name || 'this'}'s pending onboarding request for Unit ${deleteTarget?.units?.unit_name || '-'}. Use this for spam or mistaken submissions - the unit stays vacant and open to a real submission afterward. This cannot be undone.`}
         confirmLabel="Delete request"
         busy={deleteBusy}
         error={deleteError}

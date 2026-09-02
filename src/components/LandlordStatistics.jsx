@@ -228,7 +228,7 @@ export default function LandlordStatistics({ token, propertyId, isCaretaker = fa
                   <tr key={u.unitId}>
                     <td>{u.unitName}</td>
                     <td>{u.lateCount}</td>
-                    <td>{u.lastLateAt ? new Date(u.lastLateAt).toLocaleDateString('en-GB') : '—'}</td>
+                    <td>{u.lastLateAt ? new Date(u.lastLateAt).toLocaleDateString('en-GB') : '-'}</td>
                   </tr>
                 ))}
               </tbody>

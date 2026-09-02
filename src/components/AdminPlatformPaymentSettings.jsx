@@ -99,7 +99,7 @@ export default function AdminPlatformPaymentSettings({ token }) {
   return (
     <div className="admin-platform-payment">
       <InfoTip text={<>
-        This is where every landlord's RentaPay subscription payment lands — not any individual landlord's rent
+        This is where every landlord's RentaPay subscription payment lands - not any individual landlord's rent
         Paybill. It's shown on the "pay manually" screen whenever the M-Pesa prompt fails or isn't received. Changing
         it here updates that screen for everyone immediately.
       </>} />
@@ -117,14 +117,14 @@ export default function AdminPlatformPaymentSettings({ token }) {
                 {current.method === 'till' ? (
                   <>
                     <span className="admin-platform-payment__current-label">Till Number</span>
-                    <span className="admin-platform-payment__current-value">{current.till_number || '—'}</span>
+                    <span className="admin-platform-payment__current-value">{current.till_number || '-'}</span>
                   </>
                 ) : (
                   <>
                     <span className="admin-platform-payment__current-label">Paybill Number</span>
-                    <span className="admin-platform-payment__current-value">{current.paybill_number || '—'}</span>
+                    <span className="admin-platform-payment__current-value">{current.paybill_number || '-'}</span>
                     <span className="admin-platform-payment__current-label u-mt-2">Account Number</span>
-                    <span className="admin-platform-payment__current-value">{current.account_number || '—'}</span>
+                    <span className="admin-platform-payment__current-value">{current.account_number || '-'}</span>
                   </>
                 )}
                 {current.updated_at && (
@@ -204,8 +204,8 @@ export default function AdminPlatformPaymentSettings({ token }) {
                     {history.map((row) => (
                       <tr key={row.id}>
                         <td>{row.method === 'till' ? 'Till' : 'Paybill'}</td>
-                        <td>{row.method === 'till' ? row.till_number : `${row.paybill_number || '—'}${row.account_number ? ` · Acc ${row.account_number}` : ''}`}</td>
-                        <td>{row.note || '—'}</td>
+                        <td>{row.method === 'till' ? row.till_number : `${row.paybill_number || '-'}${row.account_number ? ` · Acc ${row.account_number}` : ''}`}</td>
+                        <td>{row.note || '-'}</td>
                         <td>{new Date(row.changed_at).toLocaleString('en-GB')}</td>
                       </tr>
                     ))}

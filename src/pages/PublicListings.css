@@ -3,6 +3,124 @@
   margin: 0 auto;
   padding: 24px 16px 48px;
 }
+
+/* Terms & Conditions gate - same rotating photo background + glass
+   card treatment as the login page (HeroPhotoBackground, reused). */
+.public-listings-gate {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #14201a;
+  padding: var(--space-4);
+}
+.public-listings-gate__photo-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+.public-listings-gate__photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 1.6s ease-in-out;
+}
+.public-listings-gate__photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 16, 12, 0.55) 0%, rgba(10, 16, 12, 0.7) 60%, rgba(10, 16, 12, 0.85) 100%);
+}
+.public-listings-gate__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-8) var(--space-6);
+  background: rgba(20, 30, 24, 0.45);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  text-align: center;
+}
+.public-listings-gate__brand {
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+}
+.public-listings-gate__panel h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin: var(--space-3) 0 var(--space-2);
+}
+.public-listings-gate__panel p {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-5);
+}
+.public-listings-gate__panel p a {
+  color: #fff;
+  text-decoration: underline;
+}
+.public-listings-gate__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: var(--space-5);
+  font-size: var(--text-sm);
+}
+.public-listings-gate__checkbox input {
+  width: 16px;
+  height: 16px;
+}
+.public-listings-gate__panel .btn-primary {
+  width: 100%;
+}
+
+.public-listings__email-box {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.1), rgba(46, 125, 50, 0.04));
+  border: 2px solid #2E7D32;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(46, 125, 50, 0.15);
+}
+.public-listings__email-box label {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f7a3f;
+  margin-bottom: 8px;
+}
+.public-listings__email-box input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1.5px solid #bcd9c4;
+  box-sizing: border-box;
+}
+.public-listings__email-box input:focus {
+  outline: none;
+  border-color: #2E7D32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+}
+.public-listings__email-input--error {
+  border-color: var(--color-error, #c0392b) !important;
+}
+.public-listings__email-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-error, #c0392b);
+}
 .public-listings__header {
   text-align: center;
   margin-bottom: 20px;
@@ -339,4 +457,69 @@
 
 .public-listings__contact-option:hover {
   background: var(--color-surface-sunken, #F5F5F0);
+}
+
+.public-listings__terms-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.public-listings__terms-checkbox input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .public-listings__photo {
+  background: var(--color-surface-raised);
+}
+
+[data-theme='dark'] .public-listings__status-badge--active {
+  background: #145226;
+  color: #a7e7b6;
+}
+
+[data-theme='dark'] .public-listings__status-badge--booked {
+  background: #660b00;
+  color: #e6aea7;
+}
+
+[data-theme='dark'] .public-listings__status-badge--planned {
+  background: #664200;
+  color: #f7d597;
+}
+
+[data-theme='dark'] .public-listings__deposit-badge--required {
+  background: #0a1d5c;
+  color: #b0b8de;
+}
+
+[data-theme='dark'] .public-listings__deposit-badge--none {
+  background: var(--color-surface-raised);
+  color: #cfbebe;
 }

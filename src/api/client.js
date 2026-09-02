@@ -6,6 +6,142 @@
 import { cacheKeyFor, getCached, setCached, enqueueAction, flushQueuedActions } from '../utils/offlineDb.js';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
+// SECURITY FIX (JWT-theft review, Sept 2026): access tokens issued by
+// the backend are now short-lived (30 min) instead of 7 days, so a
+// leaked token self-heals fast. That means healthy, normal use will
+// now routinely hit a 401 partway through the day purely from
+// expiry - not from anything being wrong - so this silently exchanges
+// the refresh token for a new access token and retries, exactly once,
+// rather than bouncing the person to the login screen every 30
+// minutes. See backend src/middleware/auth.middleware.js for the
+// server-side rotation/reuse-detection this pairs with.
+const AUTH_TOKEN_KEY = 'rentapay_token';
+const REFRESH_TOKEN_KEY = 'rentapay_refresh_token';
+
+export function getStoredToken() {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function getStoredRefreshToken() {
+  try {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+// Every login/verification screen that hands back a session should
+// call this (finalizeLogin.js does, for the main flow) instead of
+// setting rentapay_token directly - a token with no matching refresh
+// token just means the person gets silently logged out the moment
+// that access token expires, instead of staying signed in.
+export function storeSessionTokens(token, refreshToken) {
+  try {
+    if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
+    if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  } catch {
+    // storage unavailable (private browsing, quota) - session just
+    // won't survive a refresh; not fatal to the current request.
+  }
+}
+
+// Clears both tokens client-side. Does NOT call the backend /logout
+// endpoint itself (see logoutSession below for that) - this is the
+// bare "make the browser forget it was ever logged in" half, reused
+// by every expiry/lockdown/kick-out path as well as a real logout.
+export function clearSessionTokens() {
+  try {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+// Best-effort server-side revoke of the refresh-token family, so this
+// session can't silently renew itself via /auth/refresh after the
+// person explicitly signed out. Never throws - a logout should always
+// succeed from the user's point of view even if this network call
+// fails; clearSessionTokens() is what actually matters client-side.
+export async function logoutSession() {
+  const refreshToken = getStoredRefreshToken();
+  clearSessionTokens();
+  if (!refreshToken) return;
+  try {
+    await fetch(`${BASE_URL}/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+      keepalive: true,
+    });
+  } catch {
+    // offline or the request got cut off by navigation - the refresh
+    // token will simply expire on its own in the meantime (30 days),
+    // and can't be used to skip a password without also still holding
+    // a live access token pair, so this is a hygiene best-effort, not
+    // a security-critical guarantee.
+  }
+}
+
+// Dedupes concurrent refresh attempts: if five parallel requests all
+// 401 at once (e.g. a dashboard firing several calls together), they
+// should share ONE refresh call, not each independently try to rotate
+// the same refresh token - only the first would succeed anyway
+// (rotation invalidates a refresh token after first use), and the
+// rest would misread that as theft/reuse.
+let refreshInFlight = null;
+
+async function refreshAccessToken() {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    const rt = getStoredRefreshToken();
+    if (!rt) throw new Error('no-refresh-token');
+    const response = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: rt }),
+      cache: 'no-store',
+    });
+    let data = {};
+    try {
+      data = await response.json();
+    } catch {
+      // fall through - handled as a generic failure below
+    }
+    if (!response.ok || !data.token) {
+      const err = new Error(data.error || 'refresh-failed');
+      err.reused = !!data.reused;
+      throw err;
+    }
+    storeSessionTokens(data.token, data.refreshToken);
+    return data.token;
+  })();
+  try {
+    return await refreshInFlight;
+  } finally {
+    refreshInFlight = null;
+  }
+}
+
+function forceReLoginRedirect(message) {
+  clearSessionTokens();
+  try {
+    localStorage.removeItem('rentapay_role');
+    localStorage.removeItem('rentapay_role_level');
+    if (message) localStorage.setItem('rentapay_logout_message', message);
+  } catch {
+    // ignore
+  }
+  if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+    window.location.href = '/login';
+  }
+}
+
 // FIX: StatusPage.jsx used to fetch('/health') as a bare relative
 // path, completely bypassing BASE_URL. That works only by coincidence
 // when the frontend and backend share an origin with no VITE_API_
@@ -84,7 +220,7 @@ function endTrackedRequest() {
   }
 }
 
-async function request(path, { method = 'GET', body, token, queueable, queueDescription, keepalive } = {}) {
+async function request(path, { method = 'GET', body, token, queueable, queueDescription, keepalive, _isRetry = false } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
   const cacheKey = method === 'GET' ? cacheKeyFor(path, token) : null;
@@ -160,11 +296,35 @@ async function request(path, { method = 'GET', body, token, queueable, queueDesc
     try {
       data = await response.json();
     } catch {
-      throw new ApiError('Server returned malformed JSON.', { kind: 'parse', status: response.status });
+      // FIX (bug report: "not parsing errors, silently failing") - this
+      // used to throw a blanket "malformed JSON" message with no status
+      // or body context, hiding whatever the server actually sent. Now
+      // surfaces the real HTTP status so it's at least distinguishable
+      // (a 500 with a broken JSON body vs a 200 that somehow wasn't
+      // parseable) instead of one indistinguishable generic message.
+      throw new ApiError(`Server returned malformed JSON (status ${response.status}).`, { kind: 'parse', status: response.status });
     }
   } else {
+    // FIX (bug report: "not parsing errors, silently failing") - any
+    // non-JSON response (a Fly/proxy gateway error page, a CORS-blocked
+    // opaque response, an unhandled exception that bypassed Express's
+    // JSON error handler, etc) used to be flattened into one vague
+    // "could not reach the server" message regardless of what actually
+    // happened - discarding the real status code and body entirely, so
+    // a genuine 404/500/502 looked identical to a network drop. Reading
+    // the body as text (best-effort) and including the real status
+    // means the actual failure is now visible instead of hidden behind
+    // a misleading generic message.
+    let bodyText = '';
+    try {
+      bodyText = (await response.text()).slice(0, 200);
+    } catch {
+      // body already consumed or unreadable - proceed without it
+    }
     throw new ApiError(
-      "Could not reach the server. Please try again in a moment.",
+      response.ok
+        ? 'Unexpected response from the server.'
+        : `Request failed with status ${response.status}.${bodyText ? ` (${bodyText})` : ''}`,
       { kind: 'parse', status: response.status }
     );
   }
@@ -176,13 +336,7 @@ async function request(path, { method = 'GET', body, token, queueable, queueDesc
     // login. Handled once, here, so every page in the app benefits
     // without each one needing its own lockdown-detection code.
     if (response.status === 503 && data.lockedDown) {
-      localStorage.removeItem('rentapay_token');
-      localStorage.removeItem('rentapay_role');
-      localStorage.removeItem('rentapay_role_level');
-      localStorage.setItem('rentapay_logout_message', data.error || 'The platform has been temporarily locked down.');
-      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
-      }
+      forceReLoginRedirect(data.error || 'The platform has been temporarily locked down.');
     }
 
     // FIX (direct request: hard subscription lockout): the backend
@@ -197,6 +351,38 @@ async function request(path, { method = 'GET', body, token, queueable, queueDesc
     if (response.status === 403 && data.subscriptionExpired) {
       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/subscription') && !window.location.pathname.startsWith('/login')) {
         window.location.href = '/subscription';
+      }
+    }
+
+    // SECURITY FIX (JWT-theft review, Sept 2026): a 401 on an
+    // authenticated request now usually just means the short-lived
+    // access token expired mid-session, not that anything is wrong -
+    // silently swap it for a fresh one via the refresh token and
+    // retry this exact request once. Skipped for the refresh/login
+    // endpoints themselves (nothing to refresh, and would loop) and
+    // for an already-retried request (refresh itself failed, so a
+    // second attempt would just fail identically).
+    if (
+      response.status === 401 &&
+      token &&
+      !_isRetry &&
+      !path.startsWith('/auth/refresh') &&
+      !path.startsWith('/auth/login') &&
+      !path.startsWith('/auth/logout')
+    ) {
+      try {
+        const newToken = await refreshAccessToken();
+        return request(path, { method, body, token: newToken, queueable, queueDescription, keepalive, _isRetry: true });
+      } catch (refreshErr) {
+        // The refresh token is dead too (expired, revoked, or reuse
+        // detected server-side) - there's genuinely no way to keep
+        // this session alive. Send the person back to a real login
+        // instead of leaving them staring at a silently-broken page.
+        forceReLoginRedirect(
+          refreshErr && refreshErr.reused
+            ? 'For your security, this session was signed out because it was used from two places at once. Please log in again.'
+            : 'Your session has expired. Please log in again.'
+        );
       }
     }
 
@@ -225,12 +411,22 @@ async function request(path, { method = 'GET', body, token, queueable, queueDesc
 // header rather than a plain navigable <a href> URL (verifyToken only
 // reads the header, never a query param) goes through this, same
 // shape as the original downloadBaPayoutStatement implementation.
-async function downloadBaFile(path, queryParams, token, fallbackFilename) {
+async function downloadBaFile(path, queryParams, token, fallbackFilename, _isRetry = false) {
   const params = new URLSearchParams(queryParams);
   const response = await fetch(`${BASE_URL}${path}?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) {
+    // Same silent-refresh-and-retry as request() above - a short-lived
+    // access token expiring mid-session shouldn't break a file download.
+    if (response.status === 401 && !_isRetry) {
+      try {
+        const newToken = await refreshAccessToken();
+        return downloadBaFile(path, queryParams, newToken, fallbackFilename, true);
+      } catch {
+        forceReLoginRedirect('Your session has expired. Please log in again.');
+      }
+    }
     let message = 'Failed to download the statement.';
     try {
       const body = await response.json();
@@ -252,7 +448,7 @@ async function downloadBaFile(path, queryParams, token, fallbackFilename) {
   URL.revokeObjectURL(url);
 }
 
-async function requestMultipart(path, { method = 'POST', formData, token } = {}) {
+async function requestMultipart(path, { method = 'POST', formData, token, _isRetry = false } = {}) {
   const headers = {};
   if (token) headers.Authorization = `Bearer ${token}`;
   // Deliberately NOT setting Content-Type here - the browser sets it
@@ -291,6 +487,14 @@ async function requestMultipart(path, { method = 'POST', formData, token } = {})
   }
 
   if (!response.ok) {
+    if (response.status === 401 && token && !_isRetry) {
+      try {
+        const newToken = await refreshAccessToken();
+        return requestMultipart(path, { method, formData, token: newToken, _isRetry: true });
+      } catch {
+        forceReLoginRedirect('Your session has expired. Please log in again.');
+      }
+    }
     throw new ApiError(data.error || `Request failed with status ${response.status}`, { kind: 'http', status: response.status });
   }
 
@@ -508,6 +712,14 @@ export const api = {
   listRatingFlags: (status, token) => request(`/admin/rating-flags?status=${encodeURIComponent(status || 'flagged')}`, { token }),
   resolveRatingFlag: (table, id, resolution, note, token) => request(`/admin/rating-flags/${table}/${id}/resolve`, { method: 'PATCH', body: { resolution, note }, token }),
 
+  // DIRECT REQUEST (anti-fraud): admin review queue for landlord
+  // ownership/management proof. status defaults to 'pending' on the
+  // backend when omitted.
+  listLandlordOwnershipSubmissions: (status, token) => request(`/admin/landlord-ownership${status ? `?status=${encodeURIComponent(status)}` : ''}`, { token }),
+  getLandlordOwnershipDocumentUrl: (documentId, token) => request(`/admin/landlord-ownership/${documentId}/view`, { token }),
+  approveLandlordOwnership: (landlordId, note, token) => request(`/admin/landlord-ownership/${landlordId}/approve`, { method: 'POST', body: { note }, token }),
+  rejectLandlordOwnership: (landlordId, reason, token) => request(`/admin/landlord-ownership/${landlordId}/reject`, { method: 'POST', body: { reason }, token }),
+
   // Virtual Assistant (guided walkthrough) - server-side "has this
   // account ever seen it" flag, so it auto-launches once per account
   // regardless of device/browser, and never again after that.
@@ -645,6 +857,8 @@ export const api = {
   // Automatic Rent Collection (landlord-owned STK push) - Phase 1/2.
   // Landlord setup wizard:
   getDarajaCredentialsStatus: (token) => request('/landlord/daraja-credentials', { token }),
+  confirmDarajaPassword: (password, token) => request('/landlord/daraja-credentials/confirm-password', { method: 'POST', body: { password }, token }),
+  getDarajaHealth: (token) => request('/landlord/daraja-credentials/health', { token }),
   saveDarajaWizardStep: (step, token) => request('/landlord/daraja-credentials/step', { method: 'POST', body: { step }, token }),
   saveDarajaCredentials: (payload, token) => request('/landlord/daraja-credentials', { method: 'POST', body: payload, token }),
   verifyDarajaCredentials: (token) => request('/landlord/daraja-credentials/verify', { method: 'POST', token }),
@@ -752,6 +966,12 @@ export const api = {
 
   // Super Admin (blueprint section 13)
   getAdminDashboard: (token) => request('/admin/dashboard', { token }),
+  // Glow Dashboard §3.1 - System Health card.
+  getSystemHealth: (token) => request('/admin/system-health', { token }),
+  // Glow Dashboard Phase 4 item 2 - "Disputes & Reports" summary tile.
+  getDisputesReportsSummary: (token) => request('/admin/disputes-reports-summary', { token }),
+  // Glow Dashboard Phase 4 item 3 - "Tenant Growth" summary tile.
+  getTenantGrowth: (token) => request('/admin/tenant-growth', { token }),
   adminGlobalSearch: (query, token) => request(`/admin/search?q=${encodeURIComponent(query)}`, { token }),
   // SECTION 1 (General Manager spec): the admin "SQL" tab and its
   // client methods (listAdminSqlTables/listAdminSqlRows/
@@ -761,21 +981,21 @@ export const api = {
   // the new General Manager role.
   listGeneralManagers: (token, search) => request(`/admin/general-managers${search ? `?search=${encodeURIComponent(search)}` : ''}`, { token }),
   createGeneralManager: (payload, token) => request('/admin/general-managers', { method: 'POST', body: payload, token }),
-  // Prompt 7 — self-service onboarding link, same shape as the BA link
+  // Prompt 7 - self-service onboarding link, same shape as the BA link
   // methods above (getBaOnboardingLink / generateBaOnboardingLink).
   getGmOnboardingLink: (token) => request('/admin/general-managers/onboarding-link', { token }),
   generateGmOnboardingLink: (token) => request('/admin/general-managers/onboarding-link/generate', { method: 'POST', token }),
-  // Suspend / reactivate a General Manager's own account (admin-only —
+  // Suspend / reactivate a General Manager's own account (admin-only -
   // a General Manager can never manage another General Manager's account).
   setGeneralManagerStatus: (managerId, status, token) => request(`/admin/general-managers/${managerId}/status`, { method: 'PATCH', body: { status }, token }),
   updateGmPermissions: (managerId, payload, token) => request(`/admin/general-managers/${managerId}/permissions`, { method: 'PATCH', body: payload, token }),
-  // FIX — onboarding-link submissions now sit in a pending-approval
+  // FIX - onboarding-link submissions now sit in a pending-approval
   // queue instead of activating immediately; same shape as the BA
   // applications endpoints.
   listPendingGmApplications: (page, token) => request(`/admin/general-managers/applications${page ? `?page=${page}` : ''}`, { token }),
   approveGmApplication: (id, token) => request(`/admin/general-managers/${id}/approve`, { method: 'POST', token }),
   rejectGmApplication: (id, reason, token) => request(`/admin/general-managers/${id}/reject`, { method: 'POST', body: { reason }, token }),
-  // SECTION 8 — admin browsing a specific General Manager's own log
+  // SECTION 8 - admin browsing a specific General Manager's own log
   // page (day/week/month). `view` is 'day'|'week'|'month', `date`
   // (optional) anchors which day/week/month, defaults to today.
   getGeneralManagerLogs: (managerId, { view, date } = {}, token) => {
@@ -785,7 +1005,7 @@ export const api = {
     const qs = params.toString();
     return request(`/admin/general-managers/${managerId}/logs${qs ? `?${qs}` : ''}`, { token });
   },
-  // SECTION 9 — styled, branded PDF export of a specific General
+  // SECTION 9 - styled, branded PDF export of a specific General
   // Manager's activity log, for an optional date range (omit both to
   // export their full history). Reuses the shared authenticated-blob
   // download helper above, same as every other server-generated PDF.
@@ -795,15 +1015,15 @@ export const api = {
     if (to) params.to = to;
     return downloadBaFile(`/admin/general-managers/${managerId}/logs/export.pdf`, params, token, `rentapay-gm-activity-${managerId.slice(0, 8)}.pdf`);
   },
-  // SECTION 10 — Admin Revert Capability. Individual (one log entry)
+  // SECTION 10 - Admin Revert Capability. Individual (one log entry)
   // and bulk (every eligible, not-yet-reverted entry within an
-  // optional date range — omit both to revert the manager's entire
+  // optional date range - omit both to revert the manager's entire
   // revertible history) revert, both admin-only.
   revertGeneralManagerLog: (managerId, logId, token) =>
     request(`/admin/general-managers/${managerId}/logs/${logId}/revert`, { method: 'POST', token }),
   revertGeneralManagerLogsInRange: (managerId, { from, to } = {}, token) =>
     request(`/admin/general-managers/${managerId}/logs/revert-range`, { method: 'POST', body: { from, to }, token }),
-  // ADMIN CONFIRMATION QUEUE (direct request) — every sensitive GM
+  // ADMIN CONFIRMATION QUEUE (direct request) - every sensitive GM
   // action lands here for admin to confirm/reject, on top of the GM's
   // own Operations-PIN confirmation. Listed across ALL managers, not
   // scoped to one manager id, so it can power its own dedicated
@@ -848,10 +1068,12 @@ export const api = {
   sendRenewalReminders: (payload, token) => request('/admin/expiring-landlords/remind', { method: 'POST', body: payload, token }),
   setLandlordStatus: (landlordId, payload, token) => request(`/admin/landlords/${landlordId}/status`, { method: 'PATCH', body: payload, token }),
   deleteLandlordAccount: (landlordId, password, token, extra = {}) => request(`/admin/landlords/${landlordId}`, { method: 'DELETE', body: { password, ...extra }, token }),
+  bulkDeleteLandlordAccounts: (landlordIds, password, token, extra = {}) => request('/admin/landlords/bulk', { method: 'DELETE', body: { landlordIds, password, ...extra }, token }),
   editLandlordSubscription: (landlordId, payload, token) => request(`/admin/landlords/${landlordId}/subscription`, { method: 'PATCH', body: payload, token }),
   getLandlordProperties: (landlordId, token) => request(`/admin/landlords/${landlordId}/properties`, { token }),
   getLandlordManagers: (landlordId, token) => request(`/admin/landlords/${landlordId}/managers`, { token }),
   setManagerStatus: (managerId, payload, token) => request(`/admin/managers/${managerId}/status`, { method: 'PATCH', body: payload, token }),
+  deleteManagerAccount: (managerId, password, token, extra = {}) => request(`/admin/managers/${managerId}`, { method: 'DELETE', body: { password, ...extra }, token }),
   getActivityLog: (token) => request('/admin/activity-log', { token }),
   deleteActivityLogEntry: (logId, token) => request(`/admin/activity-log/${logId}`, { method: 'DELETE', token }),
   deleteActivityLogsForDay: (date, token) => request(`/admin/activity-log/day?date=${date}`, { method: 'DELETE', token }),
@@ -868,6 +1090,10 @@ export const api = {
   getLockdownStatus: (token) => request('/admin/lockdown-status', { token }),
   emergencyLockdown: (payload, token) => request('/admin/emergency-lockdown', { method: 'POST', body: payload, token }),
   resumeFromLockdown: (payload, token) => request('/admin/resume-lockdown', { method: 'POST', body: payload, token }),
+  // SECURITY FEATURE: kill one specific leaked/stolen session token
+  // (by its jti) without suspending the whole account - see
+  // AdminRevokeSessionPanel.jsx.
+  revokeSession: (payload, token) => request('/admin/revoke-session', { method: 'POST', body: payload, token }),
   listHelpRequestsAdmin: (status, token) => request(`/help${status ? `?status=${status}` : ''}`, { token }),
   resolveHelpRequest: (requestId, payload, token) => request(`/help/${requestId}/resolve`, { method: 'PATCH', body: payload, token }),
   deleteHelpRequest: (requestId, token) => request(`/help/${requestId}`, { method: 'DELETE', token }),
@@ -878,6 +1104,13 @@ export const api = {
   createProperty: (payload, token) => request('/properties', { method: 'POST', body: payload, token }),
   updateProperty: (propertyId, payload, token) => request(`/properties/${propertyId}`, { method: 'PATCH', body: payload, token }),
   assignUnitToProperty: (unitId, payload, token) => request(`/properties/units/${unitId}/assign`, { method: 'PATCH', body: payload, token }),
+  // Settings > Danger Zone > delete apartment (3-step: password -> OTP -> final confirm)
+  requestDeletePropertyOtp: (propertyId, payload, token) => request(`/properties/${propertyId}/danger-zone/delete/request`, { method: 'POST', body: payload, token }),
+  verifyDeletePropertyOtp: (propertyId, payload, token) => request(`/properties/${propertyId}/danger-zone/delete/verify`, { method: 'POST', body: payload, token }),
+  confirmDeletePropertyDeletion: (propertyId, payload, token) => request(`/properties/${propertyId}/danger-zone/delete/confirm`, { method: 'POST', body: payload, token }),
+  cancelDeletePropertyDeletion: (propertyId, token) => request(`/properties/${propertyId}/danger-zone/delete/cancel`, { method: 'POST', token }),
+  listDeletedProperties: (token) => request('/properties/deleted', { token }),
+  restoreProperty: (propertyId, token) => request(`/properties/${propertyId}/danger-zone/restore`, { method: 'POST', token }),
   purchaseProperty: (payload, token) => request('/properties/purchase', { method: 'POST', body: payload, token }),
   checkPropertyPurchaseStatus: (checkoutRequestId, token) => request(`/properties/purchase-status/${checkoutRequestId}`, { token }),
   checkPropertyPurchaseStatusById: (propertyPaymentId, token) => request(`/properties/purchase-status-by-id/${propertyPaymentId}`, { token }),
@@ -930,6 +1163,18 @@ export const api = {
   },
   uploadDocument: (formData, token) => requestMultipart('/documents', { method: 'POST', formData, token }),
   deleteDocument: (documentId, token) => request(`/documents/${documentId}`, { method: 'DELETE', token }),
+
+  // DIRECT REQUEST (anti-fraud): landlord/manager side of ownership
+  // verification - check status (powers the persistent dashboard
+  // banner) and submit a proof document. Approving/rejecting is
+  // admin-only (see the admin block further below).
+  // Glow Dashboard Phase 5 - "Solo Investor Snapshot" panel on the
+  // landlord dashboard. Backed by the same portfolioStats.service.js
+  // computation portfolioDigest.job.js uses for the monthly digest
+  // email, so this live figure and that email never drift (§5 item 1).
+  getPortfolioSnapshot: (token) => request('/landlord/portfolio-snapshot', { token }),
+  getOwnershipVerificationStatus: (token) => request('/landlord/ownership-verification/status', { token }),
+  uploadOwnershipDocument: (formData, token) => requestMultipart('/landlord/ownership-verification/documents', { method: 'POST', formData, token }),
 
   // Audit trail (who created/edited/deleted an expense or document -
   // including ones since deleted, since the log entry outlives the row)
@@ -1175,7 +1420,7 @@ export const api = {
   confirmBaEmailOtp: (email, code) => request('/brand-ambassadors/email/verify-otp', { method: 'POST', body: { email, code } }),
   submitBaOnboarding: (payload) => request('/brand-ambassadors/apply', { method: 'POST', body: payload }),
 
-  // PUBLIC — General Manager self-service onboarding (Prompt 7), same
+  // PUBLIC - General Manager self-service onboarding (Prompt 7), same
   // shape as the BA methods just above.
   validateGmOnboardingLink: (onboardingToken) => request(`/manager-account/onboarding/link/validate?token=${encodeURIComponent(onboardingToken || '')}`),
   requestGmEmailOtp: (email, onboardingToken) => request('/manager-account/onboarding/email/send-otp', { method: 'POST', body: { email, onboardingToken } }),

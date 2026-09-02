@@ -69,6 +69,6 @@ searching for it.
 
 For anything that looks like the app itself is broken rather than a question about
 how a feature works, checking the public status page first, described in its own
-section of this guide, can save you a round trip — if the relevant component
+section of this guide, can save you a round trip - if the relevant component
 already shows "Issue detected," you already know it's a known, wider problem being
 looked at, not something specific to you.

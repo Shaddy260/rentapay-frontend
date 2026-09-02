@@ -165,7 +165,7 @@ export default function UtilityMetersPanel({ token, propertyId, propertyName }) 
             {pendingReviews.map((r) => (
               <div key={r.readingId} className="utility-pending-review-banner__row">
                 <span>
-                  {r.utilityType === 'water' ? '💧' : '⚡'} {r.meterLabel} — {r.monthKey}
+                  {r.utilityType === 'water' ? '💧' : '⚡'} {r.meterLabel} - {r.monthKey}
                   {r.usage != null && <> · {Number(r.usage).toLocaleString()} units</>}
                   {r.anomalyFlag && <span title={r.anomalyReason} style={{ marginLeft: 6 }}>⚠️</span>}
                 </span>
@@ -348,7 +348,7 @@ function DeleteMeterConfirm({ token, meter, onClose, onDone }) {
         <h2>Delete "{meter.label}"?</h2>
         <p className="tenant-portal-hint">
           If this meter has no readings yet, it's removed for good. If it already has readings on file,
-          it's archived instead — taken off your active list, with its past readings kept intact for any
+          it's archived instead - taken off your active list, with its past readings kept intact for any
           invoices already sent.
         </p>
         {error && <p className="form-error">{error}</p>}
@@ -381,12 +381,12 @@ function MeterRow({ meter, onSubmit, onHistory, onEdit, onDelete, bothMeters, on
           {meter.is_shared && <span className="utility-meter-badge utility-meter-badge--shared">Shared</span>}
         </div>
         <div className="utility-meter-card__units">
-          {(meter.utility_meter_units || []).map((u) => u.units?.unit_name).filter(Boolean).join(', ') || '—'}
+          {(meter.utility_meter_units || []).map((u) => u.units?.unit_name).filter(Boolean).join(', ') || '-'}
         </div>
         <div className="utility-meter-card__rate">Rate: KES {Number(meter.rate_per_unit).toLocaleString()} / unit</div>
         {vacant && (
           <div className="utility-meter-card__vacant-note">
-            No active tenant on this unit right now — nothing can be billed until one is assigned.
+            No active tenant on this unit right now - nothing can be billed until one is assigned.
           </div>
         )}
         {/* Same "unit billed on both utilities" case, but shown once,
@@ -395,7 +395,7 @@ function MeterRow({ meter, onSubmit, onHistory, onEdit, onDelete, bothMeters, on
             bothMetersByMeterId is built). */}
         {!vacant && bothMeters && (
           <button type="button" className="ghost-link utility-meter-card__both" onClick={onSubmitBoth}>
-            + This unit also has {meter.utility_type === 'water' ? 'an electricity' : 'a water'} meter — submit both together
+            + This unit also has {meter.utility_type === 'water' ? 'an electricity' : 'a water'} meter - submit both together
           </button>
         )}
       </div>
@@ -544,7 +544,7 @@ function CreateMeterModal({ token, propertyId, propertyName, onClose, onCreated 
         <div className="form-field">
           <label className="form-field__label">
             <input type="checkbox" checked={bulkMode} onChange={(e) => toggleBulkMode(e.target.checked)} style={{ marginRight: 8 }} />
-            Every unit has its own meter — create one for each selected unit at once
+            Every unit has its own meter - create one for each selected unit at once
             <InfoTip label="About bulk creation" text="Use this when each unit has its own individual meter, instead of creating them one at a time. All the meters created this way share the same rate; you can edit any one of them individually afterwards." />
           </label>
         </div>
@@ -934,7 +934,7 @@ function BulkReadingsModal({ token, meters, onClose, onSubmitted, onOpenReview }
                       <td>
                         {r.error}
                         {r.needsPreviousReading && (
-                          <> — tick "First reading" for this meter and try again, either with what it read
+                          <> - tick "First reading" for this meter and try again, either with what it read
                           before, or leave that blank to just set today's number as the starting point.</>
                         )}
                       </td>
@@ -954,7 +954,7 @@ function BulkReadingsModal({ token, meters, onClose, onSubmitted, onOpenReview }
           {needsReview.length > 0 && (
             <>
               <p className="tenant-portal-hint" style={{ fontWeight: 600 }}>
-                Not billed yet — review each one to send it to the tenant:
+                Not billed yet - review each one to send it to the tenant:
               </p>
               <div className="utility-pending-review-banner__list">
                 {needsReview.map((r) => (
@@ -1009,11 +1009,11 @@ function BulkReadingsModal({ token, meters, onClose, onSubmitted, onOpenReview }
                 <div className="utility-bulk-reading-row__meter">
                   {m.label}
                   <span className="utility-bulk-reading-row__unit">
-                    {(m.utility_meter_units || []).map((u) => u.units?.unit_name).filter(Boolean).join(', ') || '—'}
+                    {(m.utility_meter_units || []).map((u) => u.units?.unit_name).filter(Boolean).join(', ') || '-'}
                   </span>
                 </div>
                 {vacant ? (
-                  <p className="tenant-portal-hint">No active tenant on this unit — nothing can be billed here right now.</p>
+                  <p className="tenant-portal-hint">No active tenant on this unit - nothing can be billed here right now.</p>
                 ) : (
                   <>
                     <div className="utility-bulk-reading-row__inputs">
@@ -1053,7 +1053,7 @@ function BulkReadingsModal({ token, meters, onClose, onSubmitted, onOpenReview }
                         <p className="tenant-portal-hint">
                           {previousValues[m.id]
                             ? "Usage will be billed this month, using the number you entered above."
-                            : "Left blank: today's number just becomes the starting point — nothing is billed until next month's reading."}
+                            : "Left blank: today's number just becomes the starting point - nothing is billed until next month's reading."}
                         </p>
                       </div>
                     )}
@@ -1205,7 +1205,7 @@ function SubmitReadingModal({ token, meter, onClose, onSubmitted }) {
   return (
     <div className="modal-overlay" onClick={() => !saving && onClose()}>
       <div className="modal-shell" onClick={(e) => e.stopPropagation()}>
-        <h2>Submit reading — {meter.label}</h2>
+        <h2>Submit reading - {meter.label}</h2>
 
         <div className="form-field">
           <label className="form-field__label">Month this reading is for</label>
@@ -1306,7 +1306,7 @@ function MeterHistoryModal({ token, meter, onClose, onOpenReview }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-shell utility-history-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>History — {meter.label}</h2>
+        <h2>History - {meter.label}</h2>
         {error && <p className="modal-error">{error}</p>}
         {loading ? (
           <Skeleton rows={4} />
@@ -1327,7 +1327,7 @@ function MeterHistoryModal({ token, meter, onClose, onOpenReview }) {
                       {r.photo_url && <> · <a href={r.photo_url} target="_blank" rel="noreferrer">photo</a></>}
                     </td>
                     <td>
-                      {r.usage_amount != null ? Number(r.usage_amount).toLocaleString() : '—'}
+                      {r.usage_amount != null ? Number(r.usage_amount).toLocaleString() : '-'}
                       {r.anomaly_flag && <span title={r.anomaly_reason} style={{ marginLeft: 6 }}>⚠️</span>}
                     </td>
                     <td><span className={`payment-status payment-status--${r.status === 'finalized' ? 'completed' : 'pending'}`}>{r.status.replace('_', ' ')}</span></td>
@@ -1392,7 +1392,7 @@ function CorrectReadingModal({ token, reading, onClose, onCorrected }) {
   return (
     <div className="modal-overlay" onClick={() => !saving && onClose()}>
       <div className="modal-shell" onClick={(e) => e.stopPropagation()}>
-        <h2>Correct reading — {reading.month_key}</h2>
+        <h2>Correct reading - {reading.month_key}</h2>
         <p className="tenant-portal-hint">Current value: {reading.reading_value}</p>
 
         <div className="form-field">

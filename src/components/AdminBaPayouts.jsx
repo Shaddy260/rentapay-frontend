@@ -162,7 +162,7 @@ function PendingTab({ token }) {
               <li key={b.baId} className="admin-ba-payouts__awaiting-item">
                 <span>
                   {b.baName}
-                  {b.baCode ? ` (${b.baCode})` : ''} — {fmtKes(b.estimatedAmountOwed)}
+                  {b.baCode ? ` (${b.baCode})` : ''} - {fmtKes(b.estimatedAmountOwed)}
                 </span>
                 {b.submissionLink ? (
                   <span className="admin-ba-payouts__awaiting-actions">
@@ -451,7 +451,7 @@ function CompletedTab({ token }) {
                     {fmtKes(card.amountOwed)} · paid {fmtDate(card.paidAt)}
                   </div>
                   <div className="admin-ba-payouts__lock-note">
-                    🔒 Locked. Won't return to Pending. Corrections don't touch payment status — only via the shared
+                    🔒 Locked. Won't return to Pending. Corrections don't touch payment status - only via the shared
                     correction link under Pending Payments.
                   </div>
                   {card.baPhone && (
@@ -495,7 +495,7 @@ function HistoryTab({ token }) {
     <>
       <div className="u-flex-row" style={{ alignItems: 'center', gap: '6px' }}>
         <span className="admin-ba-payouts__title">Payment history</span>
-        <InfoTip text="Every payout ever marked paid, across every Brand Ambassador and every cycle — an append-only audit trail." />
+        <InfoTip text="Every payout ever marked paid, across every Brand Ambassador and every cycle - an append-only audit trail." />
       </div>
       {error && <p className="admin-ba-payouts__error">{error}</p>}
       {!entries && !error && <Skeleton height="200px" />}

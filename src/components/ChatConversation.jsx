@@ -219,7 +219,7 @@ export default function ChatConversation({ token, role, roleLevel = null, thread
 
       <div className="chat-conversation__messages">
         {loading && <Skeleton rows={4} />}
-        {!loading && messages.length === 0 && <p className="chat-conversation__hint">No messages yet — say hello 👋</p>}
+        {!loading && messages.length === 0 && <p className="chat-conversation__hint">No messages yet - say hello 👋</p>}
         {!loading && messages.map((m, i) => {
           const mine = m.sender_role === role;
           const deleted = m.deletedForEveryone || m.deleted_for_everyone;

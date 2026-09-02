@@ -226,7 +226,7 @@ export default function UnitDetail() {
     try {
       const nextValue = !unit.is_publicly_listed;
       await api.updatePublicListing(unitId, nextValue, token);
-      setNotice(nextValue ? 'This unit is now public — anyone can see it and message the WhatsApp number on file once it\'s vacant.' : 'This unit is now private and will not appear on the public listings page.');
+      setNotice(nextValue ? 'This unit is now public - anyone can see it and message the WhatsApp number on file once it\'s vacant.' : 'This unit is now private and will not appear on the public listings page.');
       load();
     } catch (err) {
       setError(err.message);
@@ -655,7 +655,7 @@ export default function UnitDetail() {
                 ) : null;
               })()}
               <Button type="button" variant="secondary" loading={verifyBusy} onClick={handleVerifyUnit}>
-                Still looking for tenant — refresh listing
+                Still looking for tenant - refresh listing
               </Button>
             </div>
           )}
@@ -801,10 +801,10 @@ export default function UnitDetail() {
                 List this unit on the public listings page when vacant
                 <InfoTip
                   text={
-                    `Heads up: anyone browsing RentaPay's free listings page — no account needed — will be able to see this unit and message the WhatsApp number on file for it (your manager/caretaker's number, or yours if none is set) directly. There's no way to screen who reaches out first. ${
+                    `Heads up: anyone browsing RentaPay's free listings page - no account needed - will be able to see this unit and message the WhatsApp number on file for it (your manager/caretaker's number, or yours if none is set) directly. There's no way to screen who reaches out first. ${
                       unit.is_publicly_listed
                         ? "This unit is currently public and will show up there once it's vacant."
-                        : "This unit is currently private — it will never appear on RentaPay's public listings page, even while vacant."
+                        : "This unit is currently private - it will never appear on RentaPay's public listings page, even while vacant."
                     }`
                   }
                 />
@@ -953,9 +953,9 @@ export default function UnitDetail() {
                 {unit.payment_override_enabled ? (
                   <>
                     Override active - {unit.payment_override_method === 'paybill' && (
-                      <>Paybill {unit.payment_override_paybill_number || '—'}{unit.payment_override_paybill_account_number && ` · Acc ${unit.payment_override_paybill_account_number}`}</>
+                      <>Paybill {unit.payment_override_paybill_number || '-'}{unit.payment_override_paybill_account_number && ` · Acc ${unit.payment_override_paybill_account_number}`}</>
                     )}
-                    {unit.payment_override_method === 'till' && <>Till Number {unit.payment_override_till_number || '—'}</>}
+                    {unit.payment_override_method === 'till' && <>Till Number {unit.payment_override_till_number || '-'}</>}
                     {unit.payment_override_method === 'stk' && <>STK Push</>}
                   </>
                 ) : (
@@ -1143,7 +1143,7 @@ export default function UnitDetail() {
                     `rentapay-payment-history-${unit.unit_name || unitId}`,
                     ['Date', 'Amount (KES)', 'Method', 'Status'],
                     payments.map((p) => [
-                      p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '—',
+                      p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '-',
                       p.amount,
                       p.payment_method.replace('_', ' '),
                       p.status,
@@ -1168,7 +1168,7 @@ export default function UnitDetail() {
                 <tbody>
                   {payments.map((p) => (
                     <tr key={p.id}>
-                      <td>{p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '—'}</td>
+                      <td>{p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '-'}</td>
                       <td>KES {Number(p.amount).toLocaleString()}</td>
                       <td>{p.payment_method.replace('_', ' ')}</td>
                       <td><span className={`payment-status payment-status--${p.status}`}>{p.status}</span></td>
@@ -1453,7 +1453,7 @@ function RecordPaymentModal({ tenant, token, onClose, onDone }) {
               <option value="rent">Rent</option>
               {openBills.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.utility_type === 'water' ? '💧' : '⚡'} {b.utility_type} bill — {b.month_key} (KES {(Number(b.amount) - Number(b.amount_paid || 0)).toLocaleString()} owed)
+                  {b.utility_type === 'water' ? '💧' : '⚡'} {b.utility_type} bill - {b.month_key} (KES {(Number(b.amount) - Number(b.amount_paid || 0)).toLocaleString()} owed)
                 </option>
               ))}
             </select>
@@ -1572,7 +1572,7 @@ function TransferModal({ tenant, availableUnits, token, onClose, onDone }) {
             <select required value={newUnitId} onChange={(e) => setNewUnitId(e.target.value)}>
               <option value="">Select a unit…</option>
               {availableUnits.map((u) => (
-                <option key={u.id} value={u.id}>{u.unit_name} — KES {Number(u.rent_amount).toLocaleString()}</option>
+                <option key={u.id} value={u.id}>{u.unit_name} - KES {Number(u.rent_amount).toLocaleString()}</option>
               ))}
             </select>
             <Button type="submit" variant="primary" loading={busy}>Transfer tenant</Button>

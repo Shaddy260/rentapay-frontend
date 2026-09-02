@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppNavigate as useNavigate } from '../hooks/useAppNavigate.js';
 import Button from '../components/Button.jsx';
 import PasswordInput from '../components/PasswordInput.jsx';
-import { api, ApiError } from '../api/client.js';
+import { api, ApiError, storeSessionTokens } from '../api/client.js';
 import { getDeviceTrustToken, setDeviceTrustToken } from '../utils/deviceTrust.js';
 import { clearStaleAccountCaches } from '../utils/clearStaleCaches.js';
 import './Login.css'; // reuses the same card styling - no need to fork it
@@ -49,12 +49,13 @@ export default function AdminPortalAccess() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [resending, setResending] = useState(false);
 
-  function completeLogin(token) {
+  function completeLogin(token, refreshToken) {
     // See clearStaleCaches.js - must run before writing the new
     // session, so no page can seed itself from a previous account's
     // stale cached dashboard data.
     clearStaleAccountCaches();
-    localStorage.setItem('rentapay_token', token);
+    storeSessionTokens(token, refreshToken || localStorage.getItem('rentapay_pending_admin_refresh_token'));
+    localStorage.removeItem('rentapay_pending_admin_refresh_token');
     localStorage.setItem('rentapay_role', 'admin');
     navigate('/admin-dashboard');
   }
@@ -121,7 +122,7 @@ export default function AdminPortalAccess() {
       const res = await api.adminLogin({ password, deviceToken: getDeviceTrustToken('admin') });
       if (res && res.token) {
         // Trusted device - backend skipped straight past 2FA.
-        completeLogin(res.token);
+        completeLogin(res.token, res.refreshToken);
         return;
       }
       if (res && res.needsTotpSetup) {
@@ -154,6 +155,7 @@ export default function AdminPortalAccess() {
       // until the admin acknowledges the recovery codes below, so a
       // page refresh mid-screen doesn't strand them logged out.
       localStorage.setItem('rentapay_pending_admin_token', res.token);
+      if (res.refreshToken) localStorage.setItem('rentapay_pending_admin_refresh_token', res.refreshToken);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Verification failed.');
     } finally {
@@ -163,8 +165,9 @@ export default function AdminPortalAccess() {
 
   function handleRecoveryCodesAcknowledged() {
     const token = localStorage.getItem('rentapay_pending_admin_token');
+    const pendingRefreshToken = localStorage.getItem('rentapay_pending_admin_refresh_token');
     localStorage.removeItem('rentapay_pending_admin_token');
-    completeLogin(token);
+    completeLogin(token, pendingRefreshToken);
   }
 
   async function handleTotpSubmit(e) {
@@ -174,7 +177,7 @@ export default function AdminPortalAccess() {
     try {
       const res = await api.adminVerifyOtp({ code, rememberDevice });
       if (res.deviceToken) setDeviceTrustToken('admin', res.deviceToken);
-      completeLogin(res.token);
+      completeLogin(res.token, res.refreshToken);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Verification failed.');
     } finally {

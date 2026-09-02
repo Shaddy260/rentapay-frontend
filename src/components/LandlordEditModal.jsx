@@ -131,7 +131,7 @@ export default function LandlordEditModal({ landlordId, landlordName, token, onC
                 <select value={selectedPropertyId} onChange={(e) => handlePropertyPick(e.target.value)}>
                   {properties.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name}{p.baName ? ` — BA: ${p.baName}${p.baCode ? ` (${p.baCode})` : ''}` : ''}
+                      {p.name}{p.baName ? ` - BA: ${p.baName}${p.baCode ? ` (${p.baCode})` : ''}` : ''}
                     </option>
                   ))}
                 </select>

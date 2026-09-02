@@ -11,7 +11,7 @@ import './Login.css';
 const MANAGER_PATH = import.meta.env.VITE_MANAGER_PATH || '/manager-account';
 
 /**
- * RentaPay — General Manager Sectioned Build Spec, Section 4.
+ * RentaPay - General Manager Sectioned Build Spec, Section 4.
  *
  * "Settings page design: structured and styled the same way other
  * account settings pages are organized on the platform (same grouping

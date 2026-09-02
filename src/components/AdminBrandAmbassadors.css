@@ -161,3 +161,74 @@
 .admin-ba__status--rejected { background: #fde3e3; color: #a33; }
 .admin-ba__status--suspended { background: #fde3e3; color: #a33; }
 .admin-ba__status--inactive { background: #eee; color: #666; }
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .admin-ba__link-row input {
+  background: var(--color-surface-raised);
+}
+
+[data-theme='dark'] .admin-ba__approved-banner {
+  background: #135320;
+}
+
+[data-theme='dark'] .admin-ba__item--overdue {
+  background: #664200;
+}
+
+[data-theme='dark'] .admin-ba__item--highlight {
+  background: #13532d;
+}
+
+[data-theme='dark'] .admin-ba__overdue-flag {
+  background: #664200;
+  color: #f1cd9d;
+}
+
+[data-theme='dark'] .admin-ba__status--active {
+  background: #11551c;
+  color: #a7e7b6;
+}
+
+[data-theme='dark'] .admin-ba__status--pending_approval {
+  background: #664800;
+  color: #f1d79d;
+}
+
+[data-theme='dark'] .admin-ba__status--rejected {
+  background: #660000;
+  color: #e4a9a9;
+}
+
+[data-theme='dark'] .admin-ba__status--suspended {
+  background: #660000;
+  color: #e4a9a9;
+}
+
+[data-theme='dark'] .admin-ba__status--inactive {
+  background: var(--color-surface-raised);
+  color: #cfbebe;
+}
+
+/* Phase 3 - Glow Card summary header (RentaPay-Glow-Dashboard-Build-
+   Spec.md §4 Phase 3). */
+.admin-ba__glow-summary {
+  margin-bottom: var(--space-5, 24px);
+}

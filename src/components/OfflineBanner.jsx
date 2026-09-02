@@ -49,13 +49,13 @@ export default function OfflineBanner() {
     <div className="offline-banner" role="status" aria-live="polite">
       {isOffline ? (
         <span>
-          You're offline — showing the last saved data.
+          You're offline - showing the last saved data.
           {pending.length > 0 && ` ${pending.length} action${pending.length === 1 ? '' : 's'} will send once you're back online.`}
         </span>
       ) : pending.length > 0 ? (
         <span>Syncing {pending.length} pending action{pending.length === 1 ? '' : 's'}…</span>
       ) : (
-        <span>This is taking longer than usual — check your connection if it doesn't finish soon.</span>
+        <span>This is taking longer than usual - check your connection if it doesn't finish soon.</span>
       )}
     </div>
   );

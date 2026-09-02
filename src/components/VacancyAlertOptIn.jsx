@@ -91,14 +91,14 @@ export default function VacancyAlertOptIn() {
       <button className="vacancy-optin__dismiss" aria-label="Dismiss" onClick={handleDismiss}>×</button>
 
       {status === 'done' ? (
-        <p className="vacancy-optin__done">You're subscribed — we'll notify you the moment a matching unit goes vacant.</p>
+        <p className="vacancy-optin__done">You're subscribed - we'll notify you the moment a matching unit goes vacant.</p>
       ) : status === 'denied' ? (
-        <p className="vacancy-optin__done">No problem — you can always turn this on later from your browser's site settings.</p>
+        <p className="vacancy-optin__done">No problem - you can always turn this on later from your browser's site settings.</p>
       ) : (
         <>
           <p className="vacancy-optin__title">Get notified the moment a unit goes vacant</p>
           <p className="vacancy-optin__body">
-            We'll send a browser notification when a new vacancy appears — near you, or anywhere in Kenya.
+            We'll send a browser notification when a new vacancy appears - near you, or anywhere in Kenya.
           </p>
 
           <label className="vacancy-optin__county-label" htmlFor="vacancy-optin-county">
@@ -118,7 +118,7 @@ export default function VacancyAlertOptIn() {
           </select>
 
           {status === 'error' && (
-            <p className="vacancy-optin__error">Something went wrong — please try again.</p>
+            <p className="vacancy-optin__error">Something went wrong - please try again.</p>
           )}
 
           <div className="vacancy-optin__actions">

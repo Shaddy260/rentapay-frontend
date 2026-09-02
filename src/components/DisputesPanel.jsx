@@ -108,15 +108,15 @@ export default function DisputesPanel({ token, role = 'landlord', isCaretaker = 
             <tbody>
               {disputes.map((d) => (
                 <tr key={d.id}>
-                  <td>{d.created_at ? new Date(d.created_at).toLocaleDateString('en-GB') : '—'}</td>
-                  <td>{d.tenants?.full_name || '—'}</td>
+                  <td>{d.created_at ? new Date(d.created_at).toLocaleDateString('en-GB') : '-'}</td>
+                  <td>{d.tenants?.full_name || '-'}</td>
                   <td>
                     {d.payments ? (
                       <>
                         KES {Number(d.payments.amount).toLocaleString()}
                         {d.payments.paid_at ? ` · ${new Date(d.payments.paid_at).toLocaleDateString('en-GB')}` : ''}
                       </>
-                    ) : '—'}
+                    ) : '-'}
                   </td>
                   <td>{d.reason ? <CommentReveal text={d.reason} label="View reason" /> : <span className="tenant-portal-hint">No reason given</span>}</td>
                   <td><span className={`payment-status payment-status--${d.status === 'open' ? 'pending' : 'completed'}`}>{d.status}</span></td>

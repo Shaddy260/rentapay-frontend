@@ -20,7 +20,7 @@
 // Required for Chrome/Android to treat this as a full installable PWA
 // (WebAPK) rather than a plain bookmark shortcut. Without a `fetch`
 // listener present, Chrome still lets people "Add to Home Screen", but
-// it does NOT generate a real WebAPK — and pushes from a non-WebAPK
+// it does NOT generate a real WebAPK - and pushes from a non-WebAPK
 // install get attributed to "Chrome" + the site's origin instead of
 // the app's own name/icon. This is why notifications currently show
 // as "Chrome · rentapay.co.ke" instead of "RentaPay".

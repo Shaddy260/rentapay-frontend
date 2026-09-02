@@ -198,3 +198,9 @@
     max-height: 260px;
   }
 }
+
+/* Phase 3 - Glow Card treatment for AdminRevenueDashboard's summary
+   header (RentaPay-Glow-Dashboard-Build-Spec.md §4 Phase 3). */
+.admin-revenue-dashboard__glow-summary {
+  margin-bottom: var(--space-5, 24px);
+}

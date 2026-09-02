@@ -18,8 +18,8 @@ function Stars({ value }) {
 const FLAG_STATUS_LABEL = {
   none: null,
   flagged: 'Flag pending review',
-  upheld: 'Flag reviewed — rating upheld, counts normally',
-  removed: 'Flag reviewed — excluded from your average',
+  upheld: 'Flag reviewed - rating upheld, counts normally',
+  removed: 'Flag reviewed - excluded from your average',
 };
 
 /**
@@ -86,7 +86,7 @@ export default function RatingFlagList({ token, table, title, canFlag = true, pr
     <div className="rating-flag-list">
       <h4>{title || 'Individual ratings'}</h4>
       <InfoTip text={<>
-        Shown here (and only here) so you can recognize and dispute a specific rating — never anywhere a tenant's name
+        Shown here (and only here) so you can recognize and dispute a specific rating - never anywhere a tenant's name
         is attached.
       </>} />
       {notice && <p className="rating-flag-list__notice">{notice}</p>}
@@ -103,7 +103,7 @@ export default function RatingFlagList({ token, table, title, canFlag = true, pr
             {r.flag_status !== 'none' && (
               <p className={`rating-flag-list__status rating-flag-list__status--${r.flag_status}`}>
                 {FLAG_STATUS_LABEL[r.flag_status]}
-                {r.flag_resolution_note ? ` — ${r.flag_resolution_note}` : ''}
+                {r.flag_resolution_note ? ` - ${r.flag_resolution_note}` : ''}
               </p>
             )}
 

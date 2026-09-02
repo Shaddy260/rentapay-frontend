@@ -38,7 +38,7 @@ export default function PendingRentChangesPanel({ token, propertyId }) {
         {changes.map((c) => (
           <li key={c.id} className="audit-log-panel__item">
             <span className="audit-log-panel__line">
-              <strong>{c.unitName || 'Unit'}</strong>{c.propertyName ? ` (${c.propertyName})` : ''} — KES {Number(c.old_amount).toLocaleString()} → KES {Number(c.new_amount).toLocaleString()}
+              <strong>{c.unitName || 'Unit'}</strong>{c.propertyName ? ` (${c.propertyName})` : ''} - KES {Number(c.old_amount).toLocaleString()} → KES {Number(c.new_amount).toLocaleString()}
             </span>
             <span className="audit-log-panel__time">Takes effect {new Date(c.effective_date).toLocaleDateString('en-GB')}</span>
           </li>

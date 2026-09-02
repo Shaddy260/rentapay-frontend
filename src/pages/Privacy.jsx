@@ -361,7 +361,7 @@ export default function Privacy() {
           that a payment succeeded, RentaPay updates the relevant balance automatically, with no
           person reviewing that specific payment first. We treat this differently from an
           automated decision in the above sense, because RentaPay is not evaluating you or
-          exercising judgment about you — it is recording a factual outcome reported directly by
+          exercising judgment about you - it is recording a factual outcome reported directly by
           Safaricom, the same transaction that would have occurred with or without RentaPay. You
           can still dispute any payment recorded this way through the in app dispute tool, which is
           reviewed by a human being, and a landlord can always switch back to manual confirmation

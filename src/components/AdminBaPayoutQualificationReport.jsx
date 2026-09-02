@@ -210,9 +210,9 @@ export default function AdminBaPayoutQualificationReport({ token }) {
                           <li key={l.landlordId} className={`admin-ba-qr__landlord admin-ba-qr__landlord--${l.qualifiesThisCycle ? 'qualifies' : 'not-qualifies'}`}>
                             <span className="admin-ba-qr__landlord-name">{l.name}</span>
                             <span className="admin-ba-qr__landlord-phone">{l.maskedPhone}</span>
-                            <span className="admin-ba-qr__landlord-rate">{l.percentageApplied != null ? `${l.percentageApplied}%` : '—'}</span>
-                            <span className="admin-ba-qr__landlord-amount">{l.paymentAmount ? fmtKes(l.paymentAmount) : '—'}</span>
-                            <span className="admin-ba-qr__landlord-commission">{l.commissionAmount ? fmtKes(l.commissionAmount) : '—'}</span>
+                            <span className="admin-ba-qr__landlord-rate">{l.percentageApplied != null ? `${l.percentageApplied}%` : '-'}</span>
+                            <span className="admin-ba-qr__landlord-amount">{l.paymentAmount ? fmtKes(l.paymentAmount) : '-'}</span>
+                            <span className="admin-ba-qr__landlord-commission">{l.commissionAmount ? fmtKes(l.commissionAmount) : '-'}</span>
                             <span className="admin-ba-qr__landlord-status">{l.qualifiesThisCycle ? (l.commissionAmount ? 'Paid out' : 'Qualifying · no payment this cycle') : (l.reason || 'Not qualifying')}</span>
                           </li>
                         ))}

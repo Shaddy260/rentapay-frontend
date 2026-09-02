@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '../api/client.js';
+import GlowCard from './GlowCard.jsx';
+import HeroStat from './HeroStat.jsx';
+import KpiMiniGrid from './KpiMiniGrid.jsx';
 import './StatisticsPanel.css';
 import './AdminPricingProposal.css';
 
@@ -47,26 +50,17 @@ export default function AdminRevenueDashboard({ token }) {
       <section className="statistics-panel">
         <h2>Revenue Dashboard</h2>
 
-        <div className="statistics-panel__cards">
-          <div className="statistics-panel__card">
-            <span className="statistics-panel__card-label">MRR (monthly recurring revenue)</span>
-            <span className="statistics-panel__card-value">KES {Number(data.mrr).toLocaleString()}</span>
-          </div>
-          <div className="statistics-panel__card">
-            <span className="statistics-panel__card-label">Active landlords</span>
-            <span className="statistics-panel__card-value">{data.activeLandlordCount}</span>
-          </div>
-          <div className="statistics-panel__card">
-            <span className="statistics-panel__card-label">Churn rate (30 days)</span>
-            <span className="statistics-panel__card-value">
-              {data.churn.rate == null ? 'N/A' : `${data.churn.rate}%`}
-            </span>
-          </div>
-          <div className="statistics-panel__card">
-            <span className="statistics-panel__card-label">Renewals due this week</span>
-            <span className="statistics-panel__card-value">{data.renewalsDueThisWeek.length}</span>
-          </div>
-        </div>
+        <GlowCard accent="green" title="Recurring revenue" className="admin-revenue-dashboard__glow-summary">
+          <HeroStat eyebrow="MRR (monthly recurring revenue)" value={`KES ${Number(data.mrr).toLocaleString()}`} />
+          <KpiMiniGrid
+            accent="green"
+            items={[
+              { label: 'Active landlords', value: data.activeLandlordCount },
+              { label: 'Churn rate (30 days)', value: data.churn.rate == null ? 'N/A' : `${data.churn.rate}%` },
+              { label: 'Renewals due this week', value: data.renewalsDueThisWeek.length },
+            ]}
+          />
+        </GlowCard>
 
         <p className="tenant-portal-hint">{data.churn.note}</p>
 
@@ -228,48 +222,26 @@ function AdminPricingProposal({ token }) {
 
           <details className="admin-pricing-proposal__inputs">
             <summary>Raw inputs used</summary>
-            <div className="statistics-panel__cards">
-              <div className="statistics-panel__card">
-                <span className="statistics-panel__card-label">MRR</span>
-                <span className="statistics-panel__card-value">KES {Number(proposal.inputs.mrr).toLocaleString()}</span>
-              </div>
-              <div className="statistics-panel__card">
-                <span className="statistics-panel__card-label">Active units</span>
-                <span className="statistics-panel__card-value">{proposal.inputs.activeUnits}</span>
-              </div>
-              <div className="statistics-panel__card">
-                <span className="statistics-panel__card-label">BA commission payouts</span>
-                <span className="statistics-panel__card-value">KES {Number(proposal.inputs.baCommissionPayouts).toLocaleString()}</span>
-              </div>
-              <div className="statistics-panel__card">
-                <span className="statistics-panel__card-label">Operating expenses</span>
-                <span className="statistics-panel__card-value">KES {Number(proposal.inputs.operatingExpenses).toLocaleString()}</span>
-              </div>
-              <div className="statistics-panel__card">
-                <span className="statistics-panel__card-label">Net profit</span>
-                <span className="statistics-panel__card-value">KES {Number(proposal.inputs.netProfit).toLocaleString()}</span>
-              </div>
-              <div className="statistics-panel__card">
-                <span className="statistics-panel__card-label">Churn rate (30 days)</span>
-                <span className="statistics-panel__card-value">{proposal.inputs.churnRatePct == null ? 'N/A' : `${proposal.inputs.churnRatePct}%`}</span>
-              </div>
-              {proposal.inputs.revenuePerUnit != null && (
-                <>
-                  <div className="statistics-panel__card">
-                    <span className="statistics-panel__card-label">Revenue / unit (today)</span>
-                    <span className="statistics-panel__card-value">KES {Number(proposal.inputs.revenuePerUnit).toLocaleString()}</span>
-                  </div>
-                  <div className="statistics-panel__card">
-                    <span className="statistics-panel__card-label">Total cost / unit</span>
-                    <span className="statistics-panel__card-value">KES {Number(proposal.inputs.totalCostPerUnit).toLocaleString()}</span>
-                  </div>
-                  <div className="statistics-panel__card">
-                    <span className="statistics-panel__card-label">Current profit / unit</span>
-                    <span className="statistics-panel__card-value">KES {Number(proposal.inputs.currentProfitPerUnit).toLocaleString()}</span>
-                  </div>
-                </>
-              )}
-            </div>
+            <GlowCard accent="purple" quiet title="Raw inputs used" className="admin-pricing-proposal__glow-inputs">
+              <KpiMiniGrid
+                accent="purple"
+                items={[
+                  { label: 'MRR', value: `KES ${Number(proposal.inputs.mrr).toLocaleString()}` },
+                  { label: 'Active units', value: proposal.inputs.activeUnits },
+                  { label: 'BA commission payouts', value: `KES ${Number(proposal.inputs.baCommissionPayouts).toLocaleString()}` },
+                  { label: 'Operating expenses', value: `KES ${Number(proposal.inputs.operatingExpenses).toLocaleString()}` },
+                  { label: 'Net profit', value: `KES ${Number(proposal.inputs.netProfit).toLocaleString()}` },
+                  { label: 'Churn rate (30 days)', value: proposal.inputs.churnRatePct == null ? 'N/A' : `${proposal.inputs.churnRatePct}%` },
+                  ...(proposal.inputs.revenuePerUnit != null
+                    ? [
+                        { label: 'Revenue / unit (today)', value: `KES ${Number(proposal.inputs.revenuePerUnit).toLocaleString()}` },
+                        { label: 'Total cost / unit', value: `KES ${Number(proposal.inputs.totalCostPerUnit).toLocaleString()}` },
+                        { label: 'Current profit / unit', value: `KES ${Number(proposal.inputs.currentProfitPerUnit).toLocaleString()}` },
+                      ]
+                    : []),
+                ]}
+              />
+            </GlowCard>
           </details>
         </>
       )}

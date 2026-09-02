@@ -136,7 +136,7 @@ export default function AdminOnboardedLandlords({ token, readOnly = false }) {
                 <tr key={l.id}>
                   <td>{l.fullName}</td>
                   <td>{l.phone}</td>
-                  <td>{[l.location, l.county].filter(Boolean).join(', ') || '—'}</td>
+                  <td>{[l.location, l.county].filter(Boolean).join(', ') || '-'}</td>
                   <td>{new Date(l.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                   <td>
                     {l.baId ? (
@@ -146,7 +146,7 @@ export default function AdminOnboardedLandlords({ token, readOnly = false }) {
                     )}
                   </td>
                   <td>
-                    {l.subscriptionExpiresAt ? new Date(l.subscriptionExpiresAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                    {l.subscriptionExpiresAt ? new Date(l.subscriptionExpiresAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
                   </td>
                   {!readOnly && (
                   <td>

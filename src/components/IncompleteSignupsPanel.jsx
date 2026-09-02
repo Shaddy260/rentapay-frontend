@@ -3,6 +3,7 @@ import { api } from '../api/client.js';
 import InfoTip from './InfoTip.jsx';
 import Skeleton from './Skeleton.jsx';
 import { downloadCsv } from '../utils/downloadCsv.js';
+import { buildWaMeLink } from '../utils/whatsapp.js';
 
 /**
  * Landlords who started creating an account but haven't finished the
@@ -66,6 +67,17 @@ export default function IncompleteSignupsPanel({ token }) {
                   <td>{new Date(s.createdAt).toLocaleString('en-GB')}</td>
                   <td className="admin-table__actions">
                     <a className="ghost-link" href={`tel:${s.phone}`}>📞 Call</a>
+                    <a
+                      className="ghost-link"
+                      href={buildWaMeLink(
+                        s.phone,
+                        `Hi ${s.fullName}, this is RentaPay. We noticed you started signing up but didn't finish - you got as far as "${s.stepLabel}". Would you like a hand completing it?`
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      💬 WhatsApp
+                    </a>
                   </td>
                 </tr>
               ))}

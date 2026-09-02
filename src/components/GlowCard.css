@@ -1,0 +1,64 @@
+/* Glow Card primitive - RentaPay-Glow-Dashboard-Build-Spec.md §1.3.
+   Colors always come from --glow-accent* custom properties set inline
+   per-card (see GlowCard.jsx) rather than hardcoded hex, so light/dark
+   mode and the section accent both fall out of the token system. */
+
+.glow-card {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(0, 0, 0, 0.02) 100%),
+    var(--color-surface-raised);
+  border: 1px solid var(--glow-accent-a);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: 0 0 24px 0 var(--glow-accent-a);
+  transition: box-shadow 180ms ease-out;
+  overflow: hidden;
+}
+
+/* Progressive-enhancement-only blur - deliberately not required for
+   the glass look (spec §1.3: cheap on low-end Android is the actual
+   requirement here, not real backdrop-filter blur). */
+@supports (backdrop-filter: blur(1px)) {
+  .glow-card {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.03) 100%),
+      color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
+  }
+}
+
+.glow-card:hover,
+.glow-card:focus-within {
+  box-shadow: 0 0 36px 4px var(--glow-accent-a);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-card {
+    transition: none;
+  }
+}
+
+.glow-card__accent-bar {
+  position: absolute;
+  top: 0;
+  left: var(--space-5);
+  right: var(--space-5);
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(90deg, var(--glow-accent) 0%, transparent 100%);
+}
+
+.glow-card--quiet {
+  box-shadow: none;
+}
+
+.glow-card--quiet:hover,
+.glow-card--quiet:focus-within {
+  box-shadow: none;
+}
+
+@media (max-width: 480px) {
+  .glow-card {
+    padding: var(--space-4);
+  }
+}

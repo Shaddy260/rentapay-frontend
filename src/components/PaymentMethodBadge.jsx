@@ -45,13 +45,13 @@ export default function PaymentMethodBadge({ token, paymentMethod: providedMetho
   // and Account now stack on their own lines instead of competing for
   // the same row, so every digit of both numbers is always visible
   // regardless of screen width.
-  const paybillLine = method.method === 'paybill' ? `Paybill ${method.paybillNumber || '—'}` : null;
+  const paybillLine = method.method === 'paybill' ? `Paybill ${method.paybillNumber || '-'}` : null;
   const accountLine = method.method === 'paybill' && method.accountNumber ? `Acc ${method.accountNumber}` : null;
   const singleLineLabel = method.method === 'paybill'
     ? null
     : method.method === 'till'
-      ? `Till ${method.tillNumber || '—'}`
-      : `Send to ${method.stkPhoneNumber || '—'}`;
+      ? `Till ${method.tillNumber || '-'}`
+      : `Send to ${method.stkPhoneNumber || '-'}`;
 
   return (
     <div className={`payment-method-badge payment-method-badge--${method.method} payment-method-badge--${shape}`}>

@@ -41,6 +41,23 @@ export default function SubscriptionLockGate({ children }) {
   const [isManager, setIsManager] = useState(false);
 
   useEffect(() => {
+    // FIX (direct request: "it loads like this before showing the
+    // login page... it should load in the background... no empty
+    // pages and skeletons"): this used to only check `role`, so a
+    // visit with NO TOKEN AT ALL (fresh app open, expired session, a
+    // reopened PWA that remembered /dashboard as its last route) fell
+    // into the `role !== 'landlord' && role !== 'manager'` branch
+    // below, set checked=true immediately, and let `children`
+    // (Dashboard/Settings/etc.) mount and paint their own loading
+    // skeleton for a tick before THEIR OWN effects noticed the
+    // missing token and redirected. Checking for a token first, and
+    // redirecting straight to /login without ever setting
+    // checked=true, means children never mount at all in that case -
+    // nothing to flash.
+    if (!token) {
+      navigate('/login', { replace: true });
+      return;
+    }
     // Only landlords and managers/caretakers have a subscription to
     // lapse - tenants and admins pass straight through.
     if (role !== 'landlord' && role !== 'manager') {
@@ -65,6 +82,7 @@ export default function SubscriptionLockGate({ children }) {
     return () => { cancelled = true; };
   }, [token, role]);
 
+  if (!token) return null; // redirecting above - never render children (or their loading state) without one
   if (!checked) return null;
 
   if (!expired) return children;
@@ -99,6 +117,7 @@ export default function SubscriptionLockGate({ children }) {
             className="ghost-link"
             onClick={() => {
               localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
               localStorage.removeItem('rentapay_role');
               localStorage.removeItem('rentapay_role_level');
               navigate('/login');

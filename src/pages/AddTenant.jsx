@@ -157,7 +157,7 @@ export default function AddTenant() {
         <button className="add-tenant-back" onClick={() => navigate(`/units/${unitId}`)}>← Back to unit</button>
         <h1>Add tenant to Unit {unit?.unit_name}</h1>
         <p className="add-tenant-subtitle">
-          Rent prefilled from the unit (KES {Number(unit?.rent_amount || 0).toLocaleString()}) — override below if this tenant pays differently.
+          Rent prefilled from the unit (KES {Number(unit?.rent_amount || 0).toLocaleString()}) - override below if this tenant pays differently.
         </p>
       </header>
 

@@ -1,0 +1,104 @@
+.admin-landlord-ownership__filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-landlord-ownership__filter-btn {
+  border: 1px solid var(--color-border, #E4DFD8);
+  background: var(--color-surface, #fff);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: var(--text-sm, 0.9375rem);
+  cursor: pointer;
+}
+
+.admin-landlord-ownership__filter-btn--active {
+  background: var(--color-ink, #22282A);
+  color: #fff;
+  border-color: var(--color-ink, #22282A);
+}
+
+.admin-landlord-ownership__error {
+  color: #A33;
+  margin-bottom: 12px;
+}
+
+.admin-landlord-ownership__empty {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-landlord-ownership__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 760px;
+}
+
+.admin-landlord-ownership__item {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--color-surface, #fff);
+}
+
+.admin-landlord-ownership__header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.admin-landlord-ownership__meta {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-landlord-ownership__docs {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-landlord-ownership__doc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-landlord-ownership__doc-meta {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-landlord-ownership__doc-note {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-landlord-ownership__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-landlord-ownership__actions input {
+  flex: 1;
+  min-width: 160px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+}

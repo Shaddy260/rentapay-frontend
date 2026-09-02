@@ -292,7 +292,7 @@ export default function TenantOnboarding() {
                 onChange={(e) => update('email', e.target.value)}
                 onBlur={(e) => scheduleDuplicateCheck(undefined, e.target.value)}
               />
-              <span className="tenant-onboarding-field-hint">Enter an active email address — this will be used to reach you.</span>
+              <span className="tenant-onboarding-field-hint">Enter an active email address - this will be used to reach you.</span>
             </label>
 
             {duplicateWarning && <p className="tenant-onboarding-warning">{DUPLICATE_WARNING}</p>}
@@ -367,7 +367,7 @@ export default function TenantOnboarding() {
                 deposit-required) - the hint below just adapts to
                 whether this specific unit's landlord requires one. */}
             <label>
-              Deposit amount paid (KES) — optional
+              Deposit amount paid (KES) - optional
               <input
                 type="number"
                 min="0"
@@ -378,7 +378,7 @@ export default function TenantOnboarding() {
               />
               <span className="tenant-onboarding-field-hint">
                 {selectedUnit?.requiresDeposit
-                  ? `This unit requires a deposit${selectedUnit.depositAmountExpected != null ? ` of KES ${Number(selectedUnit.depositAmountExpected).toLocaleString()}` : ''}. Enter what you've actually paid so far — leave empty if you haven't paid anything yet.`
+                  ? `This unit requires a deposit${selectedUnit.depositAmountExpected != null ? ` of KES ${Number(selectedUnit.depositAmountExpected).toLocaleString()}` : ''}. Enter what you've actually paid so far - leave empty if you haven't paid anything yet.`
                   : "Only fill this in if you've already paid a deposit to the landlord/manager/caretaker directly."}
               </span>
             </label>
@@ -400,7 +400,7 @@ export default function TenantOnboarding() {
               <dt>Email</dt><dd>{form.email}</dd>
               <dt>ID number</dt><dd>{form.idNumber}</dd>
               <dt>Move-in date</dt><dd>{form.moveInDate}</dd>
-              <dt>Emergency contact</dt><dd>{form.emergencyContactName} — {form.emergencyContactPhone}</dd>
+              <dt>Emergency contact</dt><dd>{form.emergencyContactName} - {form.emergencyContactPhone}</dd>
               <dt>Deposit amount paid</dt>
               <dd>{form.depositAmountPaid !== '' ? `KES ${Number(form.depositAmountPaid).toLocaleString()}` : 'None entered'}</dd>
             </dl>

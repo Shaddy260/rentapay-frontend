@@ -43,31 +43,9 @@ const CHECK_INTERVAL_MS = 5 * 60 * 1000; // also re-check periodically while the
 export default function ForceUpdateGate({ children }) {
   const location = useLocation();
   const standalone = isRunningStandaloneApp();
-  const [status, setStatus] = useState('ok'); // 'ok' | 'checking' | 'blocked'
+  const [status, setStatus] = useState('ok'); // 'ok' | 'blocked'
   const [info, setInfo] = useState(null);
   const inFlight = useRef(false);
-  // FIX (direct request: "when a landlord navigates from dashboard to
-  // settings and back... it shows an orange screen and loads... it
-  // should transition without the skeletons at all"). The gate's own
-  // full-screen "checking" state was designed for exactly one moment -
-  // the first check right after login, before the dashboard has ever
-  // painted. But because runCheck() re-fires on every location.pathname
-  // change (see the effect below - that part is still correct and
-  // needed, it's how a stale app gets caught even when Login.jsx
-  // navigates instead of a hard reload), status was flipping back to
-  // 'checking' on every single in-app navigation thereafter too - an
-  // orange, z-index:999999 overlay unmounting the entire app tree
-  // (including whatever page-level cache/data was already on screen)
-  // for a routine tap between Dashboard and Settings, not just login.
-  // hasCheckedOnce draws the line: the very first check after mount
-  // still shows the full-screen holding state (correct - nothing has
-  // painted yet at that point anyway), but every check after that runs
-  // silently in the background. It can still flip status to 'blocked'
-  // at any time if the person's version genuinely falls below the
-  // floor - that hard block is real and intended, and stays instant
-  // and unmissable when it happens. It just can no longer flash
-  // 'checking' over content that's already legitimately on screen.
-  const hasCheckedOnce = useRef(false);
 
   const runCheck = useCallback(() => {
     const token = localStorage.getItem('rentapay_token');
@@ -77,16 +55,18 @@ export default function ForceUpdateGate({ children }) {
     // effect below.
     if (!standalone || !token) {
       setStatus((prev) => (prev === 'blocked' ? 'ok' : prev));
-      // No token (logged out) - reset so the *next* login gets its own
-      // branded checking screen again, same as a fresh app open would.
-      hasCheckedOnce.current = false;
       return;
     }
     if (inFlight.current) return;
     inFlight.current = true;
-    if (!hasCheckedOnce.current) {
-      setStatus((prev) => (prev === 'blocked' ? prev : 'checking'));
-    }
+    // FIX (direct request: no blank/skeleton holding screens anywhere -
+    // content should already be on screen while checks like this run
+    // in the background). This used to flip to a full-screen
+    // 'checking' state on the very first run, blocking even the
+    // login page itself behind a blank spinner. It no longer sets
+    // any intermediate status at all - status only ever changes here
+    // if the check comes back 'blocked', which is the one case that
+    // still needs a hard, unmissable interrupt (see the render below).
     api
       .getAppVersionCheck()
       .then((res) => {
@@ -103,7 +83,6 @@ export default function ForceUpdateGate({ children }) {
       })
       .finally(() => {
         inFlight.current = false;
-        hasCheckedOnce.current = true;
       });
   }, [standalone]);
 
@@ -126,18 +105,23 @@ export default function ForceUpdateGate({ children }) {
     };
   }, [runCheck]);
 
-  if (status === 'checking') {
-    // Deliberately not the dashboard, not even for a frame - a blank
-    // branded holding screen while the one quick version-check call
-    // resolves, rather than letting the real route flash on screen
-    // first and then get replaced.
-    return (
-      <div className="force-update-gate force-update-gate--checking" aria-busy="true">
-        <div className="force-update-gate__spinner" aria-hidden="true" />
-      </div>
-    );
-  }
-
+  // FIX (direct request: "it loads like this before showing the login
+  // page - this is not right, it is not supposed to load but land
+  // directly on the page... loading should happen in the background
+  // with content already displayed, not empty pages/skeletons").
+  // This full-screen 'checking' holding state used to render ABOVE
+  // everything - including the login page itself - on every cold app
+  // open where a token (even a stale/expired one) was still sitting
+  // in localStorage, exactly the tan/peach spinner screen being
+  // reported. That was a deliberate earlier design (see the version-
+  // check comment above runCheck), but it's the opposite of what's
+  // being asked for now: the version check should run silently
+  // in the background against whatever the app would already be
+  // showing (Login, Dashboard, whatever the route resolves to) -
+  // never blocking first paint. The only state that still needs a
+  // hard, unmissable full-screen interrupt is 'blocked', where the
+  // installed app is genuinely below the required version floor -
+  // that one stays, further down.
   if (status === 'blocked') {
     const playStoreUrl = info?.playStoreUrl || 'https://play.google.com/store/apps/details?id=com.rentapay.app';
     return (

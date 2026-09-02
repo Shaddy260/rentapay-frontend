@@ -8,7 +8,7 @@ import InfoTip from '../components/InfoTip.jsx';
 const EMPTY_FORM = { fullName: '', phone: '', email: '', nationalId: '', gender: '' };
 
 /**
- * Prompt 7 — self-service General Manager onboarding, replacing the
+ * Prompt 7 - self-service General Manager onboarding, replacing the
  * old "admin types in the details" flow. Mirrors BaOnboarding.jsx's
  * shape exactly: admin generates+sends this link privately
  * (/onboard-general-manager?token=...), the invitee fills in their
@@ -147,7 +147,7 @@ export default function GmOnboarding() {
           <div className="tenant-onboarding-done">
             <div className="tenant-onboarding-done__icon" aria-hidden="true">⏰</div>
             <p>{expiredMessage}</p>
-            <InfoTip text={<>Ask the RentaPay admin who invited you for a fresh link — the current one only stays valid for 24 hours.</>} />
+            <InfoTip text={<>Ask the RentaPay admin who invited you for a fresh link - the current one only stays valid for 24 hours.</>} />
           </div>
         )}
 
@@ -171,7 +171,7 @@ export default function GmOnboarding() {
             <label>
               Email address
               <input required type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
-              <span className="tenant-onboarding-field-hint">Enter an active email address — your login details will be sent here.</span>
+              <span className="tenant-onboarding-field-hint">Enter an active email address - your login details will be sent here.</span>
             </label>
             <label>
               National ID number

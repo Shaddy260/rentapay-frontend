@@ -123,7 +123,7 @@ export default function TwoFactorSettings({ token }) {
           <p>Save these recovery codes somewhere safe - each works once, and they won't be shown again.</p>
           <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
             {(recoveryCodes || []).map((rc) => (
-              <li key={rc} style={{ background: '#f6f6f4', border: '1px solid #e2e2e2', borderRadius: 6, padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+              <li key={rc} style={{ background: 'var(--color-surface-subtle)', border: '1px solid var(--color-hairline)', borderRadius: 6, padding: '0.5rem 0.75rem', textAlign: 'center' }}>
                 <code>{rc}</code>
               </li>
             ))}

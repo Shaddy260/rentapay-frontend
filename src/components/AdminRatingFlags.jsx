@@ -60,7 +60,7 @@ export default function AdminRatingFlags({ token, readOnly = false }) {
       <h2>Rating Flags</h2>
       <InfoTip text={<>
         Ratings a landlord has disputed as bad-faith. A flagged rating is excluded from that landlord's aggregate while
-        pending — resolve it as upheld (counts again) or removed (stays excluded).
+        pending - resolve it as upheld (counts again) or removed (stays excluded).
       </>} />
 
       <div className="admin-rating-flags__filter">
@@ -98,7 +98,7 @@ export default function AdminRatingFlags({ token, readOnly = false }) {
                   <strong>Landlord's reason:</strong> {f.flag_reason}
                 </p>
                 <p className="admin-rating-flags__meta">
-                  Flagged {f.flagged_at ? new Date(f.flagged_at).toLocaleDateString() : '—'}
+                  Flagged {f.flagged_at ? new Date(f.flagged_at).toLocaleDateString() : '-'}
                   {f.flag_resolved_at ? ` · Resolved ${new Date(f.flag_resolved_at).toLocaleDateString()}` : ''}
                 </p>
                 {f.flag_resolution_note && (

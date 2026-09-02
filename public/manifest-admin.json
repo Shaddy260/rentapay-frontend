@@ -1,7 +1,7 @@
 {
   "name": "RentaPay Admin",
   "short_name": "RentaPay Admin",
-  "description": "RentaPay admin portal — moderation, subscriptions, and platform oversight.",
+  "description": "RentaPay admin portal - moderation, subscriptions, and platform oversight.",
   "start_url": "/admin-portal-access-secret",
   "scope": "/admin-portal-access-secret",
   "display": "standalone",

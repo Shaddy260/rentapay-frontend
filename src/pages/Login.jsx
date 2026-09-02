@@ -9,7 +9,7 @@ import { getRememberedActiveProperty } from '../utils/activeProperty.js';
 import { finalizeLogin } from '../utils/finalizeLogin.js';
 import GoogleSignInButton from '../components/GoogleSignInButton.jsx';
 import LockoutCountdown from '../components/LockoutCountdown.jsx';
-import { api, ApiError } from '../api/client.js';
+import { api, ApiError, storeSessionTokens } from '../api/client.js';
 import { isBiometricSupported, listBiometricEntries, unlockWithBiometric } from '../utils/biometricAuth.js';
 import { isStandalone } from '../utils/useInstallPrompt.js';
 import { getAllDeviceTrustTokens } from '../utils/deviceTrust.js';
@@ -204,7 +204,7 @@ export default function Login() {
 
       await api.sessionCheck(entry.token);
 
-      localStorage.setItem('rentapay_token', entry.token);
+      storeSessionTokens(entry.token, entry.refreshToken);
       localStorage.setItem('rentapay_role', entry.role);
       if (entry.phone) localStorage.setItem('rentapay_phone', entry.phone);
       if (entry.email) localStorage.setItem('rentapay_email', entry.email);

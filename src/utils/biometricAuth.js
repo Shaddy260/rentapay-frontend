@@ -19,6 +19,12 @@
 
 const VAULT_KEY = 'rentapay_biometric_vault';
 
+// Same base-URL resolution as api/client.js - deliberately not
+// imported from there (that module isn't otherwise a dependency of
+// this one) to avoid pulling the whole request()/offline-queue
+// machinery into a WebAuthn-only file for one fetch call.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
 // SECURITY FIX: the vault previously stored each enrolled session token as
 // plain JSON in localStorage - readable by any script on the page (XSS) or
 // anyone with local device/file access, indefinitely (this is the
@@ -168,9 +174,18 @@ export function clearAllBiometricEntries() {
 
 /**
  * Registers this device's fingerprint/Face ID for the currently
- * logged-in account, sealing the current session token behind it.
+ * logged-in account, sealing the current session behind it.
+ *
+ * SECURITY FIX (JWT-theft review, Sept 2026): access tokens are now
+ * short-lived (30 min), so sealing only the access token would make
+ * fingerprint unlock stop working after half an hour. The refresh
+ * token is sealed alongside it - unlockWithBiometric below exchanges
+ * it for a fresh access token on every use, and immediately re-seals
+ * the newly-rotated refresh token back into the vault (refresh tokens
+ * are single-use; leaving the old one sealed would break the SECOND
+ * fingerprint unlock, not just the first after expiry).
  */
-export async function enrollBiometric({ phone, email, role, roleLevel, token, label }) {
+export async function enrollBiometric({ phone, email, role, roleLevel, token, refreshToken, label }) {
   if (!isBiometricSupported()) {
     throw new Error('This browser/device does not support fingerprint or device login.');
   }
@@ -195,19 +210,25 @@ export async function enrollBiometric({ phone, email, role, roleLevel, token, la
 
   const credentialId = bufToBase64Url(credential.rawId);
   const encToken = await encryptToken(token);
+  const encRefreshToken = refreshToken ? await encryptToken(refreshToken) : null;
   const vault = readVault();
   // Remember email alongside phone (when known) so unlocking later can
   // prefill whichever one the person actually logs in with, instead
-  // of always falling back to phone. The session token itself is never
-  // stored in the clear - only its AES-GCM ciphertext (encToken).
-  vault[credentialId] = { phone, email: email || null, role, roleLevel: roleLevel || null, label, encToken };
+  // of always falling back to phone. Neither token is ever stored in
+  // the clear - only its AES-GCM ciphertext (encToken/encRefreshToken).
+  vault[credentialId] = { phone, email: email || null, role, roleLevel: roleLevel || null, label, encToken, encRefreshToken };
   writeVault(vault);
   return credentialId;
 }
 
 /**
  * Prompts the device fingerprint/Face ID reader and, on success,
- * returns the sealed session for whichever enrolled account matches.
+ * exchanges the sealed refresh token for a brand-new access token
+ * (silently, over the network) and returns the fresh session. Falls
+ * back to the sealed access token as-is for older enrollments that
+ * predate the refresh-token rollout and have no encRefreshToken yet -
+ * that stored token will simply stop working once it expires, same as
+ * before, until the person re-enrolls with a fresh login.
  */
 export async function unlockWithBiometric() {
   if (!isBiometricSupported()) {
@@ -234,7 +255,44 @@ export async function unlockWithBiometric() {
   const entry = vault[credentialId];
   if (!entry) throw new Error('That fingerprint is not linked to an account on this device.');
   if (!entry.encToken) throw new Error('This device\u2019s fingerprint login is out of date - please sign in with your password and re-enable it.');
-  const token = await decryptToken(entry.encToken);
-  const { encToken: _drop, ...metadata } = entry;
-  return { ...metadata, token };
+
+  const { encToken: _drop, encRefreshToken: _drop2, ...metadata } = entry;
+
+  if (!entry.encRefreshToken) {
+    // Pre-refresh-token enrollment - hand back the sealed access token
+    // as-is (it'll simply fail once expired, same as any old session).
+    const token = await decryptToken(entry.encToken);
+    return { ...metadata, token };
+  }
+
+  const refreshToken = await decryptToken(entry.encRefreshToken);
+  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  });
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    // handled as a generic failure below
+  }
+  if (!response.ok || !data.token) {
+    throw new Error('This device\u2019s fingerprint login has expired - please sign in with your password and re-enable it.');
+  }
+
+  // Refresh tokens are single-use (rotation) - reseal the brand-new
+  // one now, or the very next fingerprint unlock on this device would
+  // fail even though this one just succeeded.
+  const [encToken, encRefreshToken] = await Promise.all([
+    encryptToken(data.token),
+    data.refreshToken ? encryptToken(data.refreshToken) : Promise.resolve(entry.encRefreshToken),
+  ]);
+  const freshVault = readVault();
+  if (freshVault[credentialId]) {
+    freshVault[credentialId] = { ...freshVault[credentialId], encToken, encRefreshToken };
+    writeVault(freshVault);
+  }
+
+  return { ...metadata, token: data.token, refreshToken: data.refreshToken };
 }

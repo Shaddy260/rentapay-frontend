@@ -92,8 +92,8 @@ export default function ArchivedTenantsPanel({ token }) {
                 <tr key={t.id}>
                   <td>{t.full_name}</td>
                   <td>{t.primary_phone}</td>
-                  <td>{t.units?.unit_name || '—'}{t.units?.properties?.name ? ` (${t.units.properties.name})` : ''}</td>
-                  <td>{t.left_at ? new Date(t.left_at).toLocaleDateString('en-GB') : '—'}</td>
+                  <td>{t.units?.unit_name || '-'}{t.units?.properties?.name ? ` (${t.units.properties.name})` : ''}</td>
+                  <td>{t.left_at ? new Date(t.left_at).toLocaleDateString('en-GB') : '-'}</td>
                   <td>KES {Number(t.totalPaidHistorically || 0).toLocaleString()}</td>
                   <td>
                     {t.claimedElsewhere ? (

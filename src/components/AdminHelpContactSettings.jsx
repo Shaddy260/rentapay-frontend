@@ -52,7 +52,7 @@ export default function AdminHelpContactSettings({ token, readOnly = false }) {
   function handleAddNumber(type) {
     setError('');
     setNotice('');
-    // Add a local, unsaved draft row only — nothing is sent to the backend
+    // Add a local, unsaved draft row only - nothing is sent to the backend
     // until the person actually types a value and clicks Save. This avoids
     // POSTing a blank value the moment "+ Add" is clicked.
     draftSeq.current += 1;
@@ -98,7 +98,7 @@ export default function AdminHelpContactSettings({ token, readOnly = false }) {
 
   async function handleRemoveNumber(id) {
     const target = numbers.find((n) => n.id === id);
-    // A draft row only exists locally — just drop it, no API call needed.
+    // A draft row only exists locally - just drop it, no API call needed.
     if (target && target.isDraft) {
       setNumbers((prev) => prev.filter((n) => n.id !== id));
       return;
@@ -129,7 +129,7 @@ export default function AdminHelpContactSettings({ token, readOnly = false }) {
       <div className="admin-help-contacts">
         <h2>Help &amp; Contact Details</h2>
         {error && <div className="admin-banner admin-banner--error">{error}</div>}
-        <p><strong>Support email:</strong> {email || '—'}</p>
+        <p><strong>Support email:</strong> {email || '-'}</p>
         <div className="admin-help-contacts__list">
           <h3>Call numbers</h3>
           {callNumbers.length === 0 && <p className="admin-help-contacts__empty">No numbers added yet.</p>}
@@ -158,7 +158,7 @@ export default function AdminHelpContactSettings({ token, readOnly = false }) {
       <InfoTip text={<>
         These numbers and this email show up in the Help modal on every portal (including the logged-out login
         screen) and in the manual-payment "call customer care" message. You can add as many call and WhatsApp
-        numbers as you need — e.g. a primary line and a backup — not just one of each.
+        numbers as you need - e.g. a primary line and a backup - not just one of each.
       </>} />
 
       {error && <div className="admin-banner admin-banner--error">{error}</div>}

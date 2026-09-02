@@ -101,13 +101,13 @@ export default function Landing() {
         <div className="landing__audience-card">
           <span className="landing__audience-icon">🏢</span>
           <h3>Landlords &amp; managers</h3>
-          <p>Add properties and units, track who&apos;s paid, send reminders, and reconcile every rent payment&nbsp;— or connect your own Till/Paybill and let it collect and confirm itself, automatically, for good.</p>
+          <p>Add properties and units, track who&apos;s paid, send reminders, and reconcile every rent payment&nbsp;- or connect your own Till/Paybill and let it collect and confirm itself, automatically, for good.</p>
           <Link to="/register" className="landing__audience-link">Sign up as a landlord →</Link>
         </div>
         <div className="landing__audience-card">
           <span className="landing__audience-icon">🧾</span>
           <h3>Tenants</h3>
-          <p>See your balance, pay rent — instantly by M-Pesa prompt if your landlord has automatic collection on, or by submitting your code otherwise — raise a maintenance request, and message your landlord: no more chasing receipts.</p>
+          <p>See your balance, pay rent - instantly by M-Pesa prompt if your landlord has automatic collection on, or by submitting your code otherwise - raise a maintenance request, and message your landlord: no more chasing receipts.</p>
           <Link to="/login" className="landing__audience-link">Log in to your portal →</Link>
         </div>
         <div className="landing__audience-card">
@@ -125,7 +125,7 @@ export default function Landing() {
             <div className="landing__feature">
               <span className="landing__feature-icon">💳</span>
               <h4>M-Pesa payments, manual or fully automatic</h4>
-              <p>Tenants pay via Paybill, Till, or Send Money and submit their code — or, if you connect your own Till/Paybill, they get a real M-Pesa prompt and balances update themselves, automatically.</p>
+              <p>Tenants pay via Paybill, Till, or Send Money and submit their code - or, if you connect your own Till/Paybill, they get a real M-Pesa prompt and balances update themselves, automatically.</p>
             </div>
             <div className="landing__feature">
               <span className="landing__feature-icon">📊</span>

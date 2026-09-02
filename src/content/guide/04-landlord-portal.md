@@ -57,7 +57,10 @@ do, scoped to the property or properties you have given them access to.
 
 **Property managers** can do almost everything a landlord can on their assigned
 properties: record and review payments, manage tenants, and handle day to day
-operations.
+operations. They cannot add or remove other property managers, touch billing or
+subscription payment, or view, set up, or change automatic rent collection - that
+stays locked to the landlord's own login and is password-protected even for the
+landlord, since it holds the account's own Daraja/banking credentials.
 
 **General managers** sit above property managers in trust and scope, typically
 running the operational side of your business across some or all of your
@@ -81,6 +84,7 @@ revoke a vacating notice, but cannot:
   a tenant between units
 - View the list of other property managers
 - Edit payment method details
+- View, set up, or change automatic rent collection
 
 If a caretaker tries to do any of these, they are shown a message pointing them to
 the landlord or property manager instead.
@@ -107,15 +111,15 @@ guide for the full picture.
 On a phone, the landlord/manager/caretaker portal shows Home, Payments,
 Maintenance, and Messages fixed to the bottom of the screen at all times, so any
 core area is one tap away no matter which screen you're on. This bar is designed to
-never cover the last item in a list or the last button on a screen — every
+never cover the last item in a list or the last button on a screen - every
 scrollable screen leaves enough room below its last item specifically so the bar
 never sits on top of real content.
 
 ## Quick Actions
 
-The Home screen's Quick Actions grid puts the most frequent landlord tasks — adding
+The Home screen's Quick Actions grid puts the most frequent landlord tasks - adding
 a unit, sending a bulk reminder, downloading a report, changing rent or due dates
-across multiple units at once, and reaching Help — within a single tap from the
+across multiple units at once, and reaching Help - within a single tap from the
 dashboard, without needing to navigate into a specific unit or tenant first.
 
 ## Overdue tenants at a glance
@@ -139,7 +143,7 @@ full detail, including any dispute raised against it.
 The Maintenance tab lists every maintenance request across your units, each showing
 its current status (such as reported, in progress, or resolved), when it was
 reported, and the tenant who reported it. Updating a request's status here is what
-the tenant sees reflected on their own side — there's no separate step needed to
+the tenant sees reflected on their own side - there's no separate step needed to
 "notify" them of a status change, since the same record is what both sides are
 looking at.
 
@@ -157,14 +161,14 @@ This is also where a landlord turns on automatic rent collection: connect your o
 Safaricom Business Paybill or Till, and rent stops being something you have to
 review at all. A tenant taps "Pay Rent," a real M-Pesa prompt lands on their phone,
 and the moment they enter their PIN, Safaricom confirms it straight back to
-RentaPay — their balance updates itself and you're notified, with nobody checking a
+RentaPay - their balance updates itself and you're notified, with nobody checking a
 transaction code by hand. Set it up once and it keeps running for the life of your
 account; there's no per-payment step to repeat.
 
 Setup itself is a handful of guided steps in Settings: confirm you have (or apply
 for) a Business Paybill or Till, enter your Paybill/Till number and Daraja app
 credentials, and RentaPay sends a small real test push to your own phone to verify
-everything automatically — no waiting on RentaPay staff to review anything. If
+everything automatically - no waiting on RentaPay staff to review anything. If
 you're mid-application with Safaricom, your progress is saved, so you can pick up
 right where you left off once your Paybill is ready.
 

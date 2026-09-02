@@ -54,3 +54,9 @@
   color: var(--color-primary, #0F3D3E);
   margin-bottom: var(--space-2, 8px);
 }
+
+/* Phase 3 - Glow Card treatment for the "Raw inputs used" details
+   block (RentaPay-Glow-Dashboard-Build-Spec.md §4 Phase 3). */
+.admin-pricing-proposal__glow-inputs {
+  margin-top: var(--space-3, 12px);
+}

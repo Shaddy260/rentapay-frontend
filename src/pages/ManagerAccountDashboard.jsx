@@ -18,6 +18,9 @@ import '../components/GmActionConfirmModal.css';
 import { api } from '../api/client.js';
 import AdminGlobalSearch from '../components/AdminGlobalSearch.jsx';
 import TenantQuickActions from '../components/TenantQuickActions.jsx';
+import GlowOverviewSections from '../components/GlowOverviewSections.jsx';
+import NotificationsBell from '../components/NotificationsBell.jsx';
+import { initPushSubscription } from '../utils/push.js';
 import { GM_PAGE_INDEX } from '../data/pageSearchIndex.js';
 // SECTION 5's visual design note ("dashboard, cards, and all visual
 // components follow the same card-based layout, spacing, and styling
@@ -55,11 +58,11 @@ function writeGmMetricsCache(value) {
 }
 
 /**
- * RentaPay — General Manager Sectioned Build Spec, Section 5 & 6.
+ * RentaPay - General Manager Sectioned Build Spec, Section 5 & 6.
  *
  * Section 5: "Once logged in, a General Manager can see everything
- * admin can see across the platform — landlord data, tenant data,
- * Brand Ambassador data, and all operational dashboards — with one
+ * admin can see across the platform - landlord data, tenant data,
+ * Brand Ambassador data, and all operational dashboards - with one
  * specific exception": the financial breakdown / profit section,
  * which simply never appears here (and is rejected server-side if
  * requested directly - see blockGeneralManagerFinancial in the
@@ -89,6 +92,9 @@ export default function ManagerAccountDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [metrics, setMetrics] = useState(() => readGmMetricsCache());
+  const [systemHealth, setSystemHealth] = useState(null);
+  const [disputesReports, setDisputesReports] = useState(null);
+  const [tenantGrowth, setTenantGrowth] = useState(null);
   const [loading, setLoading] = useState(() => !readGmMetricsCache());
   const [error, setError] = useState('');
 
@@ -109,14 +115,14 @@ export default function ManagerAccountDashboard() {
   const [landlordSearch, setLandlordSearch] = useState('');
   const [tenantSearch, setTenantSearch] = useState('');
 
-  // SECTION 6 — the two fields locked to admin-only editing, shown
+  // SECTION 6 - the two fields locked to admin-only editing, shown
   // here as plain view-only figures. Loaded lazily, once, the first
   // time the Pricing tab is opened - same lazy-load pattern as every
   // other tab on this dashboard.
   const [platformPricing, setPlatformPricing] = useState(null);
   const [baCommissionRate, setBaCommissionRate] = useState(null);
 
-  // SECTION 6 — the one pending PIN-confirmed action (if any). Shape:
+  // SECTION 6 - the one pending PIN-confirmed action (if any). Shape:
   // { kind, label, description, run(pin, reason) } - `run` is called
   // once the modal collects a valid PIN + reason, and does the actual
   // api.* call for whichever action was requested.
@@ -145,6 +151,14 @@ export default function ManagerAccountDashboard() {
       .then((res) => { setMetrics(res); writeGmMetricsCache(res); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+    // Glow Dashboard §3.1 - System Health card. Route already allows
+    // general_manager (requireRole('admin', 'general_manager') at the
+    // top of admin.routes.js covers this whole router); fetched
+    // non-blocking, same pattern as the manual-payments count below,
+    // so a hiccup here never breaks the rest of the Overview tab.
+    api.getSystemHealth(token).then(setSystemHealth).catch(() => {});
+    api.getDisputesReportsSummary(token).then(setDisputesReports).catch(() => {});
+    api.getTenantGrowth(token).then(setTenantGrowth).catch(() => {});
     // FEATURE (direct request): every GM sees the pending manual
     // payments count for the notification banner below, regardless of
     // whether they have the confirm mandate - visibility isn't gated,
@@ -155,6 +169,19 @@ export default function ManagerAccountDashboard() {
       .listChatThreads(token)
       .then((res) => setMessagesBadge((res.threads || []).reduce((sum, t) => sum + (t.unreadCount || 0), 0)))
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, role, pinSet]);
+
+  // FIX: the General Manager portal was the one portal never wired
+  // into the push/toast/chime pipeline - admin, landlord/manager,
+  // tenant, and BA all call initPushSubscription() from their own
+  // dashboard shell (see AdminDashboard.jsx's identical effect), but
+  // nothing here ever did, so a GM never got a browser push even once
+  // the backend's recipientFor()/email-lookup gaps were fixed. Same
+  // pattern, same guard (token-gated, fires once per token).
+  useEffect(() => {
+    if (!token || role !== 'general_manager' || !pinSet) return;
+    initPushSubscription(token);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, role, pinSet]);
 
@@ -184,7 +211,7 @@ export default function ManagerAccountDashboard() {
         // its own fetching), so there's nothing to preload here.
         done();
       } else if (tab === 'pricing') {
-        // SECTION 6 — view-only. GET works for a General Manager; the
+        // SECTION 6 - view-only. GET works for a General Manager; the
         // matching PATCH routes stay admin-only server-side, so
         // there's simply no edit affordance rendered for either of
         // these anywhere on this page.
@@ -214,7 +241,7 @@ export default function ManagerAccountDashboard() {
     if (tab === 'pricing' && platformPricing === null) loadTab('pricing');
   }
 
-  // SECTION 6 — opens the PIN+reason modal for a given action, then
+  // SECTION 6 - opens the PIN+reason modal for a given action, then
   // (once confirmed) runs it, refreshes the affected list, and closes
   // the modal. Every edit action on this page funnels through here so
   // there's exactly one confirmation flow, not one per action type.
@@ -305,6 +332,7 @@ export default function ManagerAccountDashboard() {
 
   function handleLogout() {
     localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
     localStorage.removeItem('rentapay_role');
     localStorage.removeItem('rentapay_gm_pin_set');
     localStorage.removeItem('rentapay_gm_can_grant_loyalty_discounts');
@@ -399,13 +427,21 @@ export default function ManagerAccountDashboard() {
           <button type="button" className="portal-topbar__hamburger admin-header__hamburger" aria-label="Menu" onClick={() => setSidebarOpen(true)}>☰</button>
           <div className="admin-header__brand">RentaPay <span>Manager</span></div>
         </div>
-        <div className="admin-header__search">
-          <AdminGlobalSearch token={token} onSelect={handleGlobalSearchSelect} pageIndex={GM_PAGE_INDEX} />
-        </div>
         <div className="admin-header__right">
+          <NotificationsBell token={token} />
           <button className="admin-header__logout" onClick={handleLogout}>Log out</button>
         </div>
       </header>
+
+      {/* FIX (direct request): same repositioning as the Admin portal
+          (see AdminDashboard.jsx) - Global Search now lives in its own
+          always-present full-width row directly below the header,
+          same fixed position, same input size as the landlord
+          portal's GlobalSearch, instead of being squeezed inline next
+          to the logout button. */}
+      <div className="admin-search-bar">
+        <AdminGlobalSearch token={token} onSelect={handleGlobalSearchSelect} pageIndex={GM_PAGE_INDEX} />
+      </div>
 
       <main className="admin-main">
         {error && <p className="admin-banner admin-banner--error">{error}</p>}
@@ -425,33 +461,20 @@ export default function ManagerAccountDashboard() {
 
         {activeTab === 'overview' && !metrics && <Skeleton rows={6} />}
         {activeTab === 'overview' && metrics && (
-          <section className="admin-metrics">
-            <button type="button" className="admin-metric-card admin-metric-card--clickable" onClick={() => goToTab('landlords')}>
-              <span className="admin-metric-card__label">Total landlords</span>
-              <span className="admin-metric-card__value">{metrics.totalLandlords}</span>
-              <span className="admin-metric-card__sub">{metrics.activeLandlords} active · {metrics.suspendedLandlords} suspended</span>
-              <span className="admin-metric-card__hint">View list →</span>
-            </button>
-            <button type="button" className="admin-metric-card admin-metric-card--clickable" onClick={() => goToTab('tenants')}>
-              <span className="admin-metric-card__label">Total tenants</span>
-              <span className="admin-metric-card__value">{metrics.totalTenants}</span>
-              <span className="admin-metric-card__hint">View list →</span>
-            </button>
-            <button type="button" className="admin-metric-card admin-metric-card--clickable" onClick={() => goToTab('units')}>
-              <span className="admin-metric-card__label">Total units</span>
-              <span className="admin-metric-card__value">{metrics.totalUnits}</span>
-              <span className="admin-metric-card__hint">View list →</span>
-            </button>
-            <button
-              type="button"
-              className="admin-metric-card admin-metric-card--clickable admin-metric-card--warn"
-              onClick={() => goToTab('expiring')}
-            >
-              <span className="admin-metric-card__label">Expiring soon (≤7 days)</span>
-              <span className="admin-metric-card__value">{metrics.expiringSoon?.length || 0}</span>
-              <span className="admin-metric-card__hint">View list →</span>
-            </button>
-            {/* No revenue/profit card here, on purpose - Section 5. */}
+          <section className="glow-dashboard-bg glow-overview-grid">
+            <GlowOverviewSections
+              metrics={metrics}
+              systemHealth={systemHealth}
+              disputesReports={disputesReports}
+              tenantGrowth={tenantGrowth}
+              showFinancial={false}
+              onGoToLandlords={() => goToTab('landlords')}
+              onGoToHelp={() => goToTab('help')}
+              onGoToBrandAmbassadors={() => goToTab('brand-ambassadors')}
+              onExpiringClick={() => goToTab('expiring')}
+              onGoToReportedAccounts={() => goToTab('reported-accounts')}
+              onGoToTenants={() => goToTab('tenants')}
+            />
           </section>
         )}
 
@@ -478,14 +501,14 @@ export default function ManagerAccountDashboard() {
                       <tr key={l.id}>
                         <td>{l.full_name}</td>
                         <td>{l.phone}</td>
-                        <td>{l.email || '—'}</td>
-                        <td>{l.estate_name || '—'}</td>
-                        <td>{[l.location, l.county].filter(Boolean).join(', ') || '—'}</td>
-                        <td>{l.subscription_plan || '—'}</td>
+                        <td>{l.email || '-'}</td>
+                        <td>{l.estate_name || '-'}</td>
+                        <td>{[l.location, l.county].filter(Boolean).join(', ') || '-'}</td>
+                        <td>{l.subscription_plan || '-'}</td>
                         <td>{l.subscription_status}</td>
-                        <td>{l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '—'}</td>
+                        <td>{l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '-'}</td>
                         <td>
-                          {/* SECTION 6 — activate/suspend a landlord, PIN+reason confirmed. */}
+                          {/* SECTION 6 - activate/suspend a landlord, PIN+reason confirmed. */}
                           {l.subscription_status === 'suspended' ? (
                             <button type="button" className="admin-table__action" onClick={() => setLandlordStatusAction(l, 'active')}>Activate</button>
                           ) : (
@@ -525,9 +548,9 @@ export default function ManagerAccountDashboard() {
                         <td><TenantContactCard tenant={{ ...t, unit_name: t.units?.unit_name }} size={30} /></td>
                         <td>{t.full_name}</td>
                         <td>{t.primary_phone}</td>
-                        <td>{t.landlords?.full_name || '—'}</td>
-                        <td>{t.units?.unit_name || '—'}</td>
-                        <td>{[t.units?.properties?.location || t.landlords?.location, t.units?.properties?.county || t.landlords?.county].filter(Boolean).join(', ') || '—'}</td>
+                        <td>{t.landlords?.full_name || '-'}</td>
+                        <td>{t.units?.unit_name || '-'}</td>
+                        <td>{[t.units?.properties?.location || t.landlords?.location, t.units?.properties?.county || t.landlords?.county].filter(Boolean).join(', ') || '-'}</td>
                         <td className={Number(t.balance_due) > 0 ? 'admin-balance--owing' : ''}>KES {Number(t.balance_due || 0).toLocaleString()}</td>
                         <td>{t.is_active ? 'Active' : 'Inactive'}</td>
                       </tr>
@@ -553,9 +576,9 @@ export default function ManagerAccountDashboard() {
                     {units.map((u) => (
                       <tr key={u.id}>
                         <td>{u.unit_name}</td>
-                        <td>{u.unit_type || '—'}</td>
-                        <td>{u.landlords?.full_name || '—'}</td>
-                        <td>{[u.properties?.location || u.landlords?.location, u.properties?.county || u.landlords?.county].filter(Boolean).join(', ') || '—'}</td>
+                        <td>{u.unit_type || '-'}</td>
+                        <td>{u.landlords?.full_name || '-'}</td>
+                        <td>{[u.properties?.location || u.landlords?.location, u.properties?.county || u.landlords?.county].filter(Boolean).join(', ') || '-'}</td>
                         <td>{Number(u.rent_amount || 0).toLocaleString()}</td>
                         <td>{u.status}</td>
                       </tr>
@@ -580,13 +603,13 @@ export default function ManagerAccountDashboard() {
                     {brandAmbassadors.map((b) => (
                       <tr key={b.id}>
                         <td>{b.full_name}</td>
-                        <td>{b.ba_code || b.referral_code || '—'}</td>
+                        <td>{b.ba_code || b.referral_code || '-'}</td>
                         <td>{b.phone}</td>
-                        <td>{b.email || '—'}</td>
+                        <td>{b.email || '-'}</td>
                         <td>{b.status}</td>
-                        <td>{b.onboarded_at ? new Date(b.onboarded_at).toLocaleDateString('en-GB') : '—'}</td>
+                        <td>{b.onboarded_at ? new Date(b.onboarded_at).toLocaleDateString('en-GB') : '-'}</td>
                         <td>
-                          {/* SECTION 6 — suspend/reactivate a BA, PIN+reason confirmed. Offboard/restore stay admin-only in this build (not part of the day-to-day account management this dashboard exposes). */}
+                          {/* SECTION 6 - suspend/reactivate a BA, PIN+reason confirmed. Offboard/restore stay admin-only in this build (not part of the day-to-day account management this dashboard exposes). */}
                           {b.status === 'active' && (
                             <button type="button" className="admin-table__action admin-table__action--danger" onClick={() => suspendBaAction(b)}>Suspend</button>
                           )}
@@ -616,10 +639,10 @@ export default function ManagerAccountDashboard() {
                     {expiringLandlords.map((l) => (
                       <tr key={l.id}>
                         <td>{l.full_name}</td>
-                        <td>{l.estate_name || '—'}</td>
+                        <td>{l.estate_name || '-'}</td>
                         <td>{l.phone}</td>
-                        <td>{[l.location, l.county].filter(Boolean).join(', ') || '—'}</td>
-                        <td>{l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '—'}</td>
+                        <td>{[l.location, l.county].filter(Boolean).join(', ') || '-'}</td>
+                        <td>{l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '-'}</td>
                         <td>
                           {l.phone && (
                             <a href={`tel:${l.phone}`} className="admin-table__call-btn" title={`Call ${l.full_name}`} aria-label={`Call ${l.full_name}`}>
@@ -660,9 +683,9 @@ export default function ManagerAccountDashboard() {
                   <tbody>
                     {helpRequests.map((h) => (
                       <tr key={h.id}>
-                        <td>{h.created_at ? new Date(h.created_at).toLocaleString('en-GB') : '—'}</td>
+                        <td>{h.created_at ? new Date(h.created_at).toLocaleString('en-GB') : '-'}</td>
                         <td>{h.name}</td>
-                        <td>{h.phone || '—'}</td>
+                        <td>{h.phone || '-'}</td>
                         <td>{h.message}</td>
                         <td>{h.status}</td>
                         {canManageHelpRequests && (
@@ -716,7 +739,7 @@ export default function ManagerAccountDashboard() {
         {activeTab === 'my-activity' && (
           <section className="admin-section">
             <h2>My activity</h2>
-            {/* SECTION 8 — this General Manager's own PIN-confirmed
+            {/* SECTION 8 - this General Manager's own PIN-confirmed
                 action history, day/week/month, read-only (no revert
                 affordance is ever shown here - that's admin's tool,
                 on AdminGeneralManagerLogs.jsx). */}
@@ -731,7 +754,7 @@ export default function ManagerAccountDashboard() {
         {activeTab === 'pricing' && (
           <section className="admin-section">
             <h2>Platform pricing &amp; commission</h2>
-            {/* SECTION 6 — "Locked to admin only - view only for General
+            {/* SECTION 6 - "Locked to admin only - view only for General
                 Managers: platform unit pricing, platform Brand
                 Ambassador commission rate. General Managers can see
                 these current settings but have no ability to change
@@ -745,7 +768,7 @@ export default function ManagerAccountDashboard() {
                 <div className="admin-metric-card">
                   <span className="admin-metric-card__label">Price per unit / month</span>
                   <span className="admin-metric-card__value">
-                    KES {platformPricing.current ? Number(platformPricing.current.base_rate_per_unit_per_month).toLocaleString() : '—'}
+                    KES {platformPricing.current ? Number(platformPricing.current.base_rate_per_unit_per_month).toLocaleString() : '-'}
                   </span>
                   {platformPricing.upcoming?.[0] && (
                     <span className="admin-metric-card__sub">
@@ -757,7 +780,7 @@ export default function ManagerAccountDashboard() {
                 <div className="admin-metric-card">
                   <span className="admin-metric-card__label">Brand Ambassador commission</span>
                   <span className="admin-metric-card__value">
-                    {baCommissionRate?.global?.current ? `${Number(baCommissionRate.global.current.percentage)}%` : '—'}
+                    {baCommissionRate?.global?.current ? `${Number(baCommissionRate.global.current.percentage)}%` : '-'}
                   </span>
                   {baCommissionRate?.global?.upcoming?.[0] && (
                     <span className="admin-metric-card__sub">

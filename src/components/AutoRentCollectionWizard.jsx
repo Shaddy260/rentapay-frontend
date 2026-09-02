@@ -13,7 +13,24 @@ import './AutoRentCollectionWizard.css';
 //
 // Screens: 'eligibility' -> (a "No" branch's static instructions) ->
 // 'credentials' -> 'verifying' -> 'active' | 'failed'.
+//
+// DIRECT REQUEST: this whole section is password-locked behind the
+// landlord's own login password every time it's opened, to prevent
+// accidental editing or deleting - the same password used to log in,
+// re-confirmed here, not a separate PIN. Nothing about the wizard
+// below (loading current status, the credential form, disabling
+// collection) runs until that password is confirmed against the
+// backend (see confirm-password endpoint). This is enforced only on
+// the frontend gate here; the backend routes underneath are already
+// landlord-only/no-caretaker (see routes file), so a caretaker or
+// manager account can never reach this at all regardless of this
+// lock screen.
 export default function AutoRentCollectionWizard({ token }) {
+  const [unlocked, setUnlocked] = useState(false);
+  const [unlockPassword, setUnlockPassword] = useState('');
+  const [unlocking, setUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(null); // backend credentials row (masked)
   const [screen, setScreen] = useState('eligibility');
@@ -42,7 +59,23 @@ export default function AutoRentCollectionWizard({ token }) {
     }
   }, [token]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (unlocked) load(); }, [unlocked, load]);
+
+  async function handleUnlock(e) {
+    e.preventDefault();
+    if (!unlockPassword) return;
+    setUnlockError('');
+    setUnlocking(true);
+    try {
+      await api.confirmDarajaPassword(unlockPassword, token);
+      setUnlocked(true);
+      setUnlockPassword('');
+    } catch (err) {
+      setUnlockError(err instanceof ApiError ? err.message : 'Failed to verify your password. Please try again.');
+    } finally {
+      setUnlocking(false);
+    }
+  }
 
   const goTo = useCallback(async (nextScreen, persistedStep) => {
     setScreen(nextScreen);
@@ -115,6 +148,35 @@ export default function AutoRentCollectionWizard({ token }) {
     }
   }
 
+  if (!unlocked) {
+    return (
+      <section className="settings-card arc-wizard">
+        <h2>
+          Automatic rent collection
+          <InfoTip text="This section holds your own Daraja/banking credentials, so it stays locked behind your login password every time you open it - even within the same session - to prevent accidental edits or deletion." />
+        </h2>
+        <form className="arc-wizard__step arc-wizard__lock" onSubmit={handleUnlock}>
+          <p className="arc-wizard__question">Enter your password to view or manage automatic rent collection</p>
+          {unlockError && <p className="modal-error">{unlockError}</p>}
+          <div className="form-field">
+            <label className="form-field__label">Password</label>
+            <input
+              type="password"
+              value={unlockPassword}
+              onChange={(e) => setUnlockPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+              autoFocus
+            />
+          </div>
+          <div className="arc-wizard__actions">
+            <Button type="submit" variant="primary" loading={unlocking}>Unlock</Button>
+          </div>
+        </form>
+      </section>
+    );
+  }
+
   if (loading) {
     return (
       <section className="settings-card arc-wizard">
@@ -136,10 +198,10 @@ export default function AutoRentCollectionWizard({ token }) {
       {screen === 'active' && status && (
         <div className="arc-wizard__status arc-wizard__status--active">
           <p className="arc-wizard__status-line">
-            <span className="arc-wizard__dot arc-wizard__dot--active" /> Active — Paybill/Till <strong>{status.shortcodeMasked}</strong>
+            <span className="arc-wizard__dot arc-wizard__dot--active" /> Active - Paybill/Till <strong>{status.shortcodeMasked}</strong>
           </p>
           <p className="arc-wizard__muted">
-            Tenants tapping "Pay Rent" get a real M-Pesa prompt straight to their phone. Balances update automatically the moment M-Pesa confirms — no manual review step.
+            Tenants tapping "Pay Rent" get a real M-Pesa prompt straight to their phone. Balances update automatically the moment M-Pesa confirms - no manual review step.
           </p>
           <Button variant="ghost" onClick={handleDisable} loading={saving}>Turn off (switch back to manual)</Button>
         </div>
@@ -190,20 +252,20 @@ function EligibilityStep({ onAnswer }) {
   return (
     <div className="arc-wizard__step">
       <p className="arc-wizard__question">
-        Is this a Safaricom-issued Paybill or Buy Goods Till Number — and when you registered it, did Safaricom register it as a <strong>Business account</strong> (not Pochi la Biashara / a personal number)?
+        Is this a Safaricom-issued Paybill or Buy Goods Till Number - and when you registered it, did Safaricom register it as a <strong>Business account</strong> (not Pochi la Biashara / a personal number)?
       </p>
       <div className="arc-wizard__answers">
         <button type="button" className="arc-wizard__answer" onClick={() => onAnswer('yes')}>
-          Yes — it's my own registered Business Paybill/Till
+          Yes - it's my own registered Business Paybill/Till
         </button>
         <button type="button" className="arc-wizard__answer" onClick={() => onAnswer('pochi')}>
-          No — I use Pochi la Biashara
+          No - I use Pochi la Biashara
         </button>
         <button type="button" className="arc-wizard__answer" onClick={() => onAnswer('bank')}>
-          No — I use a bank paybill (KCB, Equity, Co-op, etc.)
+          No - I use a bank paybill (KCB, Equity, Co-op, etc.)
         </button>
         <button type="button" className="arc-wizard__answer" onClick={() => onAnswer('personal')}>
-          No — tenants just send money to my personal number
+          No - tenants just send money to my personal number
         </button>
         <button type="button" className="arc-wizard__answer" onClick={() => onAnswer('unsure')}>
           Not sure
@@ -225,14 +287,14 @@ const APPLY_STEPS = (
     <ol className="arc-wizard__steps">
       <li>Go to m-pesaforbusiness.co.ke and click "Apply Now."</li>
       <li>Choose <strong>Paybill</strong> (not Till, not Pochi).</li>
-      <li>Pick your ownership type — sole proprietor, partnership, or registered company. This decides exactly which documents you'll need.</li>
+      <li>Pick your ownership type - sole proprietor, partnership, or registered company. This decides exactly which documents you'll need.</li>
       <li>Fill in the application: business name, KRA PIN, physical address, the bank account you want funds settled into, and an admin phone number.</li>
       <li>Upload documents: scanned ID, KRA PIN certificate, business permit/registration certificate, and proof of the bank account (a cancelled cheque or bank confirmation letter).</li>
-      <li>Sign digitally and submit — you'll get an application reference immediately.</li>
-      <li>Safaricom verifies and assigns your Paybill — typically 24–72 hours for a complete application. You'll be notified by SMS and email.</li>
+      <li>Sign digitally and submit - you'll get an application reference immediately.</li>
+      <li>Safaricom verifies and assigns your Paybill - typically 24-72 hours for a complete application. You'll be notified by SMS and email.</li>
     </ol>
     <p className="arc-wizard__muted arc-wizard__sequencing-note">
-      Note: getting the Paybill itself (above, ~1–3 days) happens <em>before</em> applying for Daraja API access, which is a separate step that can take another 2–10 days. Worth knowing up front so the full timeline doesn't come as a surprise partway through.
+      Note: getting the Paybill itself (above, ~1-3 days) happens <em>before</em> applying for Daraja API access, which is a separate step that can take another 2-10 days. Worth knowing up front so the full timeline doesn't come as a surprise partway through.
     </p>
   </>
 );
@@ -243,10 +305,10 @@ function NotEligibleStep({ branch, onBack, onHaveTill }) {
 
   if (branch === 'pochi') {
     heading = 'Pochi la Biashara can\u2019t be used for this';
-    body = <p>Pochi la Biashara shares your personal M-Pesa number and can't get its own API access. You'll need a real Business Paybill instead — this only takes your ID and KRA PIN.</p>;
+    body = <p>Pochi la Biashara shares your personal M-Pesa number and can't get its own API access. You'll need a real Business Paybill instead - this only takes your ID and KRA PIN.</p>;
   } else if (branch === 'bank') {
     heading = 'That paybill belongs to the bank, not you';
-    body = <p>Safaricom can't issue API access for a bank's own paybill. You'll need your own dedicated Paybill — your existing bank account can still be where the money settles.</p>;
+    body = <p>Safaricom can't issue API access for a bank's own paybill. You'll need your own dedicated Paybill - your existing bank account can still be where the money settles.</p>;
   } else if (branch === 'personal') {
     heading = 'You\u2019ll need a registered business Paybill first';
     body = <p>You'll need a registered business and your own Business Paybill before this can work. Register a business (via eCitizen, usually same-day or next-day) if you don't have one yet, then apply for the Paybill below.</p>;
@@ -254,7 +316,7 @@ function NotEligibleStep({ branch, onBack, onHaveTill }) {
     heading = 'Let\u2019s check what you have';
     body = (
       <p>
-        Open your M-Pesa menu or the M-Pesa for Business app — if it shows a Paybill or Till screen with a business name (even your own name) and no mention of "Pochi," it's a real Business account. Still not sure? Contact our support team and we'll help you check.
+        Open your M-Pesa menu or the M-Pesa for Business app - if it shows a Paybill or Till screen with a business name (even your own name) and no mention of "Pochi," it's a real Business account. Still not sure? Contact our support team and we'll help you check.
       </p>
     );
   }
@@ -272,7 +334,7 @@ function NotEligibleStep({ branch, onBack, onHaveTill }) {
           </p>
         </>
       )}
-      <p className="arc-wizard__muted">Come back to this page once you have your Business Paybill — you'll pick up right where you left off.</p>
+      <p className="arc-wizard__muted">Come back to this page once you have your Business Paybill - you'll pick up right where you left off.</p>
       <div className="arc-wizard__actions">
         <Button variant="primary" className="arc-wizard__glow-cta" onClick={onHaveTill}>I've got my Business Paybill now</Button>
         <button type="button" className="ghost-link" onClick={onBack}>Back</button>
@@ -285,7 +347,7 @@ function CredentialsStep({ form, setForm, onBack, onSubmit, saving }) {
   return (
     <form className="arc-wizard__step" onSubmit={onSubmit}>
       <p className="arc-wizard__question">Enter your Till/Paybill and Daraja app details</p>
-      <p className="arc-wizard__fee-note">No extra fees from us or anyone else for this — it's your own Till, direct to your own bank.</p>
+      <p className="arc-wizard__fee-note">No extra fees from us or anyone else for this - it's your own Till, direct to your own bank.</p>
 
       <div className="form-field">
         <label className="form-field__label">
@@ -315,7 +377,7 @@ function CredentialsStep({ form, setForm, onBack, onSubmit, saving }) {
       <div className="form-field">
         <label className="form-field__label">Environment</label>
         <select value={form.environment} onChange={(e) => setForm((f) => ({ ...f, environment: e.target.value }))}>
-          <option value="production">Production (real money — use this for a live Till)</option>
+          <option value="production">Production (real money - use this for a live Till)</option>
           <option value="sandbox">Sandbox (testing only)</option>
         </select>
       </div>

@@ -5,6 +5,7 @@ import Skeleton from '../components/Skeleton.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import PhotoLightbox from '../components/PhotoLightbox.jsx';
 import ModalShell from '../components/ModalShell.jsx';
+import HeroPhotoBackground from '../components/HeroPhotoBackground.jsx';
 import { usePageMeta } from '../utils/usePageMeta.js';
 import { useJsonLd } from '../utils/useJsonLd.js';
 import './TenantPortal.css';
@@ -188,6 +189,28 @@ export default function PublicListings() {
     return () => clearTimeout(handle);
   }, [searchText]);
 
+  // Public, unauthenticated page - visitors must explicitly accept the
+  // Terms & Conditions before any listing content is shown. Persisted in
+  // localStorage so it only prompts once per browser, not every visit.
+  const [termsAccepted, setTermsAccepted] = useState(() => {
+    try {
+      return localStorage.getItem('rentapay_public_listings_terms_accepted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [termsChecked, setTermsChecked] = useState(false);
+
+  function handleAcceptTerms() {
+    if (!termsChecked) return;
+    try {
+      localStorage.setItem('rentapay_public_listings_terms_accepted', 'true');
+    } catch {
+      // non-fatal - worst case it asks again next visit
+    }
+    setTermsAccepted(true);
+  }
+
   const [contactPicker, setContactPicker] = useState(null); // { unitId, options } while choosing who to message
   // FIX (spec item 9.2): replaces the old copy/paste share-link box -
   // the tenant just types their email, and the backend resolves it to
@@ -196,6 +219,9 @@ export default function PublicListings() {
   // the landlord only ever receives a link, never this raw address.
   const [reputationEmail, setReputationEmail] = useState('');
   const [resolvingReputation, setResolvingReputation] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const isValidEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+  const emailIsValid = isValidEmail(reputationEmail);
 
   async function handleContact(unitId) {
     setContactingId(unitId);
@@ -224,27 +250,30 @@ export default function PublicListings() {
 
   async function openContactOption(link) {
     const email = reputationEmail.trim();
+    if (!isValidEmail(email)) {
+      setEmailTouched(true);
+      return;
+    }
     let finalLink = link;
 
-    if (email) {
-      setResolvingReputation(true);
-      try {
-        const res = await api.getReputationShareLinkByEmail(email);
-        if (res.found && res.shareUrl) {
-          finalLink = `${link}${encodeURIComponent(`\n\nMy RentaPay tenancy reputation: ${res.shareUrl}`)}`;
-        }
-        // Not found (or lookup failed) - proceed with the plain
-        // message, per spec: never block or reveal anything either way.
-      } catch {
-        // Fails soft - the message still goes out normally.
-      } finally {
-        setResolvingReputation(false);
+    setResolvingReputation(true);
+    try {
+      const res = await api.getReputationShareLinkByEmail(email);
+      if (res.found && res.shareUrl) {
+        finalLink = `${link}${encodeURIComponent(`\n\nMy RentaPay tenancy reputation: ${res.shareUrl}`)}`;
       }
+      // Not found (or lookup failed) - proceed with the plain
+      // message, per spec: never block or reveal anything either way.
+    } catch {
+      // Fails soft - the message still goes out normally.
+    } finally {
+      setResolvingReputation(false);
     }
 
     window.open(finalLink, '_blank', 'noopener,noreferrer');
     setContactPicker(null);
     setReputationEmail('');
+    setEmailTouched(false);
   }
 
   // Group listings by property. Units with no property_id belong to no
@@ -331,6 +360,39 @@ export default function PublicListings() {
 
   useJsonLd(listingsSchema);
 
+  if (!termsAccepted) {
+    return (
+      <div className="public-listings-gate">
+        <HeroPhotoBackground
+          wrapClassName="public-listings-gate__photo-bg"
+          photoClassName="public-listings-gate__photo"
+          overlayClassName="public-listings-gate__photo-overlay"
+        />
+        <div className="public-listings-gate__panel">
+          <Link to="/login" className="public-listings-gate__brand">RentaPay</Link>
+          <h1>Before you browse</h1>
+          <p>Please accept our <Link to="/terms" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</Link> to continue.</p>
+          <label className="public-listings-gate__checkbox">
+            <input
+              type="checkbox"
+              checked={termsChecked}
+              onChange={(e) => setTermsChecked(e.target.checked)}
+            />
+            <span>I accept the Terms &amp; Conditions.</span>
+          </label>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!termsChecked}
+            onClick={handleAcceptTerms}
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="public-listings">
       <header className="public-listings__header">
@@ -408,34 +470,24 @@ export default function PublicListings() {
       )}
 
       {contactPicker && (
-        <ModalShell title="Who would you like to message?" onClose={() => { setContactPicker(null); setReputationEmail(''); }}>
-          {/* FIX (spec item 9.2): a clearly visible, optional email
-              field that stands out - instead of the old small
-              easy-to-miss paste-a-link box - and invites the tenant to
-              fill it in before picking who to message. */}
-          <div
-            style={{
-              marginBottom: 16,
-              padding: 14,
-              background: '#f7fbf8',
-              border: '1.5px solid #cfe9d8',
-              borderRadius: 10,
-            }}
-          >
-            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#1f7a3f', marginBottom: 4 }}>
-              ⭐ Have a RentaPay tenancy reputation? Share it with the landlord
-            </label>
-            <p style={{ margin: '0 0 8px', fontSize: 12, color: '#555' }}>
-              Optional - enter your RentaPay account email and we'll attach your reputation score to the message. We'll
-              never share your email itself, only a link to your score.
-            </p>
+        <ModalShell title="Who would you like to message?" onClose={() => { setContactPicker(null); setReputationEmail(''); setEmailTouched(false); }}>
+          {/* Email is now mandatory: checked against an existing
+              RentaPay tenancy reputation to attach if found. */}
+          <div className="public-listings__email-box">
+            <label htmlFor="reputation-email">📩 Enter your email</label>
             <input
+              id="reputation-email"
               type="email"
+              required
               value={reputationEmail}
               onChange={(e) => setReputationEmail(e.target.value)}
+              onBlur={() => setEmailTouched(true)}
               placeholder="you@example.com"
-              style={{ width: '100%', padding: '10px 12px', fontSize: 14, borderRadius: 8, border: '1px solid #bcd9c4' }}
+              className={emailTouched && !emailIsValid ? 'public-listings__email-input--error' : ''}
             />
+            {emailTouched && !emailIsValid && (
+              <span className="public-listings__email-error">Enter a valid email.</span>
+            )}
           </div>
 
           <div className="public-listings__contact-picker">
@@ -444,7 +496,7 @@ export default function PublicListings() {
                 key={opt.role}
                 type="button"
                 className="public-listings__contact-option"
-                disabled={resolvingReputation}
+                disabled={resolvingReputation || !emailIsValid}
                 onClick={() => openContactOption(opt.whatsappLink)}
               >
                 <span aria-hidden="true">💬</span> {resolvingReputation ? 'Preparing message…' : `Message the ${opt.label}`}

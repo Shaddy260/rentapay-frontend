@@ -10,8 +10,8 @@ import { useEffect } from 'react';
 // houses Nairobi" should land on /find-a-house's own title, not the
 // generic homepage one). Resets back to the default on unmount so
 // navigating away doesn't leave a stale title/description behind.
-const DEFAULT_TITLE = 'RentaPay — Property & Rent Management for Landlords in Kenya | Find Vacant Houses';
-const DEFAULT_DESCRIPTION = "RentaPay is Kenya's property management platform for landlords, property managers, and caretakers — collect rent via M-Pesa, track tenants and units, and manage every property from one dashboard.";
+const DEFAULT_TITLE = 'RentaPay - Property & Rent Management for Landlords in Kenya | Find Vacant Houses';
+const DEFAULT_DESCRIPTION = "RentaPay is Kenya's property management platform for landlords, property managers, and caretakers - collect rent via M-Pesa, track tenants and units, and manage every property from one dashboard.";
 
 export function usePageMeta(title, description) {
   useEffect(() => {

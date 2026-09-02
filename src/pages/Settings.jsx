@@ -13,7 +13,9 @@ import Skeleton from '../components/Skeleton.jsx';
 import InfoTip from '../components/InfoTip.jsx';
 import ProfilePhotoUpload from '../components/ProfilePhotoUpload.jsx';
 import LatePenaltySettingsPanel from '../components/LatePenaltySettingsPanel.jsx';
+import PropertyDangerZone from '../components/PropertyDangerZone.jsx';
 import AutoRentCollectionWizard from '../components/AutoRentCollectionWizard.jsx';
+import DarajaHealthBanner from '../components/DarajaHealthBanner.jsx';
 import { readPageCache, writePageCache } from '../utils/pageCache.js';
 import { pollExportAndDownload } from '../utils/exportDownload.js';
 
@@ -29,6 +31,7 @@ const SETTINGS_CATEGORIES = [
   { id: 'team', label: 'Team & Access' },
   { id: 'security', label: 'Security' },
   { id: 'finances', label: 'Finances' },
+  { id: 'danger', label: 'Danger Zone' },
 ];
 
 /**
@@ -53,6 +56,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem('rentapay_token');
+  const refreshToken = localStorage.getItem('rentapay_refresh_token');
   const role = localStorage.getItem('rentapay_role');
   const isManager = role === 'manager';
   // FEATURE REMOVAL (spec item 13): the "Fix notifications on this
@@ -622,7 +626,7 @@ export default function Settings() {
           hides the relevant clusters, so nothing about the existing
           load/save logic below had to change. */}
       <div className="settings-category-tabs" role="tablist" aria-label="Settings categories">
-        {SETTINGS_CATEGORIES.map((cat) => (
+        {SETTINGS_CATEGORIES.filter((cat) => cat.id !== 'danger' || !isCaretaker).map((cat) => (
           <button
             key={cat.id}
             type="button"
@@ -683,7 +687,7 @@ export default function Settings() {
               <li key={p.id} className="settings-manager-row">
                 <div className="settings-manager-row__name">
                   <strong>{p.name}</strong>
-                  {p.location && <span> — {p.location}</span>}
+                  {p.location && <span> - {p.location}</span>}
                 </div>
 
                 {editingPropertyId === p.id ? (
@@ -715,7 +719,7 @@ export default function Settings() {
                 ) : (
                   <div className="settings-manager-row__display">
                     {p.caretaker_name || p.caretaker_phone ? (
-                      <span>{p.caretaker_name || '—'} {p.caretaker_phone && `· ${p.caretaker_phone}`}</span>
+                      <span>{p.caretaker_name || '-'} {p.caretaker_phone && `· ${p.caretaker_phone}`}</span>
                     ) : (
                       <span className="settings-manager-row__empty">No caretaker set for this property.</span>
                     )}
@@ -792,7 +796,7 @@ export default function Settings() {
                   <div className="settings-manager-row__edit">
                     <textarea
                       rows={5}
-                      placeholder="e.g. No pets without written approval. Quiet hours 10pm–6am. Visitors must sign in with the caretaker…"
+                      placeholder="e.g. No pets without written approval. Quiet hours 10pm-6am. Visitors must sign in with the caretaker…"
                       value={rulesDraft}
                       onChange={(e) => setRulesDraft(e.target.value)}
                     />
@@ -804,7 +808,7 @@ export default function Settings() {
                 ) : (
                   <div className="settings-manager-row__display">
                     {p.rules_text ? (
-                      <span className="settings-manager-row__rules-preview">📋 Rules set — visible to tenants</span>
+                      <span className="settings-manager-row__rules-preview">📋 Rules set - visible to tenants</span>
                     ) : (
                       <span className="settings-manager-row__empty">No property rules set (optional).</span>
                     )}
@@ -1207,6 +1211,7 @@ export default function Settings() {
         role={role}
         roleLevel={roleLevel}
         token={token}
+        refreshToken={refreshToken}
         label={myContact.fullName}
       />
 
@@ -1360,9 +1365,9 @@ export default function Settings() {
             <div className="settings-manager-row__display">
               <span>
                 {paymentMethod.method === 'paybill' && (
-                  <>Paybill · {paymentMethod.paybillNumber || '—'} {paymentMethod.accountNumber && `· Acc ${paymentMethod.accountNumber}`}</>
+                  <>Paybill · {paymentMethod.paybillNumber || '-'} {paymentMethod.accountNumber && `· Acc ${paymentMethod.accountNumber}`}</>
                 )}
-                {paymentMethod.method === 'till' && <>Till Number · {paymentMethod.tillNumber || '—'}</>}
+                {paymentMethod.method === 'till' && <>Till Number · {paymentMethod.tillNumber || '-'}</>}
                 {paymentMethod.method === 'stk' && (
                   <>STK Push (M-Pesa prompt straight to the tenant's phone){paymentMethod.stkPhoneNumber && <><br />{paymentMethod.stkPhoneNumber}</>}</>
                 )}
@@ -1382,6 +1387,11 @@ export default function Settings() {
           is the account's own Daraja API/banking credentials, so
           editing stays strictly landlord-only, not manager/caretaker). */}
       {!isManager && <AutoRentCollectionWizard token={token} />}
+      {/* Same read-only status banner as Dashboard.jsx - shown here too
+          since this is where the landlord actually manages the wizard
+          above, and managers/caretakers passing through Settings
+          should see it as well. */}
+      <DarajaHealthBanner token={token} />
 
       {/* ---------------- Late payment penalty ----------------
           FEATURE (direct request): configured PER APARTMENT/PROPERTY
@@ -1405,6 +1415,22 @@ export default function Settings() {
           {exportError && <p className="modal-error">{exportError}</p>}
         </section>
       )}
+      </div>
+
+      {/* ---------------- Danger Zone ---------------- */}
+      <div className={`settings-category${activeCategory === 'danger' ? '' : ' settings-category--hidden'}`}>
+      <h2 className="settings-cluster-title">Danger Zone</h2>
+      <section className="settings-card">
+        <PropertyDangerZone
+          properties={properties}
+          token={token}
+          isManager={isManager}
+          onDeleted={(deletedId) => {
+            setProperties((prev) => prev.filter((p) => p.id !== deletedId));
+            setNotice('Apartment deleted.');
+          }}
+        />
+      </section>
       </div>
 
       <ConfirmDialog

@@ -35,17 +35,17 @@
   flex-shrink: 0;
 }
 
-/* FIX (direct request): Global Search used to be squeezed into a
-   fixed 300px box crammed next to the notification bell and logout
-   button - barely noticeable. It's now its own flexed section between
-   the brand and the right-hand controls, so it actually reads as the
-   primary "search anything" field rather than a small afterthought. */
-.admin-header__search {
-  flex: 1 1 auto;
+/* FIX (direct request): Global Search now lives in its own always-
+   present full-width row directly below the header (see
+   .admin-search-bar) instead of squeezed inline between the brand
+   and the bell/logout controls - the prior "flex: 1 1 auto" approach
+   still collapsed to a sliver whenever the header ran out of room. */
+.admin-search-bar {
   display: flex;
   justify-content: center;
-  min-width: 0;
-  padding: 0 var(--space-4);
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-hairline);
+  padding: var(--space-3) var(--space-6);
 }
 
 .admin-header__hamburger {
@@ -110,10 +110,8 @@
     padding: var(--space-3) var(--space-4);
   }
 
-  .admin-header__search {
-    order: 3;
-    flex-basis: 100%;
-    padding: 0;
+  .admin-search-bar {
+    padding: var(--space-2) var(--space-4);
   }
 
   .admin-header__right {
@@ -201,6 +199,23 @@
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-4);
   margin-bottom: var(--space-6);
+}
+
+/* Glow Dashboard Overview grid (RentaPay-Glow-Dashboard-Build-Spec.md
+   Phase 1) - one column of full-width GlowSection cards, stacked.
+   Each GlowSection handles its own internal responsive layout (see
+   GlowSection.css); this just spaces the sections themselves and
+   applies the faint grid-texture backdrop (dark mode only, see
+   .glow-dashboard-bg in tokens.css). */
+.glow-overview-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+  padding: var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  margin-right: calc(var(--space-2) * -1);
+  border-radius: var(--radius-lg);
 }
 
 @media (max-width: 800px) {
@@ -655,3 +670,46 @@ body.admin-drilldown-open {
 /* The sidebar is now a toggleable drawer at every screen size (see
    PortalSidebar.css), so the header/main content no longer needs to
    permanently make room for it. */
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .admin-section--danger {
+  background: #660f00;
+}
+
+[data-theme='dark'] .admin-status--pending, .admin-status--warning {
+  background: #5e3008;
+}
+
+[data-theme='dark'] .lockdown-active {
+  background: #650101;
+}
+
+[data-theme='dark'] .admin-table__row--highlight {
+  background: #664e00;
+}
+
+[data-theme='dark'] .admin-table__row--expanded {
+  background: var(--color-surface-raised);
+}
+
+[data-theme='dark'] .admin-table__subrow > td {
+  background: var(--color-surface-raised);
+}

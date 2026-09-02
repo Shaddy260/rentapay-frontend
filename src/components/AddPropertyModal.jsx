@@ -314,7 +314,7 @@ export default function AddPropertyModal({ token, onClose, onDone }) {
               <p className="form-field__hint">Referred by <strong>{referredByName}</strong>.</p>
             ) : referralNotFound ? (
               <p className="form-field__error">
-                No such referral code exists — please check with your BA or leave this field blank.
+                No such referral code exists - please check with your BA or leave this field blank.
               </p>
             ) : (
               <InfoTip text={<>Working with a RentaPay Brand Ambassador on this property? Enter their code here - completely optional, and only applies if you don't already have one linked to your account.</>} />

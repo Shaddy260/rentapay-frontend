@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ModalShell from './ModalShell.jsx';
 
 /**
- * RentaPay — General Manager Sectioned Build Spec, Section 6.
+ * RentaPay - General Manager Sectioned Build Spec, Section 6.
  *
  * "The login password plays no role here - it's used only to log in.
  * Every edit action requires the Operations PIN to confirm it. Every

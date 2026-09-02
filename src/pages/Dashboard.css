@@ -763,9 +763,9 @@
 }
 
 .quick-action-btn {
-  background: var(--color-surface-raised);
+  background: var(--color-surface);
   border: 1px solid var(--color-hairline);
-  color: var(--color-primary-dark);
+  color: var(--color-ink);
   padding: 0.7rem 1rem;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
@@ -782,7 +782,7 @@
 
 .quick-action-btn:hover {
   border-color: var(--color-primary);
-  background: var(--color-surface);
+  background: var(--color-surface-raised);
   box-shadow: var(--shadow-sm);
 }
 
@@ -803,7 +803,7 @@
   transform: none;
   box-shadow: none;
   border-color: var(--color-hairline);
-  background: var(--color-surface-raised);
+  background: var(--color-surface);
 }
 
 .quick-actions__status {
@@ -998,7 +998,7 @@
 /* Section 5 - card-grouped action section: bordered cards with a
    consistent header/padding/radius instead of loose floating blocks. */
 .dashboard-card {
-  background: #fff;
+  background: var(--color-surface-raised, #fff);
   border: 1px solid var(--color-hairline, #e2e6ea);
   border-radius: var(--rp-radius-lg, 12px);
   padding: var(--rp-space-2, 16px);
@@ -1193,4 +1193,50 @@
 .unit-tile__placeholder-icon {
   font-size: 1.4rem;
   font-weight: 700;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .subscription-gate {
+  background: #660b00;
+  color: #e6aca8;
+}
+
+[data-theme='dark'] .subscription-bar--urgent {
+  background: #660b00;
+}
+
+[data-theme='dark'] .subscription-bar--critical {
+  background: #64022b;
+}
+
+[data-theme='dark'] .unit-card--frozen {
+  background: var(--color-surface-raised);
+}
+
+[data-theme='dark'] .units-group__count {
+  background: var(--color-surface-raised);
+  color: #d1ccbc;
+}
+
+[data-theme='dark'] .units-group__vacant-summary {
+  background: var(--color-surface-raised);
+  color: #d1ccbc;
 }

@@ -9,7 +9,7 @@ Tenants use RentaPay to:
   till or account number to pay to.
 - **Pay rent, automatically or manually.** Where their landlord has connected their
   own Paybill or Till, tapping "Pay Rent" sends a real M-Pesa prompt straight to
-  their phone, and their balance updates itself the moment they enter their PIN —
+  their phone, and their balance updates itself the moment they enter their PIN -
   no waiting on anyone. Otherwise, after paying to the number shown, the tenant
   enters the confirmation code in the app, which the landlord or their manager or
   caretaker then reviews and approves.
@@ -74,7 +74,7 @@ The Payments tab shows your full payment history for your unit, each entry showi
 the amount, date, transaction code, and how it was confirmed. From here you can
 also make a payment (where automatic M-Pesa collection is enabled for your unit) or
 upload proof of a payment made outside the app for your landlord to confirm
-manually. Every past receipt is available to view or download again at any time —
+manually. Every past receipt is available to view or download again at any time -
 you never need to hunt down an old SMS confirmation once a payment is on record
 here.
 
@@ -88,8 +88,8 @@ to ask.
 
 ## Your balance, explained
 
-Your current balance is always shown broken down into what it's made of — rent due,
-any utility charges from submetering, and any other recorded charges — rather than
+Your current balance is always shown broken down into what it's made of - rent due,
+any utility charges from submetering, and any other recorded charges - rather than
 just a single total. This is deliberate: if a number ever looks wrong, you should
 be able to check it against its parts immediately rather than having to ask what it
 includes.

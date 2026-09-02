@@ -116,7 +116,7 @@ export default function TenantContactCard({ tenant, size = 32, token, canRate = 
     }
   }
 
-  if (!tenant) return <Avatar name="—" size={size} />;
+  if (!tenant) return <Avatar name="-" size={size} />;
 
   return (
     <>
@@ -184,8 +184,8 @@ export default function TenantContactCard({ tenant, size = 32, token, canRate = 
                 <div className="tenant-contact-card__row tenant-contact-card__row--static">
                   <span className="tenant-contact-card__label">Emergency contact</span>
                   <span>
-                    {tenant.emergency_contact_name || '—'}
-                    {tenant.emergency_contact_phone ? ` — ${tenant.emergency_contact_phone}` : ''}
+                    {tenant.emergency_contact_name || '-'}
+                    {tenant.emergency_contact_phone ? ` - ${tenant.emergency_contact_phone}` : ''}
                   </span>
                 </div>
               )}

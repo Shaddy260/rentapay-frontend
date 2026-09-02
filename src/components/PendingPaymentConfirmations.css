@@ -220,3 +220,52 @@
   width: 18px;
   height: 18px;
 }
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .ppc-card__resubmitted-banner {
+  background: #664800;
+  color: #f7db97;
+}
+
+[data-theme='dark'] .ppc-card__duplicate-banner {
+  background: #600b06;
+  color: #eba6a2;
+}
+
+[data-theme='dark'] .ppc-card__mismatch-banner {
+  background: #664200;
+  color: #f7d597;
+}
+
+[data-theme='dark'] .ppc-card__target-badge--water {
+  background: #054261;
+  color: #9ed6f0;
+}
+
+[data-theme='dark'] .ppc-card__target-badge--electricity {
+  background: #664800;
+  color: #f7dc97;
+}
+
+[data-theme='dark'] .ppc-card__target-badge--rent {
+  background: #000c66;
+  color: #abade3;
+}

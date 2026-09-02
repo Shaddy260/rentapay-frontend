@@ -66,7 +66,7 @@ export default function RateTenantReminderPopup({ token }) {
   }
 
   const reasonText = reminder.reason === 'payment'
-    ? `${reminder.tenantName} just paid — rate their tenancy while it's fresh?`
+    ? `${reminder.tenantName} just paid - rate their tenancy while it's fresh?`
     : `Got a minute to rate ${reminder.tenantName}${reminder.unitLabel ? ` (${reminder.unitLabel})` : ''}?`;
 
   return (

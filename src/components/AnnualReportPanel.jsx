@@ -59,7 +59,7 @@ export default function AnnualReportPanel({ token, propertyId, isCaretaker = fal
   function labelFor(kind, idleLabel) {
     const st = statusFor(kind);
     if (st === 'creating' || st === 'queued' || st === 'processing') return 'Preparing…';
-    if (st === 'completed') return '✓ Ready — download started';
+    if (st === 'completed') return '✓ Ready - download started';
     if (st === 'failed' || st === 'timeout') return `Retry ${idleLabel}`;
     return idleLabel;
   }
@@ -134,7 +134,7 @@ export default function AnnualReportPanel({ token, propertyId, isCaretaker = fal
           {labelFor('annual', `⬇ Annual report (${year}, all properties)`)}
         </button>
         <button className="ghost-link" data-download-fx onClick={() => handleJob('csv')} disabled={isRunning('csv')}>
-          {labelFor('csv', `⬇ P&L report (Excel/CSV)${effectivePropertyId ? ' — this property' : ''}`)}
+          {labelFor('csv', `⬇ P&L report (Excel/CSV)${effectivePropertyId ? ' - this property' : ''}`)}
         </button>
         {!isCaretaker && (
           <button className="ghost-link" onClick={() => setShowTaxForm((s) => !s)}>
@@ -143,7 +143,7 @@ export default function AnnualReportPanel({ token, propertyId, isCaretaker = fal
         )}
       </div>
       <InfoTip text={<>
-        The P&L report includes expected vs. collected rent, expenses, and net income per month — opens directly in Excel or Google Sheets.
+        The P&L report includes expected vs. collected rent, expenses, and net income per month - opens directly in Excel or Google Sheets.
       </>} />
 
       {showTaxForm && !isCaretaker && (

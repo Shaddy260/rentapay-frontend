@@ -30,19 +30,19 @@ export default function UnitInfoCard({ unit, profile, dueDate }) {
               <button className="modal-card__close" onClick={() => setOpen(false)}>×</button>
             </div>
             <div className="unit-info-modal__grid">
-              <div><span className="unit-info-modal__label">Unit type</span><span>{unit.unit_type || '—'}</span></div>
-              <div><span className="unit-info-modal__label">Unit code</span><span>{unit.unit_payment_code || '—'}</span></div>
+              <div><span className="unit-info-modal__label">Unit type</span><span>{unit.unit_type || '-'}</span></div>
+              <div><span className="unit-info-modal__label">Unit code</span><span>{unit.unit_payment_code || '-'}</span></div>
               <div><span className="unit-info-modal__label">Monthly rent</span><span>KES {Number(unit.rent_amount || 0).toLocaleString()}</span></div>
-              <div><span className="unit-info-modal__label">Rent due day</span><span>{unit.due_day_of_month ? `${unit.due_day_of_month} of each month` : '—'}</span></div>
-              <div><span className="unit-info-modal__label">Next due date</span><span>{dueDate ? dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</span></div>
-              <div><span className="unit-info-modal__label">Status</span><span>{unit.status ? unit.status.replace('_', ' ') : '—'}</span></div>
+              <div><span className="unit-info-modal__label">Rent due day</span><span>{unit.due_day_of_month ? `${unit.due_day_of_month} of each month` : '-'}</span></div>
+              <div><span className="unit-info-modal__label">Next due date</span><span>{dueDate ? dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span></div>
+              <div><span className="unit-info-modal__label">Status</span><span>{unit.status ? unit.status.replace('_', ' ') : '-'}</span></div>
             </div>
 
             <h4 className="unit-info-modal__subhead">Occupant</h4>
             <div className="unit-info-modal__grid">
-              <div><span className="unit-info-modal__label">Name</span><span>{profile?.full_name || '—'}</span></div>
-              <div><span className="unit-info-modal__label">Phone</span><span>{profile?.primary_phone || '—'}</span></div>
-              <div><span className="unit-info-modal__label">Move-in date</span><span>{profile?.move_in_date || '—'}</span></div>
+              <div><span className="unit-info-modal__label">Name</span><span>{profile?.full_name || '-'}</span></div>
+              <div><span className="unit-info-modal__label">Phone</span><span>{profile?.primary_phone || '-'}</span></div>
+              <div><span className="unit-info-modal__label">Move-in date</span><span>{profile?.move_in_date || '-'}</span></div>
             </div>
           </div>
         </div>

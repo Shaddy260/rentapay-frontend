@@ -18,7 +18,7 @@ import { isStandalone } from '../utils/useInstallPrompt.js';
  * caretaker, and tenant - since the menu item lives in AccountMenu,
  * which every portal uses.
  */
-export default function BiometricSettingsPanel({ phone, email, role, roleLevel, token, label }) {
+export default function BiometricSettingsPanel({ phone, email, role, roleLevel, token, refreshToken, label }) {
   const [entries, setEntries] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -41,7 +41,7 @@ export default function BiometricSettingsPanel({ phone, email, role, roleLevel, 
     setError('');
     setNotice('');
     try {
-      await enrollBiometric({ phone, email, role, roleLevel, token, label });
+      await enrollBiometric({ phone, email, role, roleLevel, token, refreshToken, label });
       setEntries(listBiometricEntries());
       setNotice('Fingerprint login is set up on this device.');
     } catch (err) {

@@ -172,7 +172,7 @@ export default function BaPayoutSubmit() {
   return (
     <div className="tenant-onboarding-page">
       <div className="tenant-onboarding-card">
-        <h1>RentaPay Brand Ambassador Payout — {isEditMode ? 'Correct Your Details' : 'Payment Details'}</h1>
+        <h1>RentaPay Brand Ambassador Payout - {isEditMode ? 'Correct Your Details' : 'Payment Details'}</h1>
 
         {step === 'checkingLink' && <p className="tenant-onboarding-instruction">Checking this link…</p>}
 
@@ -194,7 +194,7 @@ export default function BaPayoutSubmit() {
             <p>{expiredMessage}</p>
             <InfoTip text={<>
               Each Brand Ambassador can only submit payment details once. If something needs to change, ask
-              RentaPay admin for the correction link — it's the only way to update details already on file.
+              RentaPay admin for the correction link - it's the only way to update details already on file.
             </>} />
           </div>
         )}
@@ -239,7 +239,7 @@ export default function BaPayoutSubmit() {
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="6-digit code"
               />
-              <span className="tenant-onboarding-field-hint">Check your email — the code expires in 10 minutes.</span>
+              <span className="tenant-onboarding-field-hint">Check your email - the code expires in 10 minutes.</span>
             </label>
             <Button type="submit" variant="primary" loading={verifying} disabled={!code.trim() || verifying}>
               Verify code
@@ -261,7 +261,7 @@ export default function BaPayoutSubmit() {
               Verified account email
               <input type="email" value={email} disabled readOnly className="tenant-onboarding-locked-field" />
               <span className="tenant-onboarding-field-hint">
-                Confirmed for this session — everything you submit below only ever affects this account. To edit a
+                Confirmed for this session - everything you submit below only ever affects this account. To edit a
                 different account, exit and start verification again with that account's email.
               </span>
             </label>
@@ -269,7 +269,7 @@ export default function BaPayoutSubmit() {
             <InfoTip text={<>
               {isEditMode
                 ? "Update the M-Pesa number or name we should pay your commission to. This correction link stays live until it expires, but each verification code can only be used once."
-                : "Enter the M-Pesa number and name we should pay your commission to. Double-check these — errors here mean you won't get paid. You can only submit this once, so please make sure everything is correct before you continue."}
+                : "Enter the M-Pesa number and name we should pay your commission to. Double-check these - errors here mean you won't get paid. You can only submit this once, so please make sure everything is correct before you continue."}
             </>} />
 
             {submitError && <p className="tenant-onboarding-error">{submitError}</p>}
@@ -282,7 +282,7 @@ export default function BaPayoutSubmit() {
                 onChange={(e) => update('mpesaNumber', e.target.value)}
                 placeholder="e.g. 0712345678"
               />
-              <span className="tenant-onboarding-field-hint">The number to be paid — double-check it's correct.</span>
+              <span className="tenant-onboarding-field-hint">The number to be paid - double-check it's correct.</span>
             </label>
             <label>
               Name on M-Pesa
@@ -306,7 +306,7 @@ export default function BaPayoutSubmit() {
             <p>{doneMessage}</p>
             {submittedSummary && (
               <p className="tenant-onboarding-field-hint">
-                {submittedSummary.mpesaNumber} — {submittedSummary.submittedName} ({submittedSummary.submittedEmail})
+                {submittedSummary.mpesaNumber} - {submittedSummary.submittedName} ({submittedSummary.submittedEmail})
               </p>
             )}
             {!isEditMode && (

@@ -8,6 +8,7 @@
 // involved.
 import { getRememberedActiveProperty } from './activeProperty.js';
 import { clearStaleAccountCaches } from './clearStaleCaches.js';
+import { storeSessionTokens } from '../api/client.js';
 
 export function finalizeLogin(navigate, res, { fallbackIdentifier } = {}) {
   // Must run BEFORE anything else below - see clearStaleCaches.js for
@@ -17,7 +18,10 @@ export function finalizeLogin(navigate, res, { fallbackIdentifier } = {}) {
   // moment.
   clearStaleAccountCaches();
 
-  localStorage.setItem('rentapay_token', res.token);
+  // SECURITY FIX (JWT-theft review, Sept 2026): stores both the
+  // short-lived access token and the refresh token that lets the app
+  // silently renew it - see storeSessionTokens/api/client.js.
+  storeSessionTokens(res.token, res.refreshToken);
   localStorage.setItem('rentapay_role', res.role);
   localStorage.setItem('rentapay_phone', res.phone || fallbackIdentifier || '');
 

@@ -156,7 +156,7 @@ export default function BaOnboarding() {
             <div className="tenant-onboarding-done__icon" aria-hidden="true">⏰</div>
             <p>{expiredMessage}</p>
             <InfoTip text={<>
-              Ask the RentaPay admin who invited you for a fresh link — the current one only stays valid for 24 hours.
+              Ask the RentaPay admin who invited you for a fresh link - the current one only stays valid for 24 hours.
             </>} />
           </div>
         )}
@@ -186,7 +186,7 @@ export default function BaOnboarding() {
             <label>
               Email address
               <input required type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
-              <span className="tenant-onboarding-field-hint">Enter an active email address — this will be used to reach you.</span>
+              <span className="tenant-onboarding-field-hint">Enter an active email address - this will be used to reach you.</span>
             </label>
             <label>
               National ID number

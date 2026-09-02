@@ -122,9 +122,9 @@ export default function AdminBaPayoutRules({ token }) {
     <div className="admin-ba-rules">
       <InfoTip text={<>
         BAs earn a percentage of what each qualifying landlord actually pays RentaPay, recurring on every payment
-        cycle for as long as that landlord stays subscribed — not a one-off amount. This rate applies to every BA by
+        cycle for as long as that landlord stays subscribed - not a one-off amount. This rate applies to every BA by
         default; pick a specific BA below to give them a custom override instead. Setting a new rate never
-        overwrites the current one — it's recorded as of a chosen effective date, so past rates (and exactly which
+        overwrites the current one - it's recorded as of a chosen effective date, so past rates (and exactly which
         payments they applied to) are always preserved.
       </>} />
 
@@ -148,7 +148,7 @@ export default function AdminBaPayoutRules({ token }) {
         <>
           {isOverride && !current && (
             <p className="admin-ba-rules__note">
-              This BA has no custom rate yet — currently using the global default. Set one below to give them a
+              This BA has no custom rate yet - currently using the global default. Set one below to give them a
               custom rate.
             </p>
           )}
@@ -180,8 +180,8 @@ export default function AdminBaPayoutRules({ token }) {
             )}
 
             <p className="admin-ba-rules__meta">
-              Setting a new rate immediately notifies {isOverride ? 'this BA' : 'every affected BA'} — in-app and
-              push — with the old rate, new rate, and effective date.
+              Setting a new rate immediately notifies {isOverride ? 'this BA' : 'every affected BA'} - in-app and
+              push - with the old rate, new rate, and effective date.
             </p>
 
             <div className="admin-ba-rules__form-row">

@@ -123,7 +123,7 @@ export default function MyReputationPanel({ token, tenantId }) {
           No landlord has rated you yet. Once they do, your score will appear here first - and it's the same score that will
           follow you (by this email address) to any future landlord who adds you on RentaPay.
         </p>
-        <div style={{ marginTop: 16, padding: 12, background: '#f7fbf8', border: '1px solid #dceee1', borderRadius: 10 }}>
+        <div style={{ marginTop: 16, padding: 12, background: 'var(--color-success-bg)', border: '1px solid var(--color-hairline)', borderRadius: 10 }}>
           <p style={{ margin: '0 0 8px', fontSize: 13, color: '#333' }}>
             You can still share your (currently empty) RentaPay profile link with a landlord - it'll fill in automatically
             as ratings come in.
@@ -147,7 +147,7 @@ export default function MyReputationPanel({ token, tenantId }) {
   }
 
   const shareSection = (
-    <div style={{ marginTop: 16, padding: 12, background: '#f7fbf8', border: '1px solid #dceee1', borderRadius: 10 }}>
+    <div style={{ marginTop: 16, padding: 12, background: 'var(--color-success-bg)', border: '1px solid var(--color-hairline)', borderRadius: 10 }}>
       <p style={{ margin: '0 0 8px', fontSize: 13, color: '#333' }}>
         Contacting a landlord about a vacant unit? Share this score with them - it's optional, and only your score is
         shown, never individual comments.
@@ -219,9 +219,9 @@ export default function MyReputationPanel({ token, tenantId }) {
                   Flag as unfair
                 </button>
               )}
-              {r.flagStatus === 'flagged' && <span className="my-reputation-panel__flag-status">Flagged — pending review, excluded from your average.</span>}
-              {r.flagStatus === 'upheld' && <span className="my-reputation-panel__flag-status">Reviewed — kept as-is.</span>}
-              {r.flagStatus === 'removed' && <span className="my-reputation-panel__flag-status">Reviewed — removed from your average.</span>}
+              {r.flagStatus === 'flagged' && <span className="my-reputation-panel__flag-status">Flagged - pending review, excluded from your average.</span>}
+              {r.flagStatus === 'upheld' && <span className="my-reputation-panel__flag-status">Reviewed - kept as-is.</span>}
+              {r.flagStatus === 'removed' && <span className="my-reputation-panel__flag-status">Reviewed - removed from your average.</span>}
 
               {flaggingId === r.id && (
                 <div className="my-reputation-panel__flag-form">

@@ -321,3 +321,9 @@
   gap: 10px;
   justify-content: flex-end;
 }
+
+/* Phase 3 - Glow Card summary header (RentaPay-Glow-Dashboard-Build-
+   Spec.md §4 Phase 3). */
+.admin-ba-rewards__glow-summary {
+  margin-bottom: var(--space-5, 24px);
+}

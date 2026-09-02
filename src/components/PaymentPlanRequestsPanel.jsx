@@ -97,7 +97,7 @@ export default function PaymentPlanRequestsPanel({ token, isCaretaker = false })
           {requests.map((r) => (
             <div key={r.id} className="rent-breakdown" style={{ padding: 14 }}>
               <div className="rent-breakdown__row">
-                <span><strong>{r.tenants?.full_name || 'Tenant'}</strong> · {r.units?.unit_name || '—'}</span>
+                <span><strong>{r.tenants?.full_name || 'Tenant'}</strong> · {r.units?.unit_name || '-'}</span>
                 <span>KES {Number(r.total_amount).toLocaleString()}</span>
               </div>
               {r.reason && <p className="tenant-portal-hint">"{r.reason}"</p>}
@@ -127,7 +127,7 @@ export default function PaymentPlanRequestsPanel({ token, isCaretaker = false })
               ) : (
                 <p className="tenant-portal-hint" style={{ marginTop: 8 }}>
                   {r.status === 'approved' ? '✅ Approved' : r.status === 'declined' ? '❌ Declined' : r.status}
-                  {r.decision_note ? ` — ${r.decision_note}` : ''}
+                  {r.decision_note ? ` - ${r.decision_note}` : ''}
                 </p>
               )}
             </div>

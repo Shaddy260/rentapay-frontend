@@ -13,10 +13,12 @@ import AdminRevenueDashboard from '../components/AdminRevenueDashboard.jsx';
 import AdminCredentialsPanel from '../components/AdminCredentialsPanel.jsx';
 import GeneralManagersPanel from '../components/GeneralManagersPanel.jsx';
 import AdminChangePasswordPanel from '../components/AdminChangePasswordPanel.jsx';
+import AdminRevokeSessionPanel from '../components/AdminRevokeSessionPanel.jsx';
 import AdminHelpContactSettings from '../components/AdminHelpContactSettings.jsx';
 import SupportChatWidget from '../components/SupportChatWidget.jsx';
 import SupportAnalyticsPanel from '../components/SupportAnalyticsPanel.jsx';
 import AdminRatingFlags from '../components/AdminRatingFlags.jsx';
+import AdminLandlordOwnershipVerification from '../components/AdminLandlordOwnershipVerification.jsx';
 import AdminReportedAccounts from '../components/AdminReportedAccounts.jsx';
 import AdminBrandAmbassadors from '../components/AdminBrandAmbassadors.jsx';
 import AdminBaRewardsDashboard from '../components/AdminBaRewardsDashboard.jsx';
@@ -31,6 +33,7 @@ import AdminSubscriptionPricing from '../components/AdminSubscriptionPricing.jsx
 import AdminPlatformPaymentSettings from '../components/AdminPlatformPaymentSettings.jsx';
 import AdminLoyaltyDiscounts from '../components/AdminLoyaltyDiscounts.jsx';
 import LandlordEditModal from '../components/LandlordEditModal.jsx';
+import GlowOverviewSections from '../components/GlowOverviewSections.jsx';
 import { downloadCsv } from '../utils/downloadCsv.js';
 import Faq from '../components/Faq.jsx';
 import IncomingItemsBanner from '../components/IncomingItemsBanner.jsx';
@@ -89,6 +92,20 @@ function writeAdminMetricsCache(value) {
   }
 }
 
+// "1st property", "2nd property", "3rd", "4th", "5th"... for the
+// Properties panel below - properties are returned in signup order,
+// so this is just that position spelled out.
+function ordinalLabel(n) {
+  const rem100 = n % 100;
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1: return `${n}st`;
+    case 2: return `${n}nd`;
+    case 3: return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const token = localStorage.getItem('rentapay_token');
@@ -105,6 +122,9 @@ export default function AdminDashboard() {
   const [showIOSInstallSteps, setShowIOSInstallSteps] = useState(false);
 
   const [metrics, setMetrics] = useState(() => readAdminMetricsCache());
+  const [systemHealth, setSystemHealth] = useState(null);
+  const [disputesReports, setDisputesReports] = useState(null);
+  const [tenantGrowth, setTenantGrowth] = useState(null);
   const [landlords, setLandlords] = useState([]);
   const [activityLog, setActivityLog] = useState([]);
   // FIX ("admin panel should remember the page I last was at on
@@ -171,6 +191,19 @@ export default function AdminDashboard() {
   const [landlordManagersById, setLandlordManagersById] = useState({});
   const [landlordManagersLoading, setLandlordManagersLoading] = useState(false);
   const [landlordManagersError, setLandlordManagersError] = useState('');
+  // FIX (direct request): "landlord adds a 2nd/3rd property, admin
+  // only ever sees the first one" - the landlords table row only ever
+  // showed landlords.estate_name (the single field captured at
+  // signup, for the FIRST property only). Every property after that
+  // lived only in the `properties` table and had no way to surface
+  // here. Mirrors the Team panel above: its own expand state, its own
+  // cache keyed by landlord id, fetched from the same
+  // getLandlordProperties endpoint the edit modal already uses.
+  const [expandedPropertiesLandlordId, setExpandedPropertiesLandlordId] = useState('');
+  const [landlordPropertiesById, setLandlordPropertiesById] = useState({});
+  const [landlordPropertiesLoading, setLandlordPropertiesLoading] = useState(false);
+  const [landlordPropertiesError, setLandlordPropertiesError] = useState('');
+  const [propertyHighlightId, setPropertyHighlightId] = useState('');
   // When a manager/caretaker is tapped in global search, we expand
   // their landlord's panel and highlight this specific row in it.
   const [managerHighlightId, setManagerHighlightId] = useState('');
@@ -184,9 +217,11 @@ export default function AdminDashboard() {
   // require the admin password"): both actions now route through this
   // single confirmation modal, which re-collects the admin's password
   // and only proceeds once the backend confirms it's correct.
-  const [pendingDangerAction, setPendingDangerAction] = useState(null); // { type: 'delete-landlord' | 'lockdown' | 'set-landlord-status' | 'resume-lockdown', label, landlordId?, status? }
+  const [pendingDangerAction, setPendingDangerAction] = useState(null); // { type: 'delete-landlord' | 'bulk-delete-landlords' | 'lockdown' | 'set-landlord-status' | 'resume-lockdown', label, landlordId?, landlordIds?, status? }
   const [dangerPassword, setDangerPassword] = useState('');
   const [dangerError, setDangerError] = useState('');
+  // Bulk-select delete: ids of landlords checked in the table below.
+  const [selectedLandlordIds, setSelectedLandlordIds] = useState([]);
   const [broadcastSending, setBroadcastSending] = useState(false);
 
   function dateKeyOf(dateString) {
@@ -314,6 +349,11 @@ export default function AdminDashboard() {
   const [drillDown, setDrillDown] = useState(null); // 'tenants' | 'units' | 'revenue' | 'expiring' | null
   const [drillDownLoading, setDrillDownLoading] = useState(false);
   const [drillDownData, setDrillDownData] = useState(null);
+  // Simple (no-password) confirm for admin tenant delete - matches the
+  // severity of the landlord's own self-service "archive tenant"
+  // action (UnitDetail.jsx), which also just confirms and calls the
+  // same deleteTenant endpoint without a password step.
+  const [pendingTenantDelete, setPendingTenantDelete] = useState(null); // { id, name } | null
 
   useEffect(() => {
     document.body.classList.toggle('admin-drilldown-open', !!drillDown);
@@ -326,7 +366,7 @@ export default function AdminDashboard() {
   // Sidebar badge counts - polled independently of whichever tab is
   // active, so "3 open help requests" etc. is visible at a glance
   // without having to click into each section first.
-  const [sidebarCounts, setSidebarCounts] = useState({ help: 0, landlordPayments: 0, messages: 0, ratingFlags: 0, reportedAccounts: 0, gmPendingActions: 0 });
+  const [sidebarCounts, setSidebarCounts] = useState({ help: 0, landlordPayments: 0, messages: 0, ratingFlags: 0, reportedAccounts: 0, gmPendingActions: 0, landlordOwnership: 0 });
   const [helpFilter, setHelpFilter] = useState('open');
   const [helpLoading, setHelpLoading] = useState(false);
   // FIX (direct request): "help requests should be categorized under
@@ -406,7 +446,13 @@ export default function AdminDashboard() {
     // landlords/activity would otherwise shift array positions around
     // depending on which combination is loaded, silently swapping
     // which result lands in which state setter.
-    const jobs = { metrics: api.getAdminDashboard(token), lockdown: api.getLockdownStatus(token) };
+    const jobs = {
+      metrics: api.getAdminDashboard(token),
+      lockdown: api.getLockdownStatus(token),
+      systemHealth: api.getSystemHealth(token),
+      disputesReports: api.getDisputesReportsSummary(token),
+      tenantGrowth: api.getTenantGrowth(token),
+    };
     if (landlordsLoaded) jobs.landlords = api.listAllLandlords(token);
     if (activityLoaded) jobs.activity = api.getActivityLog(token);
 
@@ -417,12 +463,16 @@ export default function AdminDashboard() {
         setMetrics(byKey.metrics);
         writeAdminMetricsCache(byKey.metrics);
         setLockdownStatus(byKey.lockdown);
+        if (byKey.systemHealth) setSystemHealth(byKey.systemHealth);
+        if (byKey.disputesReports) setDisputesReports(byKey.disputesReports);
+        if (byKey.tenantGrowth) setTenantGrowth(byKey.tenantGrowth);
         if (byKey.landlords) setLandlords(byKey.landlords.landlords || []);
         if (byKey.activity) setActivityLog(byKey.activity.logs || []);
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) {
           localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
           localStorage.removeItem('rentapay_role');
           navigate('/login');
           return;
@@ -456,7 +506,8 @@ export default function AdminDashboard() {
       api.listRatingFlags('flagged', token),
       api.listCommunityReports('open', token),
       api.getGmPendingActionCount(token),
-    ]).then(([helpRes, landlordPayRes, threadsRes, flagsRes, reportsRes, gmPendingRes]) => {
+      api.listLandlordOwnershipSubmissions('pending', token),
+    ]).then(([helpRes, landlordPayRes, threadsRes, flagsRes, reportsRes, gmPendingRes, ownershipRes]) => {
       const help = helpRes.status === 'fulfilled' ? (helpRes.value.helpRequests || []).length : 0;
       const landlordPayments = landlordPayRes.status === 'fulfilled' ? (landlordPayRes.value || []).length : 0;
       const messages =
@@ -466,7 +517,15 @@ export default function AdminDashboard() {
       const ratingFlags = flagsRes.status === 'fulfilled' ? (flagsRes.value.flags || []).length : 0;
       const reportedAccounts = reportsRes.status === 'fulfilled' ? (reportsRes.value.reports || []).length : 0;
       const gmPendingActions = gmPendingRes.status === 'fulfilled' ? gmPendingRes.value.count || 0 : 0;
-      setSidebarCounts({ help, landlordPayments, messages, ratingFlags, reportedAccounts, gmPendingActions });
+      // Documents come back one row per file - count distinct landlords
+      // awaiting review, not distinct documents, so a landlord who
+      // submitted 3 files shows as 1 pending item, matching how the
+      // review queue itself groups them.
+      const landlordOwnership =
+        ownershipRes.status === 'fulfilled'
+          ? new Set((ownershipRes.value.submissions || []).map((d) => d.landlord_id)).size
+          : 0;
+      setSidebarCounts({ help, landlordPayments, messages, ratingFlags, reportedAccounts, gmPendingActions, landlordOwnership });
     });
   }, [token]);
 
@@ -521,6 +580,7 @@ export default function AdminDashboard() {
 
   function handleLogout() {
     localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
     localStorage.removeItem('rentapay_role');
     navigate('/login');
   }
@@ -566,6 +626,29 @@ export default function AdminDashboard() {
     }
   }
 
+  // Same idea as toggleLandlordManagers above, for the "Properties"
+  // panel - lists every property the landlord has added, not just the
+  // first one denormalized onto landlords.estate_name.
+  async function toggleLandlordProperties(landlordId, forceOpen = false) {
+    if (!forceOpen && expandedPropertiesLandlordId === landlordId) {
+      setExpandedPropertiesLandlordId('');
+      return;
+    }
+    setExpandedPropertiesLandlordId(landlordId);
+    if (!forceOpen) setPropertyHighlightId('');
+    if (landlordPropertiesById[landlordId]) return; // already cached
+    setLandlordPropertiesLoading(true);
+    setLandlordPropertiesError('');
+    try {
+      const res = await api.getLandlordProperties(landlordId, token);
+      setLandlordPropertiesById((prev) => ({ ...prev, [landlordId]: res.properties || [] }));
+    } catch (err) {
+      setLandlordPropertiesError(err.message);
+    } finally {
+      setLandlordPropertiesLoading(false);
+    }
+  }
+
   // Same shape as landlord suspend/activate - just routed to the
   // manager/caretaker status endpoint and re-fetches that landlord's
   // manager list (bypassing the cache) instead of the whole page.
@@ -581,10 +664,60 @@ export default function AdminDashboard() {
     });
   }
 
+  function handleDeleteManager(managerId, managerName, landlordId) {
+    setDangerError('');
+    setDangerPassword('');
+    setPendingDangerAction({
+      type: 'delete-manager',
+      managerId,
+      landlordId,
+      label: `Permanently delete ${managerName || 'this manager/caretaker'}'s account`,
+    });
+  }
+
   async function handleDelete(landlordId, landlordName) {
     setDangerError('');
     setDangerPassword('');
     setPendingDangerAction({ type: 'delete-landlord', landlordId, label: `Permanently delete ${landlordName}'s account` });
+  }
+
+  function toggleLandlordSelected(landlordId) {
+    setSelectedLandlordIds((prev) => (prev.includes(landlordId) ? prev.filter((id) => id !== landlordId) : [...prev, landlordId]));
+  }
+
+  function toggleSelectAllLandlords(ids) {
+    setSelectedLandlordIds((prev) => (ids.every((id) => prev.includes(id)) ? prev.filter((id) => !ids.includes(id)) : Array.from(new Set([...prev, ...ids]))));
+  }
+
+  function handleDeleteTenant(tenantId, tenantName) {
+    setPendingTenantDelete({ id: tenantId, name: tenantName });
+  }
+
+  async function confirmDeleteTenant() {
+    if (!pendingTenantDelete) return;
+    setBusy(true);
+    setDangerError('');
+    try {
+      await api.deleteTenant(pendingTenantDelete.id, token);
+      setNotice('Tenant removed and unit marked vacant.');
+      setDrillDownData((prev) => (Array.isArray(prev) ? prev.filter((t) => t.id !== pendingTenantDelete.id) : prev));
+      setPendingTenantDelete(null);
+    } catch (err) {
+      setDangerError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleBulkDelete() {
+    if (selectedLandlordIds.length === 0) return;
+    setDangerError('');
+    setDangerPassword('');
+    setPendingDangerAction({
+      type: 'bulk-delete-landlords',
+      landlordIds: selectedLandlordIds,
+      label: `Permanently delete ${selectedLandlordIds.length} landlord account${selectedLandlordIds.length === 1 ? '' : 's'}`,
+    });
   }
 
   async function handleLockdown() {
@@ -606,6 +739,11 @@ export default function AdminDashboard() {
       if (pendingDangerAction.type === 'delete-landlord') {
         await api.deleteLandlordAccount(pendingDangerAction.landlordId, dangerPassword, token);
         setNotice('Landlord account deleted.');
+        load();
+      } else if (pendingDangerAction.type === 'bulk-delete-landlords') {
+        const res = await api.bulkDeleteLandlordAccounts(pendingDangerAction.landlordIds, dangerPassword, token);
+        setNotice(res.message);
+        setSelectedLandlordIds((prev) => prev.filter((id) => !(res.deleted || []).includes(id)));
         load();
       } else if (pendingDangerAction.type === 'lockdown') {
         const res = await api.emergencyLockdown({ reason: pendingDangerAction.reason, password: dangerPassword }, token);
@@ -632,6 +770,18 @@ export default function AdminDashboard() {
             // succeeded above.
           }
         }
+      } else if (pendingDangerAction.type === 'delete-manager') {
+        await api.deleteManagerAccount(pendingDangerAction.managerId, dangerPassword, token);
+        setNotice('Manager/caretaker account deleted.');
+        const landlordId = pendingDangerAction.landlordId;
+        if (landlordId) {
+          try {
+            const res = await api.getLandlordManagers(landlordId, token);
+            setLandlordManagersById((prev) => ({ ...prev, [landlordId]: res.managers || [] }));
+          } catch {
+            // Non-fatal, same as above - deletion already succeeded.
+          }
+        }
       } else if (pendingDangerAction.type === 'resume-lockdown') {
         const res = await api.resumeFromLockdown({ password: dangerPassword }, token);
         setNotice(res.message);
@@ -651,7 +801,7 @@ export default function AdminDashboard() {
   function handleResume() {
     setDangerError('');
     setDangerPassword('');
-    setPendingDangerAction({ type: 'resume-lockdown', label: 'Resume the platform — restore all access' });
+    setPendingDangerAction({ type: 'resume-lockdown', label: 'Resume the platform - restore all access' });
   }
 
   // ---------------------------------------------------------------
@@ -724,7 +874,28 @@ export default function AdminDashboard() {
       setLandlordSearch(result.landlordName || '');
       setManagerHighlightId(result.id);
       if (result.landlordId) toggleLandlordManagers(result.landlordId, true);
-      setNotice(`Showing ${result.landlordName || 'the landlord'} — ${result.name} is a ${result.roleLevel === 'caretaker' ? 'caretaker' : 'manager'} on their account.`);
+      setNotice(`Showing ${result.landlordName || 'the landlord'} - ${result.name} is a ${result.roleLevel === 'caretaker' ? 'caretaker' : 'manager'} on their account.`);
+    } else if (result.role === 'property') {
+      // FIX (direct request): a property found via Global Search
+      // (2nd/3rd+ property, or matched directly by name) now expands
+      // that landlord's row and opens the new Properties panel,
+      // highlighting this specific property - same pattern as the
+      // manager deep-link above.
+      setActiveTab('landlords');
+      setLandlordStatusFilter('all');
+      setLandlordSearch(result.landlordName || result.landlordEmail || '');
+      setPropertyHighlightId(result.id);
+      if (result.landlordId) toggleLandlordProperties(result.landlordId, true);
+      setNotice(`Showing ${result.landlordName || 'the landlord'} - ${result.name} is ${result.roleLabel?.toLowerCase() || 'a property'} on their account.`);
+    } else if (result.role === 'unit') {
+      // FIX (direct request): units found via Global Search (e.g. a
+      // vacant unit with no tenant yet) had no deep-link at all -
+      // only the tenant branch above knew how to open the units
+      // drilldown. Mirrors that behaviour using the unit's own id.
+      setActiveTab('overview');
+      setDrillDownHighlightUnitId(result.id);
+      openDrillDown('units');
+      setNotice(`Showing unit ${result.name}${result.estateName ? ` (landlord: ${result.estateName})` : ''}.`);
     } else if (result.role === 'general_manager') {
       setGmSearchPrefill(result.email || '');
       setActiveTab('general-managers');
@@ -842,6 +1013,7 @@ export default function AdminDashboard() {
               { key: 'messages', label: 'Messages', icon: '💬', badge: sidebarCounts.messages, onClick: () => navigate('/messages') },
               { key: 'broadcast', label: 'Broadcast', icon: '📢', onClick: () => setShowBroadcastModal(true) },
               { key: 'rating-flags', label: 'Rating Flags', icon: '🚩', badge: sidebarCounts.ratingFlags, onClick: () => setActiveTab('rating-flags') },
+              { key: 'landlord-ownership', label: 'Landlord Verification', icon: '🛡️', badge: sidebarCounts.landlordOwnership, onClick: () => setActiveTab('landlord-ownership') },
               { key: 'reported-accounts', label: 'Reported Accounts', icon: '⛔', badge: sidebarCounts.reportedAccounts, onClick: () => setActiveTab('reported-accounts') },
               { key: 'faq', label: 'FAQs', icon: '📚', onClick: () => setActiveTab('faq') },
               { key: 'help-contact-settings', label: 'Help & Contact Details', icon: '☎️', onClick: () => setActiveTab('help-contact-settings') },
@@ -891,14 +1063,25 @@ export default function AdminDashboard() {
           <button type="button" className="portal-topbar__hamburger admin-header__hamburger" aria-label="Menu" onClick={() => setSidebarOpen(true)}>☰</button>
           <div className="admin-header__brand">RentaPay <span>Admin</span></div>
         </div>
-        <div className="admin-header__search">
-          <AdminGlobalSearch token={token} onSelect={handleGlobalSearchSelect} pageIndex={ADMIN_PAGE_INDEX} />
-        </div>
         <div className="admin-header__right">
           <NotificationsBell token={token} />
           <button className="admin-header__logout" onClick={handleLogout}>Log out</button>
         </div>
       </header>
+
+      {/* FIX (direct request): Global Search used to live inline in the
+          header row, where it got squeezed to a near-unusable sliver
+          next to the notification bell/logout button on any narrower
+          screen. Moved to its own always-present full-width row right
+          below the header - same fixed position on every page, same
+          input size as the landlord portal's GlobalSearch, and never
+          competing with other header controls for space. Shared by
+          both the Admin and General Manager portals (see
+          ManagerAccountDashboard.jsx, which mirrors this exact
+          structure). */}
+      <div className="admin-search-bar">
+        <AdminGlobalSearch token={token} onSelect={handleGlobalSearchSelect} pageIndex={ADMIN_PAGE_INDEX} />
+      </div>
 
       {showBroadcastModal && (
         <div className="modal-overlay" onClick={() => setShowBroadcastModal(false)}>
@@ -963,13 +1146,36 @@ export default function AdminDashboard() {
         />
       )}
 
+      {pendingTenantDelete && (
+        <div className="modal-overlay" onClick={() => { if (!busy) { setPendingTenantDelete(null); setDangerError(''); } }}>
+          <div className="modal-shell" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <h2>Remove tenant</h2>
+            <p style={{ color: '#666', fontSize: '0.9rem' }}>
+              Remove {pendingTenantDelete.name || 'this tenant'} and mark their unit vacant? Their record is archived, not erased.
+            </p>
+            {dangerError && <p className="form-error">{dangerError}</p>}
+            <div className="settings-manager-row__actions">
+              <Button variant="primary" loading={busy} onClick={confirmDeleteTenant}>Remove tenant</Button>
+              <button
+                type="button"
+                className="ghost-link"
+                onClick={() => { setPendingTenantDelete(null); setDangerError(''); }}
+                disabled={busy}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {pendingDangerAction && (
         <div className="modal-overlay" onClick={() => { if (!busy) { setPendingDangerAction(null); setDangerPassword(''); setDangerError(''); } }}>
           <div className="modal-shell" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
             <h2>Confirm with your admin password</h2>
             <p style={{ color: '#666', fontSize: '0.9rem' }}>
               {pendingDangerAction.label}
-              {pendingDangerAction.type === 'delete-landlord'
+              {pendingDangerAction.type === 'delete-landlord' || pendingDangerAction.type === 'bulk-delete-landlords' || pendingDangerAction.type === 'delete-manager'
                 ? '. This is irreversible - re-enter your admin password to proceed.'
                 : '. Re-enter your admin password to proceed.'}
             </p>
@@ -1025,12 +1231,14 @@ export default function AdminDashboard() {
         {activeTab === 'credentials' && (
           <>
             <AdminChangePasswordPanel token={token} role={role} />
+            <AdminRevokeSessionPanel token={token} />
             <AdminCredentialsPanel token={token} />
           </>
         )}
         {activeTab === 'general-managers' && <GeneralManagersPanel token={token} initialSearch={gmSearchPrefill} />}
         {activeTab === 'gm-pending-actions' && <GmPendingActionsPanel token={token} onReviewed={loadSidebarCounts} />}
         {activeTab === 'rating-flags' && <AdminRatingFlags token={token} />}
+        {activeTab === 'landlord-ownership' && <AdminLandlordOwnershipVerification token={token} />}
         {activeTab === 'reported-accounts' && <AdminReportedAccounts token={token} />}
         {activeTab === 'subscription-pricing' && <AdminSubscriptionPricing token={token} />}
         {activeTab === 'platform-payment-settings' && role === 'admin' && <AdminPlatformPaymentSettings token={token} />}
@@ -1064,59 +1272,21 @@ export default function AdminDashboard() {
         {activeTab === 'overview' && !metrics && <Skeleton rows={6} />}
         {activeTab === 'overview' && metrics && (
           <>
-            <section className="admin-metrics">
-              <button type="button" className="admin-metric-card admin-metric-card--clickable" onClick={() => openDrillDown('tenants')}>
-                <span className="admin-metric-card__label">Total tenants</span>
-                <span className="admin-metric-card__value">{metrics.totalTenants}</span>
-                <span className="admin-metric-card__hint">View list →</span>
-              </button>
-              <button type="button" className="admin-metric-card admin-metric-card--clickable" onClick={() => openDrillDown('units')}>
-                <span className="admin-metric-card__label">Total units</span>
-                <span className="admin-metric-card__value">{metrics.totalUnits}</span>
-                <span className="admin-metric-card__hint">View list →</span>
-              </button>
-              <button
-                type="button"
-                className="admin-metric-card admin-metric-card--clickable admin-metric-card--good"
-                onClick={() => openDrillDown('revenue')}
-              >
-                <span className="admin-metric-card__label">Revenue this month</span>
-                <span className="admin-metric-card__value">KES {Number(metrics.revenueThisMonth || 0).toLocaleString()}</span>
-                <span className="admin-metric-card__hint">View breakdown →</span>
-              </button>
-              <button
-                type="button"
-                className="admin-metric-card admin-metric-card--clickable admin-metric-card--good"
-                onClick={() => openDrillDown('revenue-year')}
-              >
-                <span className="admin-metric-card__label">Revenue this year</span>
-                <span className="admin-metric-card__value">KES {Number(metrics.revenueThisYear || 0).toLocaleString()}</span>
-                <span className="admin-metric-card__hint">View breakdown →</span>
-              </button>
-              <button type="button" className="admin-metric-card admin-metric-card--clickable" onClick={() => setActiveTab('landlords')}>
-                <span className="admin-metric-card__label">Total landlords</span>
-                <span className="admin-metric-card__value">{metrics.totalLandlords}</span>
-                <span className="admin-metric-card__sub">{metrics.activeLandlords} active · {metrics.suspendedLandlords} suspended</span>
-                <span className="admin-metric-card__hint">View details →</span>
-              </button>
-              <button
-                type="button"
-                className="admin-metric-card admin-metric-card--clickable admin-metric-card--warn"
-                onClick={() => { setLandlordStatusFilter('suspended'); setLandlordSearch(''); setActiveTab('landlords'); }}
-              >
-                <span className="admin-metric-card__label">Suspended landlords</span>
-                <span className="admin-metric-card__value">{metrics.suspendedLandlords}</span>
-                <span className="admin-metric-card__hint">View list →</span>
-              </button>
-              <button
-                type="button"
-                className="admin-metric-card admin-metric-card--clickable admin-metric-card--warn"
-                onClick={() => openDrillDown('expiring')}
-              >
-                <span className="admin-metric-card__label">Expiring soon (≤7 days)</span>
-                <span className="admin-metric-card__value">{metrics.expiringSoon?.length || 0}</span>
-                <span className="admin-metric-card__hint">Contact & remind →</span>
-              </button>
+            <section className="glow-dashboard-bg glow-overview-grid">
+              <GlowOverviewSections
+                metrics={metrics}
+                systemHealth={systemHealth}
+                disputesReports={disputesReports}
+                tenantGrowth={tenantGrowth}
+                showFinancial={role !== 'general_manager'}
+                onGoToLandlords={() => setActiveTab('landlords')}
+                onGoToHelp={() => setActiveTab('help')}
+                onGoToBrandAmbassadors={() => setActiveTab('brand-ambassadors')}
+                onRevenueClick={() => openDrillDown('revenue')}
+                onExpiringClick={() => openDrillDown('expiring')}
+                onGoToReportedAccounts={() => setActiveTab('reported-accounts')}
+                onGoToTenants={() => openDrillDown('tenants')}
+              />
             </section>
 
             {drillDown && (
@@ -1125,8 +1295,8 @@ export default function AdminDashboard() {
                   <h2>
                     {drillDown === 'tenants' && 'All tenants'}
                     {drillDown === 'units' && 'All units'}
-                    {drillDown === 'revenue' && 'Revenue this month — breakdown'}
-                    {drillDown === 'revenue-year' && 'Revenue this year — breakdown'}
+                    {drillDown === 'revenue' && 'Revenue this month - breakdown'}
+                    {drillDown === 'revenue-year' && 'Revenue this year - breakdown'}
                     {drillDown === 'expiring' && 'Subscriptions expiring soon'}
                   </h2>
                   <div className="admin-drilldown__header-actions">
@@ -1212,7 +1382,7 @@ export default function AdminDashboard() {
                     )}
                     <div className="admin-table-wrapper">
                     <table className="admin-table">
-                      <thead><tr><th></th><th>Name</th><th>Phone</th><th>Landlord</th><th>Unit</th><th>Location</th><th>Balance</th><th>Status</th></tr></thead>
+                      <thead><tr><th></th><th>Name</th><th>Phone</th><th>Landlord</th><th>Unit</th><th>Location</th><th>Balance</th><th>Status</th><th></th></tr></thead>
                       <tbody>
                         {(drillDownData || [])
                           .filter((t) => {
@@ -1225,13 +1395,16 @@ export default function AdminDashboard() {
                             <td><TenantContactCard tenant={{ ...t, unit_name: t.units?.unit_name }} size={30} /></td>
                             <td>{t.full_name}</td>
                             <td>{t.primary_phone}</td>
-                            <td>{t.landlords?.full_name || '—'}</td>
-                            <td>{t.units?.unit_name || '—'}</td>
-                            <td>{[t.units?.properties?.location || t.landlords?.location, t.units?.properties?.county || t.landlords?.county].filter(Boolean).join(', ') || '—'}</td>
+                            <td>{t.landlords?.full_name || '-'}</td>
+                            <td>{t.units?.unit_name || '-'}</td>
+                            <td>{[t.units?.properties?.location || t.landlords?.location, t.units?.properties?.county || t.landlords?.county].filter(Boolean).join(', ') || '-'}</td>
                             <td className={Number(t.balance_due) > 0 ? 'admin-balance--owing' : ''}>
                               KES {Number(t.balance_due || 0).toLocaleString()}
                             </td>
                             <td>{t.is_active ? 'Active' : 'Inactive'}</td>
+                            <td className="admin-table__actions">
+                              <button disabled={busy} className="admin-table__delete" onClick={() => handleDeleteTenant(t.id, t.full_name)}>Delete</button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1245,7 +1418,7 @@ export default function AdminDashboard() {
                     {drillDownHighlightUnitId && (
                       <div className="admin-section__header-row">
                         <p className="admin-section__hint" style={{ margin: 0 }}>
-                          Jumped here from a tenant search result — their unit is highlighted below.
+                          Jumped here from a tenant search result - their unit is highlighted below.
                         </p>
                         <button className="ghost-link" onClick={() => setDrillDownHighlightUnitId('')}>Clear highlight</button>
                       </div>
@@ -1260,9 +1433,9 @@ export default function AdminDashboard() {
                         ).map((u) => (
                           <tr key={u.id} className={drillDownHighlightUnitId && u.id === drillDownHighlightUnitId ? 'admin-table__row--highlight' : ''}>
                             <td>{u.unit_name}</td>
-                            <td>{u.unit_type || '—'}</td>
-                            <td>{u.landlords?.full_name || '—'}</td>
-                            <td>{[u.properties?.location || u.landlords?.location, u.properties?.county || u.landlords?.county].filter(Boolean).join(', ') || '—'}</td>
+                            <td>{u.unit_type || '-'}</td>
+                            <td>{u.landlords?.full_name || '-'}</td>
+                            <td>{[u.properties?.location || u.landlords?.location, u.properties?.county || u.landlords?.county].filter(Boolean).join(', ') || '-'}</td>
                             <td>KES {Number(u.rent_amount || 0).toLocaleString()}</td>
                             <td>{u.status}</td>
                           </tr>
@@ -1283,7 +1456,7 @@ export default function AdminDashboard() {
                         {(drillDownData.payments || []).map((p) => (
                           <tr key={p.id}>
                             <td>{new Date(p.paid_at).toLocaleDateString('en-GB')}</td>
-                            <td>{p.landlords?.full_name || '—'}</td>
+                            <td>{p.landlords?.full_name || '-'}</td>
                             <td>KES {Number(p.amount).toLocaleString()}</td>
                           </tr>
                         ))}
@@ -1318,7 +1491,7 @@ export default function AdminDashboard() {
                                 </td>
                                 <td>{l.full_name} <span className="admin-table__estate-name">{l.estate_name}</span></td>
                                 <td>{l.phone}{l.email ? ` · ${l.email}` : ''}</td>
-                                <td>{[l.location, l.county].filter(Boolean).join(', ') || '—'}</td>
+                                <td>{[l.location, l.county].filter(Boolean).join(', ') || '-'}</td>
                                 <td>{l.daysLeft} day{l.daysLeft === 1 ? '' : 's'}</td>
                                 <td className="admin-table__draft-message">{l.draftMessage}</td>
                               </tr>
@@ -1350,6 +1523,7 @@ export default function AdminDashboard() {
                 { key: 'help', icon: '❓', label: 'Open help requests', count: sidebarCounts.help, onClick: () => setActiveTab('help') },
                 { key: 'messages', icon: '💬', label: 'Unread messages', count: sidebarCounts.messages, onClick: () => navigate('/messages') },
                 { key: 'rating-flags', icon: '🚩', label: 'Rating flags awaiting review', count: sidebarCounts.ratingFlags, onClick: () => setActiveTab('rating-flags') },
+                { key: 'landlord-ownership', icon: '🛡️', label: 'Landlords awaiting ownership verification', count: sidebarCounts.landlordOwnership, onClick: () => setActiveTab('landlord-ownership') },
                 { key: 'reported-accounts', icon: '⛔', label: 'Open account reports', count: sidebarCounts.reportedAccounts, onClick: () => setActiveTab('reported-accounts') },
               ]}
             />
@@ -1364,11 +1538,11 @@ export default function AdminDashboard() {
                   <p className="admin-section__hint">
                     Locked down since {new Date(lockdownStatus.lockdown_started_at).toLocaleString('en-GB')}. No landlord, property manager, caretaker, or tenant can access the platform until you resume.
                   </p>
-                  <Button variant="primary" loading={busy} onClick={handleResume}>Resume platform — restore all access</Button>
+                  <Button variant="primary" loading={busy} onClick={handleResume}>Resume platform - restore all access</Button>
                 </div>
               ) : (
                 <>
-                  <p className="admin-section__hint">Blocks every landlord, property manager, caretaker, and tenant platform-wide — including anyone already logged in right now. Use only in a genuine emergency.</p>
+                  <p className="admin-section__hint">Blocks every landlord, property manager, caretaker, and tenant platform-wide - including anyone already logged in right now. Use only in a genuine emergency.</p>
                   {!showLockdownConfirm ? (
                     <Button variant="ghost" onClick={() => setShowLockdownConfirm(true)}>Lock down platform</Button>
                   ) : (
@@ -1389,7 +1563,7 @@ export default function AdminDashboard() {
                           rows={2}
                         />
                       )}
-                      <p><strong>Are you sure?</strong> This immediately blocks every landlord, manager, caretaker, and tenant — including anyone currently logged in. You'll be asked to confirm your admin password on the next step.</p>
+                      <p><strong>Are you sure?</strong> This immediately blocks every landlord, manager, caretaker, and tenant - including anyone currently logged in. You'll be asked to confirm your admin password on the next step.</p>
                       <div className="lockdown-confirm__actions">
                         <button className="lockdown-confirm__cancel" onClick={() => setShowLockdownConfirm(false)}>Cancel</button>
                         <button
@@ -1429,6 +1603,15 @@ export default function AdminDashboard() {
                 value={landlordSearch}
                 onChange={(e) => setLandlordSearch(e.target.value)}
               />
+              {selectedLandlordIds.length > 0 && (
+                <button
+                  disabled={busy}
+                  className="admin-table__delete"
+                  onClick={handleBulkDelete}
+                >
+                  Delete {selectedLandlordIds.length} selected
+                </button>
+              )}
               {filteredLandlords.length > 0 && (
                 <button
                   className="ghost-link"
@@ -1459,12 +1642,29 @@ export default function AdminDashboard() {
             <div className="admin-table-wrapper">
             <table className="admin-table">
               <thead>
-                <tr><th></th><th>Name</th><th>Contact</th><th>Location</th><th>Plan</th><th>Units</th><th>Status</th><th>Expires</th><th></th></tr>
+                <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={filteredLandlords.length > 0 && filteredLandlords.every((l) => selectedLandlordIds.includes(l.id))}
+                      onChange={() => toggleSelectAllLandlords(filteredLandlords.map((l) => l.id))}
+                      aria-label="Select all landlords"
+                    />
+                  </th>
+                  <th></th><th>Name</th><th>Contact</th><th>Location</th><th>Plan</th><th>Units</th><th>Status</th><th>Expires</th><th></th></tr>
               </thead>
               <tbody>
                 {filteredLandlords.map((l) => (
                   <React.Fragment key={l.id}>
                   <tr className={expandedLandlordId === l.id ? 'admin-table__row--expanded' : ''}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedLandlordIds.includes(l.id)}
+                        onChange={() => toggleLandlordSelected(l.id)}
+                        aria-label={`Select ${l.full_name}`}
+                      />
+                    </td>
                     <td><Avatar name={l.full_name} photoUrl={l.photo_url} size={32} /></td>
                     <td>
                       <div className="admin-table__name-cell">
@@ -1478,11 +1678,11 @@ export default function AdminDashboard() {
                         {l.email && <span className="admin-table__email">{l.email}</span>}
                       </div>
                     </td>
-                    <td>{[l.location, l.county].filter(Boolean).join(', ') || '—'}</td>
+                    <td>{[l.location, l.county].filter(Boolean).join(', ') || '-'}</td>
                     <td>{l.subscription_plan}</td>
                     <td>{l.unit_limit}</td>
                     <td><span className={`admin-status admin-status--${l.subscription_status}`}>{l.subscription_status}</span></td>
-                    <td>{l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '—'}</td>
+                    <td>{l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '-'}</td>
                     <td className="admin-table__actions">
                       {/* Managers/caretakers share this landlord's dashboard
                           rather than having their own admin tab, so they're
@@ -1491,6 +1691,9 @@ export default function AdminDashboard() {
                           toggleLandlordManagers. */}
                       <button disabled={busy} onClick={() => toggleLandlordManagers(l.id)}>
                         {expandedLandlordId === l.id ? 'Team ▾' : 'Team ▸'}
+                      </button>
+                      <button disabled={busy} onClick={() => toggleLandlordProperties(l.id)}>
+                        {expandedPropertiesLandlordId === l.id ? 'Properties ▾' : 'Properties ▸'}
                       </button>
                       <button disabled={busy} onClick={() => setEditingLandlord({ id: l.id, name: l.full_name })}>Edit</button>
                       {l.subscription_status === 'suspended' ? (
@@ -1503,9 +1706,9 @@ export default function AdminDashboard() {
                   </tr>
                   {expandedLandlordId === l.id && (
                     <tr className="admin-table__subrow">
-                      <td colSpan={9}>
+                      <td colSpan={10}>
                         <div className="admin-managers-panel">
-                          <p className="admin-managers-panel__title">Managers &amp; caretakers — {l.full_name}</p>
+                          <p className="admin-managers-panel__title">Managers &amp; caretakers - {l.full_name}</p>
                           {landlordManagersLoading && !landlordManagersById[l.id] && <Skeleton rows={2} />}
                           {landlordManagersError && <p className="admin-section__hint admin-section__hint--error">{landlordManagersError}</p>}
                           {landlordManagersById[l.id] && landlordManagersById[l.id].length === 0 && (
@@ -1532,7 +1735,7 @@ export default function AdminDashboard() {
                                           {m.email && <span className="admin-table__email">{m.email}</span>}
                                         </div>
                                       </td>
-                                      <td>{(m.assignedProperties || []).map((p) => p.name).filter(Boolean).join(', ') || '—'}</td>
+                                      <td>{(m.assignedProperties || []).map((p) => p.name).filter(Boolean).join(', ') || '-'}</td>
                                       <td><span className={`admin-status admin-status--${m.is_active ? 'active' : 'suspended'}`}>{m.is_active ? 'Active' : 'Suspended'}</span></td>
                                       <td className="admin-table__actions">
                                         {m.is_active ? (
@@ -1540,7 +1743,50 @@ export default function AdminDashboard() {
                                         ) : (
                                           <button disabled={busy} onClick={() => handleSetManagerStatus(m.id, 'active', m.full_name, l.id)}>Activate</button>
                                         )}
+                                        <button disabled={busy} className="admin-table__delete" onClick={() => handleDeleteManager(m.id, m.full_name, l.id)}>Delete</button>
                                       </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  {expandedPropertiesLandlordId === l.id && (
+                    <tr className="admin-table__subrow">
+                      <td colSpan={10}>
+                        <div className="admin-managers-panel">
+                          <p className="admin-managers-panel__title">Properties - {l.full_name}</p>
+                          {landlordPropertiesLoading && !landlordPropertiesById[l.id] && <Skeleton rows={2} />}
+                          {landlordPropertiesError && <p className="admin-section__hint admin-section__hint--error">{landlordPropertiesError}</p>}
+                          {landlordPropertiesById[l.id] && landlordPropertiesById[l.id].length === 0 && (
+                            <p className="admin-section__hint">No properties have been added for this landlord.</p>
+                          )}
+                          {landlordPropertiesById[l.id] && landlordPropertiesById[l.id].length > 0 && (
+                            <div className="admin-table-wrapper">
+                              <table className="admin-table admin-table--nested">
+                                <thead>
+                                  <tr><th>#</th><th>Property</th><th>Location</th><th>Units</th><th>Plan</th><th>Status</th><th>Expires</th></tr>
+                                </thead>
+                                <tbody>
+                                  {/* getLandlordProperties orders by created_at ascending, so
+                                      index position IS signup order - 1st, 2nd, 3rd property
+                                      added, etc. */}
+                                  {landlordPropertiesById[l.id].map((p, idx) => (
+                                    <tr
+                                      key={p.id}
+                                      className={p.id === propertyHighlightId ? 'admin-table__row--highlight' : ''}
+                                    >
+                                      <td>{ordinalLabel(idx + 1)}</td>
+                                      <td>{p.name || '-'}</td>
+                                      <td>{[p.location, p.county].filter(Boolean).join(', ') || '-'}</td>
+                                      <td>{p.unit_limit ?? '-'}</td>
+                                      <td>{p.subscription_period_months ? `${p.subscription_period_months} mo` : '-'}</td>
+                                      <td><span className={`admin-status admin-status--${p.subscription_status}`}>{p.subscription_status || '-'}</span></td>
+                                      <td>{p.subscription_expires_at ? new Date(p.subscription_expires_at).toLocaleDateString('en-GB') : '-'}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1697,7 +1943,7 @@ export default function AdminDashboard() {
                         <tr key={h.id}>
                           <td>{new Date(h.created_at).toLocaleString('en-GB')}</td>
                           <td>{h.name} <span className="admin-table__estate-name">{helpCategoryOf(h)}</span></td>
-                          <td>{h.phone || '—'}</td>
+                          <td>{h.phone || '-'}</td>
                           <td className="admin-table__draft-message">{h.message}</td>
                           <td><span className={`admin-status admin-status--${h.status === 'resolved' ? 'active' : 'suspended'}`}>{h.status}</span></td>
                           <td className="admin-table__actions">
@@ -1788,7 +2034,7 @@ export default function AdminDashboard() {
                           <td>{new Date(log.created_at).toLocaleTimeString('en-GB')}</td>
                           <td>{log.actor_type}</td>
                           <td>{log.action}</td>
-                          <td>{log.target_type || '—'}</td>
+                          <td>{log.target_type || '-'}</td>
                           <td><button onClick={() => handleDeleteActivityEntry(log.id)}>Delete</button></td>
                         </tr>
                       ))}

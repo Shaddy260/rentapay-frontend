@@ -280,6 +280,7 @@ export default function TenantPortal() {
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) {
           localStorage.removeItem('rentapay_token');
+      localStorage.removeItem('rentapay_refresh_token');
           localStorage.removeItem('rentapay_role');
           if (err.accountRevoked) {
             localStorage.setItem('rentapay_logout_message', err.message);
@@ -488,7 +489,7 @@ export default function TenantPortal() {
         items={[
           { key: 'dashboard', label: 'Home', icon: '🏠', onClick: () => setActiveTab('dashboard') },
           { key: 'financials', label: 'Payments', icon: '🏦', onClick: () => setActiveTab('financials') },
-          { key: 'maintenance', label: 'Maintenance', icon: '🔧', onClick: () => setActiveTab('maintenance') },
+          { key: 'settings', label: 'Settings', icon: '⚙️', onClick: () => navigate('/tenant-settings') },
           { key: 'messages', label: 'Messages', icon: '💬', onClick: () => navigate('/messages') },
         ]}
       />
@@ -573,7 +574,7 @@ export default function TenantPortal() {
                   <div className="balance-card__receipt">
                     <span className="balance-card__receipt-info">
                       ✓ Last payment: KES {Number(latestCompletedPayment.amount).toLocaleString()} on{' '}
-                      {latestCompletedPayment.paid_at ? new Date(latestCompletedPayment.paid_at).toLocaleDateString('en-GB') : '—'}
+                      {latestCompletedPayment.paid_at ? new Date(latestCompletedPayment.paid_at).toLocaleDateString('en-GB') : '-'}
                     </span>
                     <button
                       className="receipt-link"
@@ -615,7 +616,7 @@ export default function TenantPortal() {
                   <div className="balance-card__receipt">
                     <span className="balance-card__receipt-info">
                       ✓ Last payment: KES {Number(latestCompletedPayment.amount).toLocaleString()} on{' '}
-                      {latestCompletedPayment.paid_at ? new Date(latestCompletedPayment.paid_at).toLocaleDateString('en-GB') : '—'}
+                      {latestCompletedPayment.paid_at ? new Date(latestCompletedPayment.paid_at).toLocaleDateString('en-GB') : '-'}
                     </span>
                     <button
                       className="receipt-link"
@@ -723,7 +724,7 @@ export default function TenantPortal() {
                       }
                     }}
                   >
-                    This was a mistake — Cancel
+                    This was a mistake - Cancel
                   </Button>
                 </div>
               ) : (
@@ -840,7 +841,7 @@ export default function TenantPortal() {
                           'rentapay-payment-history',
                           ['Date', 'Amount (KES)', 'Method', 'Status'],
                           payments.map((p) => [
-                            p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '—',
+                            p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '-',
                             p.amount,
                             p.payment_method.replace('_', ' '),
                             p.status,
@@ -881,7 +882,7 @@ export default function TenantPortal() {
                     <tbody>
                       {payments.map((p) => (
                         <tr key={p.id}>
-                          <td>{p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '—'}</td>
+                          <td>{p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-GB') : '-'}</td>
                           <td>KES {Number(p.amount).toLocaleString()}</td>
                           <td>{p.payment_method.replace('_', ' ')}</td>
                           <td><span className={`payment-status payment-status--${p.status}`}>{p.status}</span></td>
@@ -922,8 +923,8 @@ export default function TenantPortal() {
               {!editingDetails ? (
                 <div className="profile-grid">
                   <div><span className="profile-grid__label">Phone</span><span>{profile?.primary_phone}</span></div>
-                  <div><span className="profile-grid__label">Secondary phone</span><span>{profile?.secondary_phone || '—'}</span></div>
-                  <div><span className="profile-grid__label">Email</span><span>{profile?.email || '—'}</span></div>
+                  <div><span className="profile-grid__label">Secondary phone</span><span>{profile?.secondary_phone || '-'}</span></div>
+                  <div><span className="profile-grid__label">Email</span><span>{profile?.email || '-'}</span></div>
                   <div><span className="profile-grid__label">Emergency contact</span><span>{profile?.emergency_contact_name} ({profile?.emergency_contact_phone})</span></div>
                 </div>
               ) : (
@@ -1082,7 +1083,7 @@ function VacatingNoticeModal({ token, onClose, onDone }) {
           <div className="modal-form">
             {error && <p className="modal-error">{error}</p>}
             <p>You're about to give notice to vacate on <strong>{vacatingDate}</strong>. Your landlord will be notified immediately.</p>
-            <Button variant="ghost" onClick={() => setStep(1)}>This was a mistake — Cancel</Button>
+            <Button variant="ghost" onClick={() => setStep(1)}>This was a mistake - Cancel</Button>
             <Button variant="primary" loading={busy} onClick={confirm}>Confirm notice</Button>
           </div>
         )}
@@ -1154,7 +1155,7 @@ export function StkPaymentModal({ amountDue, defaultPhone, token, onClose, onDon
         {phase === 'form' && (
           <form className="modal-form" onSubmit={submit}>
             {error && <p className="modal-error">{error}</p>}
-            <p className="tenant-portal-hint">You'll get a real M-Pesa prompt on your phone — enter your PIN there to complete payment. No manual review step needed.</p>
+            <p className="tenant-portal-hint">You'll get a real M-Pesa prompt on your phone - enter your PIN there to complete payment. No manual review step needed.</p>
             <label className="form-field__label">Phone number to charge</label>
             <input required type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="e.g. 0712345678" />
             <label className="form-field__label">Amount (KES)</label>
@@ -1200,7 +1201,7 @@ export function PaybillModal({ paymentInstructions, amountDue, token, onClose, o
     setError('');
     try {
       if (!mpesaSmsTimestamp) {
-        setError('M-Pesa SMS time is required — enter the time shown on your payment confirmation SMS.');
+        setError('M-Pesa SMS time is required - enter the time shown on your payment confirmation SMS.');
         setBusy(false);
         return;
       }

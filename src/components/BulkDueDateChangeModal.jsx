@@ -110,7 +110,7 @@ export default function BulkDueDateChangeModal({ token, propertyId, propertyName
                               onChange={() => toggleUnit(u.id)}
                             />
                             <span className="bulk-rent-modal__unit-name">{u.unit_name}</span>
-                            <span className="bulk-rent-modal__unit-meta">Due day {u.due_day_of_month ?? '—'}</span>
+                            <span className="bulk-rent-modal__unit-meta">Due day {u.due_day_of_month ?? '-'}</span>
                           </label>
                         </li>
                       ))}

@@ -107,7 +107,7 @@ export default function AdminBaReconciliation({ token, prefill, onPrefillConsume
             <ul>
               {result.matchedInSystem.map((m, i) => (
                 <li key={m.landlord.id || i}>
-                  {m.pasted.name || m.pasted.raw} — matches onboarded landlord {m.landlord.name} ({m.landlord.phone})
+                  {m.pasted.name || m.pasted.raw} - matches onboarded landlord {m.landlord.name} ({m.landlord.phone})
                 </li>
               ))}
             </ul>
@@ -115,11 +115,11 @@ export default function AdminBaReconciliation({ token, prefill, onPrefillConsume
 
           <div className="admin-ba-reconcile__bucket admin-ba-reconcile__bucket--flagged">
             <h3>Claimed but missing from system ({result.counts.missing})</h3>
-            <InfoTip text={<>Potential inflation — these appear in the pasted list with no corresponding onboarded landlord that day.</>} />
+            <InfoTip text={<>Potential inflation - these appear in the pasted list with no corresponding onboarded landlord that day.</>} />
             {result.claimedButMissingFromSystem.length === 0 && <p className="admin-ba-reconcile__empty">None.</p>}
             <ul>
               {result.claimedButMissingFromSystem.map((e, i) => (
-                <li key={i}>{e.name ? `${e.name} — ${e.phoneRaw || 'no phone found'}` : e.raw}</li>
+                <li key={i}>{e.name ? `${e.name} - ${e.phoneRaw || 'no phone found'}` : e.raw}</li>
               ))}
             </ul>
           </div>
@@ -127,12 +127,12 @@ export default function AdminBaReconciliation({ token, prefill, onPrefillConsume
           {!result.editedAfterSubmissionRetired ? (
             <div className="admin-ba-reconcile__bucket admin-ba-reconcile__bucket--flagged">
               <h3>Edited after submission ({result.counts.edited})</h3>
-              <InfoTip text={<>Name or phone number was changed after the claim was first logged — worth a manual look.</>} />
+              <InfoTip text={<>Name or phone number was changed after the claim was first logged - worth a manual look.</>} />
               {result.editedAfterSubmission.length === 0 && <p className="admin-ba-reconcile__empty">None.</p>}
               <ul>
                 {result.editedAfterSubmission.map((c) => (
                   <li key={c.id}>
-                    {c.submitted_name} ({c.submitted_phone}) — {c.edit_history.length} edit{c.edit_history.length === 1 ? '' : 's'}
+                    {c.submitted_name} ({c.submitted_phone}) - {c.edit_history.length} edit{c.edit_history.length === 1 ? '' : 's'}
                   </li>
                 ))}
               </ul>

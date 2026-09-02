@@ -30,7 +30,7 @@ default, a tenant pays and submits their payment code in the app; the landlord, 
 their manager or caretaker, reviews and approves it, and everything updates
 automatically from there. Where a landlord has connected their own Safaricom
 Business Paybill or Till, a tenant instead gets a real M-Pesa prompt sent straight
-to their phone, and the payment confirms itself the moment Safaricom reports it —
+to their phone, and the payment confirms itself the moment Safaricom reports it -
 no review step at all. See "How payments flow" earlier in this guide for the full
 picture, including how a landlord's own subscription payment can be confirmed
 automatically instead.
@@ -39,12 +39,22 @@ automatically instead.
 From Settings, if you own a genuine Safaricom Business Paybill or Till (Pochi la
 Biashara and a bank's own paybill don't qualify, since Safaricom can't issue API
 access for either), you connect it and enter your Daraja app credentials.
-Verification is automatic — RentaPay sends a small real test push to your own
-phone — so there's no waiting on anyone at RentaPay to review it. It's a handful
+Verification is automatic - RentaPay sends a small real test push to your own
+phone - so there's no waiting on anyone at RentaPay to review it. It's a handful
 of steps once, and then rent collection runs itself from there: no more matching
 transaction codes by hand, every month, for as long as your account is active. You
 can switch back to manual confirmation at any time without losing any payment
 history.
+
+**Who can set up or change automatic rent collection?**
+Only the landlord account itself - not a manager, and not a caretaker, no matter
+what else they're allowed to do on the account. Because this section holds your
+own Daraja/banking credentials, it's also locked behind your own login password
+every time you open it, even if you're already signed in, to prevent it being
+edited or turned off by mistake or by someone else using an unlocked device.
+Managers and caretakers can still see whether it's currently working through the
+read-only status banner on their dashboard - they just can't open or change the
+credentials themselves.
 
 **How is a security deposit handled?**
 You record the amount a tenant paid at move in, kept completely separate from
@@ -96,7 +106,7 @@ shared and individual meters, readings, and billing work.
 
 Check the public status page, reachable without signing in. It reports on
 seventeen individual parts of the platform separately, so you'll see by name
-exactly which feature, if any, has an issue — not just a vague "something's wrong."
+exactly which feature, if any, has an issue - not just a vague "something's wrong."
 
 ## Why does my session log me out after a week?
 
@@ -106,21 +116,21 @@ password, ends a session immediately rather than waiting for that week to pass.
 
 ## Can I get a report or export from RentaPay?
 
-Yes — annual reports, tax summaries, financial CSVs, and receipt bundles are all
+Yes - annual reports, tax summaries, financial CSVs, and receipt bundles are all
 available from within the app. Larger ones are generated in the background and
 delivered as a time-limited download link, valid for one hour; smaller ones may be
 generated immediately.
 
 ## What if a notification (email, SMS, WhatsApp) doesn't arrive?
 
-Check the app itself first — the underlying record (a payment, a maintenance
+Check the app itself first - the underlying record (a payment, a maintenance
 update) is always accurate regardless of whether an accompanying notification
 arrived. If a specific delivery channel is having a problem, it will show as an
 issue on the status page.
 
 ## Can more than one person manage the same property?
 
-Yes — a landlord can add property managers and caretakers to the same account, each
+Yes - a landlord can add property managers and caretakers to the same account, each
 with their own login, and set what each one can see and do. Every action any of
 them takes is attributed to their own account in the activity log, so it's always
 clear who made a specific change even when several people manage the same
@@ -143,7 +153,7 @@ access to the funds themselves.
 
 ## Does RentaPay work if I have a weak internet connection?
 
-RentaPay is built to be lightweight — most screens are just text and numbers, which
+RentaPay is built to be lightweight - most screens are just text and numbers, which
 load quickly even on a slow connection. Photos are the heaviest thing the app
 transfers; if uploading one is slow, that's usually your connection specifically
 rather than the app itself, which you can confirm on the status page.

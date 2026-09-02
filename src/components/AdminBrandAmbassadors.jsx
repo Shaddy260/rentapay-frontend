@@ -7,6 +7,9 @@ import InfoTip from './InfoTip.jsx';
 import AdminBaPayoutRules from './AdminBaPayoutRules.jsx';
 import AdminBaPayoutQualificationReport from './AdminBaPayoutQualificationReport.jsx';
 import AdminBaPayouts from './AdminBaPayouts.jsx';
+import GlowCard from './GlowCard.jsx';
+import HeroStat from './HeroStat.jsx';
+import KpiMiniGrid from './KpiMiniGrid.jsx';
 import { buildWaMeLink } from '../utils/whatsapp.js';
 import './AdminBrandAmbassadors.css';
 import './TenantOnboardingPanel.css';
@@ -229,9 +232,47 @@ export default function AdminBrandAmbassadors({ token, initialHighlightId }) {
     }
   }
 
+  // Phase 3 - Glow Card summary header (RentaPay-Glow-Dashboard-
+  // Build-Spec.md §4 Phase 3). Sourced entirely from whichever of
+  // `applications`/`roster` is already loaded for the current view -
+  // no new fetch added here, per the phase's "CSS/markup only" rule.
+  const rosterStatusCounts = roster
+    ? roster.reduce((acc, b) => {
+        acc[b.status] = (acc[b.status] || 0) + 1;
+        return acc;
+      }, {})
+    : null;
+
   return (
     <div className="admin-ba">
       <h2>Brand Ambassadors</h2>
+
+      {view === 'applications' && applications && (
+        <GlowCard accent="green" title="Applications summary" className="admin-ba__glow-summary">
+          <HeroStat eyebrow="Pending applications" value={applications.length} />
+          <KpiMiniGrid
+            accent="green"
+            items={[
+              { label: 'Overdue for review', value: applications.filter((a) => a.overdue).length },
+            ]}
+          />
+        </GlowCard>
+      )}
+
+      {view === 'roster' && roster && (
+        <GlowCard accent="green" title="Roster summary" className="admin-ba__glow-summary">
+          <HeroStat eyebrow={rosterStatus ? `${rosterStatus.charAt(0).toUpperCase()}${rosterStatus.slice(1)} Brand Ambassadors` : 'Total Brand Ambassadors'} value={roster.length} />
+          {rosterStatusCounts && !rosterStatus && (
+            <KpiMiniGrid
+              accent="green"
+              items={['active', 'suspended', 'inactive', 'rejected'].map((s) => ({
+                label: s.charAt(0).toUpperCase() + s.slice(1),
+                value: rosterStatusCounts[s] || 0,
+              }))}
+            />
+          )}
+        </GlowCard>
+      )}
 
       {/* Onboard a new BA: share this one generic, reusable link with
           whoever you want to become a Brand Ambassador. They open it,
@@ -241,7 +282,7 @@ export default function AdminBrandAmbassadors({ token, initialHighlightId }) {
         <p className="admin-ba__link-card-title">Onboard a new Brand Ambassador</p>
         <InfoTip text={<>
           Generate a link and send it to the person you want to onboard as a BA. They'll fill in their own details
-          and submit — you approve or reject it from Pending Applications below. The link expires 24 hours after
+          and submit - you approve or reject it from Pending Applications below. The link expires 24 hours after
           it's generated; after that (or once you generate a new one) the old one stops working and whoever has it
           is told to request a fresh one.
         </>} />
@@ -250,7 +291,7 @@ export default function AdminBrandAmbassadors({ token, initialHighlightId }) {
           <p className="admin-ba__meta">Loading…</p>
         ) : !baLink.link || baLink.expired ? (
           <div className="admin-ba__link-row">
-            <p className="admin-ba__meta">No live link right now — generate one to share.</p>
+            <p className="admin-ba__meta">No live link right now - generate one to share.</p>
             <Button variant="primary" loading={linkBusy} onClick={generateOnboardingLink}>Generate Link</Button>
           </div>
         ) : (
@@ -321,7 +362,7 @@ export default function AdminBrandAmbassadors({ token, initialHighlightId }) {
         <div className="admin-ba__approved-banner">
           <p>
             Approved as <strong>{approvedInfo.baCode}</strong>. Credentials were sent to {approvedInfo.phone} /{' '}
-            {approvedInfo.email}. If delivery fails, share manually — temp password:{' '}
+            {approvedInfo.email}. If delivery fails, share manually - temp password:{' '}
             <code>{approvedInfo.tempPassword}</code>, referral link:{' '}
             <a href={approvedInfo.referralLink} target="_blank" rel="noopener noreferrer">
               {approvedInfo.referralLink}
@@ -345,7 +386,7 @@ export default function AdminBrandAmbassadors({ token, initialHighlightId }) {
                   {a.overdue && <span className="admin-ba__overdue-flag">Overdue for review</span>}
                   <span>{a.phone}</span>
                   <span>{a.email}</span>
-                  <span>ID: {a.national_id || '—'}</span>
+                  <span>ID: {a.national_id || '-'}</span>
                   <span>Submitted {new Date(a.created_at).toLocaleString()}</span>
                 </div>
                 <div className="onboarding-request-card__actions">
@@ -399,7 +440,7 @@ export default function AdminBrandAmbassadors({ token, initialHighlightId }) {
                     <span className={`admin-ba__status admin-ba__status--${b.status}`}>{b.status}</span>
                   </div>
                   <p className="admin-ba__meta">
-                    {b.ba_code || '—'} · {b.phone} · {b.email}
+                    {b.ba_code || '-'} · {b.phone} · {b.email}
                   </p>
                   {b.referralLink && (
                     <p className="admin-ba__meta">

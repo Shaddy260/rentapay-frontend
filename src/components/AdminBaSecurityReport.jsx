@@ -55,12 +55,12 @@ export default function AdminBaSecurityReport({ token, onReview }) {
 
       <div className="admin-ba-security__section">
         <h3>Rapid-fire onboarding ({report.rapidFireOnboarding.length})</h3>
-        <InfoTip text={<>Landlords onboarded unusually close together in time by one Brand Ambassador — a rough proxy for signups logged without an actual field visit.</>} />
+        <InfoTip text={<>Landlords onboarded unusually close together in time by one Brand Ambassador - a rough proxy for signups logged without an actual field visit.</>} />
         {report.rapidFireOnboarding.length === 0 && <p className="admin-ba-security__empty">None found.</p>}
         <ul className="admin-ba-security__cards">
           {report.rapidFireOnboarding.map((r) => (
             <li key={r.baId} className="admin-ba-security__card">
-              {r.baName} — {r.count} landlords within {r.windowMinutes} minutes
+              {r.baName} - {r.count} landlords within {r.windowMinutes} minutes
               <button type="button" className="admin-ba-security__review-link" onClick={() => onReview?.({ baId: r.baId, date: dateOnly(r.from) })}>
                 Review
               </button>
@@ -71,12 +71,12 @@ export default function AdminBaSecurityReport({ token, onReview }) {
 
       <div className="admin-ba-security__section">
         <h3>Disputed attributions ({report.disputedAttributions.length})</h3>
-        <InfoTip text={<>The linked landlord has disputed this Brand Ambassador's attribution — internal review only, never shown to the landlord.</>} />
+        <InfoTip text={<>The linked landlord has disputed this Brand Ambassador's attribution - internal review only, never shown to the landlord.</>} />
         {report.disputedAttributions.length === 0 && <p className="admin-ba-security__empty">None found.</p>}
         <ul className="admin-ba-security__cards">
           {report.disputedAttributions.map((d) => (
             <li key={d.landlordId} className="admin-ba-security__card">
-              {d.baName} — {d.landlordName}
+              {d.baName} - {d.landlordName}
               <button type="button" className="admin-ba-security__review-link" onClick={() => onReview?.({ baId: d.baId, date: dateOnly(d.disputedAt) })}>
                 Review
               </button>

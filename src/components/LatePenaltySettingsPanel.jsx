@@ -364,7 +364,7 @@ function TenantOverrideManager({ token, propertyId, propertyName }) {
               {overrides.filter((o) => o.is_active).map((o) => (
                 <li key={o.id}>
                   <div>
-                    <strong>{o.period_reference}</strong> — {o.override_type === 'waive' ? 'Waived' : o.override_type === 'custom_amount' ? `Custom amount: KES ${Number(o.override_value).toLocaleString()}` : `Custom rate: ${o.override_value}%`}
+                    <strong>{o.period_reference}</strong> - {o.override_type === 'waive' ? 'Waived' : o.override_type === 'custom_amount' ? `Custom amount: KES ${Number(o.override_value).toLocaleString()}` : `Custom rate: ${o.override_value}%`}
                     <br />
                     <span className="late-penalty-panel__muted">"{o.reason}"</span>
                   </div>

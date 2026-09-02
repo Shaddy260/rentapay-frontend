@@ -222,7 +222,7 @@ export default function AdminBaPayoutReview({ token }) {
                         <li key={c.id} className="admin-ba-payout__claim">
                           <label>
                             <input type="checkbox" checked={selected ? selected.has(c.id) : false} onChange={() => toggleClaim(row.ba.id, c.id)} />
-                            {c.landlordName} {c.landlordLocation ? `— ${c.landlordLocation}` : ''}
+                            {c.landlordName} {c.landlordLocation ? `- ${c.landlordLocation}` : ''}
                           </label>
                           <span>
                             {money(c.payoutAmount)} + {money(c.commissionBonusAmount)} commission · {c.qualificationStatus}

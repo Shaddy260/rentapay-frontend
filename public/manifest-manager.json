@@ -1,7 +1,7 @@
 {
   "name": "RentaPay Manager",
   "short_name": "RentaPay Manager",
-  "description": "RentaPay General Manager portal — platform-wide oversight for admin-provisioned managers.",
+  "description": "RentaPay General Manager portal - platform-wide oversight for admin-provisioned managers.",
   "start_url": "/manager-account",
   "scope": "/manager-account",
   "display": "standalone",

@@ -67,7 +67,7 @@ part answers the question you actually came here with.
 
 ## Who builds and operates RentaPay
 
-RentaPay is operated as a single platform serving every account on it — landlords,
+RentaPay is operated as a single platform serving every account on it - landlords,
 property managers, caretakers, general managers, tenants, prospective tenants
 browsing public listings, and Brand Ambassadors all use the same underlying system,
 just with different views and permissions suited to their role. There is no
@@ -94,7 +94,7 @@ to any landlord's actual tenant or financial data.
 
 Before a tool like this, a lot of rent management in the Kenyan market has
 historically happened across a mix of paper receipts, WhatsApp messages, and
-memory — workable, but easy for a specific payment, a specific conversation, or a
+memory - workable, but easy for a specific payment, a specific conversation, or a
 specific promise to get lost, especially once a dispute arises and everyone is
 trying to reconstruct what actually happened months later. RentaPay's core value is
 simply keeping a single, timestamped, shared record that both a landlord and a
