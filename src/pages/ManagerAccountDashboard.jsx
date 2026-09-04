@@ -113,7 +113,19 @@ export default function ManagerAccountDashboard() {
   const [tabLoading, setTabLoading] = useState(false);
 
   const [landlordSearch, setLandlordSearch] = useState('');
+  // FREE TRIAL (free-trial-build-plan.md, Phase 7): same filter as
+  // AdminDashboard.jsx's "All landlords" tab.
+  const [landlordStatusFilter, setLandlordStatusFilter] = useState('all'); // 'all' | 'active' | 'trial' | 'suspended'
   const [tenantSearch, setTenantSearch] = useState('');
+
+  // GM "All landlords" -> Properties panel (mirrors AdminDashboard's
+  // toggleLandlordProperties): lists every apartment a landlord has
+  // added, each with its own Delete action, PIN+reason confirmed like
+  // everything else on this page.
+  const [expandedPropertiesLandlordId, setExpandedPropertiesLandlordId] = useState('');
+  const [landlordPropertiesById, setLandlordPropertiesById] = useState({});
+  const [landlordPropertiesLoading, setLandlordPropertiesLoading] = useState(false);
+  const [landlordPropertiesError, setLandlordPropertiesError] = useState('');
 
   // SECTION 6 - the two fields locked to admin-only editing, shown
   // here as plain view-only figures. Loaded lazily, once, the first
@@ -258,6 +270,7 @@ export default function ManagerAccountDashboard() {
       await confirmAction.run(operationsPin, reason);
       setConfirmAction(null);
       if (confirmAction.refresh) loadTab(confirmAction.refresh);
+      if (confirmAction.onSuccess) confirmAction.onSuccess();
     } catch (err) {
       setConfirmError(err.message);
     } finally {
@@ -271,6 +284,50 @@ export default function ManagerAccountDashboard() {
       description: `${status === 'suspended' ? 'Suspend' : 'Activate'} ${landlord.full_name}'s account?`,
       refresh: 'landlords',
       run: (operationsPin, reason) => api.setLandlordStatus(landlord.id, { status, operationsPin, reason }, token),
+    });
+  }
+
+  // Same idea as AdminDashboard.jsx's toggleLandlordProperties - lists
+  // every apartment the landlord has added, cached per landlord so
+  // re-expanding is instant.
+  async function toggleLandlordProperties(landlordId) {
+    if (expandedPropertiesLandlordId === landlordId) {
+      setExpandedPropertiesLandlordId('');
+      return;
+    }
+    setExpandedPropertiesLandlordId(landlordId);
+    if (landlordPropertiesById[landlordId]) return; // already cached
+    setLandlordPropertiesLoading(true);
+    setLandlordPropertiesError('');
+    try {
+      const res = await api.getLandlordProperties(landlordId, token);
+      setLandlordPropertiesById((prev) => ({ ...prev, [landlordId]: res.properties || [] }));
+    } catch (err) {
+      setLandlordPropertiesError(err.message);
+    } finally {
+      setLandlordPropertiesLoading(false);
+    }
+  }
+
+  async function refreshLandlordProperties(landlordId) {
+    try {
+      const res = await api.getLandlordProperties(landlordId, token);
+      setLandlordPropertiesById((prev) => ({ ...prev, [landlordId]: res.properties || [] }));
+    } catch {
+      // Non-fatal - panel just shows stale data until collapsed/reopened.
+    }
+  }
+
+  // Delete one apartment out of a landlord's Properties panel -
+  // PIN+reason confirmed like every other write on this page. A
+  // landlord with more than one apartment can have any single one
+  // removed without touching the others.
+  function deletePropertyAction(property, landlordId) {
+    requestConfirm({
+      label: 'Delete apartment',
+      description: `Permanently delete the apartment "${property.name || 'this apartment'}"? This is irreversible.`,
+      run: (operationsPin, reason) => api.deleteLandlordProperty(landlordId, property.id, undefined, token, { operationsPin, reason }),
+      onSuccess: () => refreshLandlordProperties(landlordId),
     });
   }
 
@@ -323,12 +380,14 @@ export default function ManagerAccountDashboard() {
   }, [tenants, tenantSearch]);
 
   const filteredLandlords = useMemo(() => {
+    let list = landlords || [];
+    if (landlordStatusFilter !== 'all') list = list.filter((l) => l.subscription_status === landlordStatusFilter);
     const q = landlordSearch.trim().toLowerCase();
-    if (!q || !landlords) return landlords || [];
-    return landlords.filter((l) =>
+    if (!q) return list;
+    return list.filter((l) =>
       [l.full_name, l.phone, l.email, l.estate_name, l.location, l.county].filter(Boolean).some((f) => f.toLowerCase().includes(q))
     );
-  }, [landlords, landlordSearch]);
+  }, [landlords, landlordSearch, landlordStatusFilter]);
 
   function handleLogout() {
     localStorage.removeItem('rentapay_token');
@@ -482,6 +541,17 @@ export default function ManagerAccountDashboard() {
           <section className="admin-section">
             <div className="admin-section__header-row">
               <h2>All landlords</h2>
+              <select
+                className="admin-search-input"
+                style={{ maxWidth: 160 }}
+                value={landlordStatusFilter}
+                onChange={(e) => setLandlordStatusFilter(e.target.value)}
+              >
+                <option value="all">All statuses</option>
+                <option value="active">Active only</option>
+                <option value="trial">On trial</option>
+                <option value="suspended">Suspended only</option>
+              </select>
               <input
                 type="search"
                 className="admin-search-input"
@@ -498,16 +568,20 @@ export default function ManagerAccountDashboard() {
                   <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Estate</th><th>Location</th><th>Plan</th><th>Status</th><th>Expires</th><th>Actions</th></tr></thead>
                   <tbody>
                     {filteredLandlords.map((l) => (
-                      <tr key={l.id}>
+                      <React.Fragment key={l.id}>
+                      <tr className={expandedPropertiesLandlordId === l.id ? 'admin-table__row--expanded' : ''}>
                         <td>{l.full_name}</td>
                         <td>{l.phone}</td>
                         <td>{l.email || '-'}</td>
                         <td>{l.estate_name || '-'}</td>
                         <td>{[l.location, l.county].filter(Boolean).join(', ') || '-'}</td>
                         <td>{l.subscription_plan || '-'}</td>
-                        <td>{l.subscription_status}</td>
+                        <td><span className={`admin-status admin-status--${l.subscription_status}`}>{l.subscription_status}</span></td>
                         <td>{l.subscription_expires_at ? new Date(l.subscription_expires_at).toLocaleDateString('en-GB') : '-'}</td>
                         <td>
+                          <button type="button" className="admin-table__action" onClick={() => toggleLandlordProperties(l.id)}>
+                            {expandedPropertiesLandlordId === l.id ? 'Properties ▾' : 'Properties ▸'}
+                          </button>
                           {/* SECTION 6 - activate/suspend a landlord, PIN+reason confirmed. */}
                           {l.subscription_status === 'suspended' ? (
                             <button type="button" className="admin-table__action" onClick={() => setLandlordStatusAction(l, 'active')}>Activate</button>
@@ -516,6 +590,46 @@ export default function ManagerAccountDashboard() {
                           )}
                         </td>
                       </tr>
+                      {expandedPropertiesLandlordId === l.id && (
+                        <tr className="admin-table__subrow">
+                          <td colSpan={9}>
+                            <div className="admin-managers-panel">
+                              <p className="admin-managers-panel__title">Properties - {l.full_name}</p>
+                              {landlordPropertiesLoading && !landlordPropertiesById[l.id] && <Skeleton rows={2} />}
+                              {landlordPropertiesError && <p className="admin-section__hint admin-section__hint--error">{landlordPropertiesError}</p>}
+                              {landlordPropertiesById[l.id] && landlordPropertiesById[l.id].length === 0 && (
+                                <p className="admin-section__hint">No properties have been added for this landlord.</p>
+                              )}
+                              {landlordPropertiesById[l.id] && landlordPropertiesById[l.id].length > 0 && (
+                                <div className="admin-table-wrapper">
+                                  <table className="admin-table admin-table--nested">
+                                    <thead>
+                                      <tr><th>#</th><th>Property</th><th>Location</th><th>Units</th><th>Plan</th><th>Status</th><th>Expires</th><th></th></tr>
+                                    </thead>
+                                    <tbody>
+                                      {landlordPropertiesById[l.id].map((p, idx) => (
+                                        <tr key={p.id}>
+                                          <td>{idx + 1}</td>
+                                          <td>{p.name || '-'}</td>
+                                          <td>{[p.location, p.county].filter(Boolean).join(', ') || '-'}</td>
+                                          <td>{p.unit_limit ?? '-'}</td>
+                                          <td>{p.subscription_period_months ? `${p.subscription_period_months} mo` : '-'}</td>
+                                          <td><span className={`admin-status admin-status--${p.subscription_status}`}>{p.subscription_status || '-'}</span></td>
+                                          <td>{p.subscription_expires_at ? new Date(p.subscription_expires_at).toLocaleDateString('en-GB') : '-'}</td>
+                                          <td className="admin-table__actions">
+                                            <button type="button" className="admin-table__delete" onClick={() => deletePropertyAction(p, l.id)}>Delete</button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>

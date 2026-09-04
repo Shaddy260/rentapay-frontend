@@ -7,8 +7,9 @@
 // whenever gender hasn't been set yet (nothing forces anyone to
 // answer it), so this is purely additive - never a blocker.
 
-export function roleLabel(role, roleLevel, gender) {
+export function roleLabel(role, roleLevel, gender, accountLabel) {
   if (role === 'landlord') {
+    if (accountLabel === 'property_manager') return 'Property Manager';
     if (gender === 'female') return 'Landlady';
     return 'Landlord';
   }

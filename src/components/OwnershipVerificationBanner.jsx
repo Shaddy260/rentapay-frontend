@@ -68,6 +68,17 @@ export default function OwnershipVerificationBanner({ token }) {
       setFile(null);
       setJustSubmitted(true);
       load();
+      // FIX (direct request): the modal used to stay open after a
+      // successful submit, with just its two fields silently cleared -
+      // no confirmation the upload actually went through. A landlord
+      // reading that as "did nothing happen?" kept re-selecting the
+      // same file and tapping Submit again, which is exactly what
+      // produced 8 separate documents (and 8 separate admin emails)
+      // for the same proof. Now: close the modal automatically a beat
+      // after success (long enough to read the checkmark line inside
+      // it) so there's nothing left on screen inviting another tap,
+      // and the banner itself flips to the "submitted" message.
+      setTimeout(() => setShowModal(false), 1400);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to submit document.');
     } finally {
@@ -83,16 +94,16 @@ export default function OwnershipVerificationBanner({ token }) {
       <div className={`ownership-verification-banner ${isRejected ? 'ownership-verification-banner--rejected' : isPending ? 'ownership-verification-banner--pending' : ''}`}>
         <div className="ownership-verification-banner__text">
           {isPending && !justSubmitted && (
-            <span>⏳ Your ownership verification documents are under review. Your vacant units will appear on the public listings page once approved - everything else in your account works as normal.</span>
+            <span>⏳ Waiting for review. Once approved your units will appear automatically on the public listings. If not approved you will get notified and can call in for help via the Help feature in the portal.</span>
           )}
           {isPending && justSubmitted && (
-            <span>✅ Document submitted - it's now waiting on admin review.</span>
+            <span>✅ Submitted successfully, waiting for review. Once approved your units will appear automatically on the public listings. If not approved you will get notified and can call in for help via the Help feature in the portal.</span>
           )}
           {isRejected && (
-            <span>⚠️ Your ownership documents weren't approved{rejectionReason ? `: "${rejectionReason}"` : '.'} Please submit a new document to have your vacant units listed publicly.</span>
+            <span>⚠️ Your ownership documents weren't approved{rejectionReason ? `: "${rejectionReason}"` : '.'} Please submit a new document, or use the Help feature in the portal if you need assistance.</span>
           )}
           {status === 'unverified' && (
-            <span>📄 Verify that you own or manage your apartment(s) to have your vacant units appear on the public listings page. This is a one-time check to keep RentaPay free of fraudulent listings.</span>
+            <span>📄 Verify that you own or manage your apartment(s) to have your vacant units appear on the public listings page. This is a one time check to keep RentaPay free of fraudulent listings.</span>
           )}
         </div>
         <Button variant="secondary" onClick={() => { setShowModal(true); setJustSubmitted(false); setError(''); }}>
@@ -102,25 +113,33 @@ export default function OwnershipVerificationBanner({ token }) {
 
       {showModal && (
         <ModalShell title="Submit proof of ownership" onClose={() => setShowModal(false)}>
-          <p className="ownership-verification-banner__modal-hint">
-            Upload a document that shows you own or manage this property - e.g. a title deed, a rates/utility
-            bill in your name, or a management agreement. An admin reviews it before your vacant units go public.
-          </p>
-          {error && <p className="modal-error">{error}</p>}
-          <form className="ownership-verification-banner__form" onSubmit={handleUpload}>
-            <input
-              type="text"
-              placeholder="Label (e.g. Title deed, Rates bill)"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-            />
-            <input
-              type="file"
-              accept="application/pdf,image/jpeg,image/png,image/webp,.doc,.docx"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
-            <Button type="submit" variant="primary" disabled={uploading}>{uploading ? 'Submitting…' : 'Submit for review'}</Button>
-          </form>
+          {justSubmitted ? (
+            <p className="ownership-verification-banner__success">✅ Submitted successfully, waiting for review.</p>
+          ) : (
+            <>
+              <p className="ownership-verification-banner__modal-hint">
+                Upload a document that shows you own or manage this property, e.g. a title deed, a rates/utility
+                bill in your name, or a management agreement. An admin reviews it before your vacant units go public.
+              </p>
+              {error && <p className="modal-error">{error}</p>}
+              <form className="ownership-verification-banner__form" onSubmit={handleUpload}>
+                <input
+                  type="text"
+                  placeholder="Label (e.g. Title deed, Rates bill)"
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  disabled={uploading}
+                />
+                <input
+                  type="file"
+                  accept="application/pdf,image/jpeg,image/png,image/webp,.doc,.docx"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  disabled={uploading}
+                />
+                <Button type="submit" variant="primary" disabled={uploading}>{uploading ? 'Submitting…' : 'Submit for review'}</Button>
+              </form>
+            </>
+          )}
         </ModalShell>
       )}
     </>

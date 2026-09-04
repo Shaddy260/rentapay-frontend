@@ -20,6 +20,11 @@ export default function ExpensesPanel({ token, propertyId, canEdit = true }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // PAGINATION: the backend now returns a page at a time (see
+  // expense.controller.js) instead of every expense ever logged.
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
   const [saving, setSaving] = useState(false);
@@ -39,8 +44,12 @@ export default function ExpensesPanel({ token, propertyId, canEdit = true }) {
     setLoading(true);
     const params = {};
     if (propertyId && propertyId !== 'unassigned') params.propertyId = propertyId;
-    api.listExpenses(token, params)
-      .then((res) => setExpenses(res.expenses || []))
+    api.listExpenses(token, { ...params, page: 1 })
+      .then((res) => {
+        setExpenses(res.expenses || []);
+        setPage(1);
+        setHasMore(!!res.hasMore);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }
@@ -49,6 +58,29 @@ export default function ExpensesPanel({ token, propertyId, canEdit = true }) {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, propertyId]);
+
+  // "Load more" - appends the next page so switching to paginated
+  // fetching doesn't silently truncate what the panel currently shows;
+  // older expenses are still one click away instead of gone.
+  // NOTE: "This month" total above is computed from whatever pages have
+  // been loaded so far - for a landlord with more than 50 expenses in
+  // the current month, click "Load more" to pull in the rest before
+  // trusting that figure.
+  function loadMore() {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const params = {};
+    if (propertyId && propertyId !== 'unassigned') params.propertyId = propertyId;
+    const nextPage = page + 1;
+    api.listExpenses(token, { ...params, page: nextPage })
+      .then((res) => {
+        setExpenses((prev) => [...prev, ...(res.expenses || [])]);
+        setPage(nextPage);
+        setHasMore(!!res.hasMore);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoadingMore(false));
+  }
 
   const totalThisMonth = expenses
     .filter((e) => {
@@ -199,6 +231,14 @@ export default function ExpensesPanel({ token, propertyId, canEdit = true }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {hasMore && (
+        <div className="expenses-panel__load-more">
+          <button type="button" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
       )}
     </section>
   );

@@ -298,6 +298,17 @@ export default function Login() {
       return;
     }
 
+    // ZERO-TRUST RISK ENGINE (direct request): this login looked risky
+    // in context (new/unrecognized device, unusual hour, etc.) even
+    // though the password was correct, and this account has no TOTP
+    // configured - an emailed one-time code was sent instead.
+    if (res.needsStepUp) {
+      navigate('/verify-login-step-up', {
+        state: { accountType: res.accountType, accountId: res.accountId, fallbackIdentifier: identifier, message: res.message },
+      });
+      return;
+    }
+
     if (res.paymentPending) {
       try {
         // localStorage (not sessionStorage) so this survives the

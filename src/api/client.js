@@ -4,6 +4,7 @@
 // In dev, Vite proxies /api/* to http://localhost:5000 (see vite.config.js).
 
 import { cacheKeyFor, getCached, setCached, enqueueAction, flushQueuedActions } from '../utils/offlineDb.js';
+import { getDeviceFingerprint } from '../utils/deviceFingerprint.js';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -223,6 +224,16 @@ function endTrackedRequest() {
 async function request(path, { method = 'GET', body, token, queueable, queueDescription, keepalive, _isRetry = false } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
+  // ZERO-TRUST RISK ENGINE (backend: riskEngine.service.js) - lets the
+  // backend recognize "this same device" across logins/requests
+  // without any PII, so a genuinely new device (higher risk) can be
+  // told apart from the same phone/browser the account normally uses.
+  try {
+    headers['x-device-fingerprint'] = getDeviceFingerprint();
+  } catch {
+    // best-effort only - a missing header just means the backend
+    // treats this request as a weaker/unrecognized signal, never an error.
+  }
   const cacheKey = method === 'GET' ? cacheKeyFor(path, token) : null;
 
   let response;
@@ -348,6 +359,26 @@ async function request(path, { method = 'GET', body, token, queueable, queueDesc
     // request, without needing every single page to check for this
     // itself. Deliberately does NOT clear the token/log the person
     // out - they need to stay signed in to actually pay.
+    // ZERO-TRUST CONTINUOUS RISK CHECK (backend: verifyToken calling
+    // riskEngine.evaluateRequestRisk on every request). The session
+    // itself is still valid - this is deliberately NOT a logout -
+    // but the backend wants a fresh proof-of-identity before this (or
+    // any further sensitive) request goes through. Surfaced as a
+    // global event so a single top-level modal can handle it for
+    // every screen in the app, the same pattern as the lockdown/
+    // subscription-expired handling above.
+    if (response.status === 403 && data.stepUpRequired) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rentapay:step-up-required', { detail: { path, message: data.error } }));
+      }
+    }
+    // A session actively terminated by the continuous risk engine
+    // (e.g. device fingerprint AND IP both changed mid-session) - this
+    // one DOES require a full re-login, unlike stepUpRequired above.
+    if (response.status === 401 && data.riskTerminated) {
+      forceReLoginRedirect(data.error || 'This session was ended for your protection. Please log in again.');
+    }
+
     if (response.status === 403 && data.subscriptionExpired) {
       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/subscription') && !window.location.pathname.startsWith('/login')) {
         window.location.href = '/subscription';
@@ -537,6 +568,17 @@ export const api = {
   // tenant/manager/brand_ambassador) - only called when login() above
   // returns needsTotp: true.
   verifyLoginTotp: (payload) => request('/auth/verify-login-totp', { method: 'POST', body: payload }),
+  // ZERO-TRUST RISK ENGINE - login() returns needsStepUp: true (instead
+  // of needsTotp) when the login context looked risky (new device,
+  // unusual hour, etc.) on an account with no TOTP enabled. Completes
+  // that login the same way verifyLoginTotp completes a TOTP challenge.
+  verifyLoginStepUp: (payload) => request('/auth/step-up/login/verify', { method: 'POST', body: payload }),
+  // MID-SESSION step-up: call requestStepUp() as soon as a
+  // 'rentapay:step-up-required' event fires (see request() above),
+  // then confirmStepUp({ code }) once the person enters it. Both need
+  // the still-valid (if flagged) session token.
+  requestStepUp: (token) => request('/auth/step-up/session/request', { method: 'POST', token }),
+  confirmStepUp: (payload, token) => request('/auth/step-up/session/verify', { method: 'POST', body: payload, token }),
   loginWithGoogle: (payload) => request('/auth/google', { method: 'POST', body: payload }),
   sessionCheck: (token) => request('/auth/session-check', { token }),
   requestPasswordReset: (payload) => request('/auth/forgot-password/request', { method: 'POST', body: payload }),
@@ -642,7 +684,11 @@ export const api = {
   broadcastPlatformAnnouncement: (message, targetGroup, token) => request('/admin/announcements/broadcast', { method: 'POST', body: { message, targetGroup }, token }),
 
   // Community board + marketplace (tenant<->tenant, scoped to a property)
-  listCommunityPosts: (kind, token, propertyId) => request(`/community?kind=${kind}${propertyId ? `&propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
+  // `page` defaults to 1 server-side if omitted; kept optional here so
+  // every existing call site (which only ever passed kind/token/propertyId)
+  // keeps working unchanged.
+  listCommunityPosts: (kind, token, propertyId, page) =>
+    request(`/community?kind=${kind}${propertyId ? `&propertyId=${encodeURIComponent(propertyId)}` : ''}${page ? `&page=${page}` : ''}`, { token }),
   getCommunityUnreadCount: (token, propertyId) => request(`/community/unread-count${propertyId ? `?propertyId=${encodeURIComponent(propertyId)}` : ''}`, { token }),
   markCommunityRead: (postIds, token) => request('/community/mark-read', { method: 'POST', body: { postIds }, token }),
   createCommunityPost: (payload, token) => request('/community', { method: 'POST', body: payload, token }),
@@ -968,6 +1014,24 @@ export const api = {
   getAdminDashboard: (token) => request('/admin/dashboard', { token }),
   // Glow Dashboard §3.1 - System Health card.
   getSystemHealth: (token) => request('/admin/system-health', { token }),
+  // Zero-trust risk engine admin UI - AdminSecurityPanel.jsx.
+  getRiskEvents: (params, token) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params || {}).filter(([, v]) => v))).toString();
+    return request(`/admin/security/risk-events${qs ? `?${qs}` : ''}`, { token });
+  },
+  getRiskSummary: (token) => request('/admin/security/risk-events/summary', { token }),
+  getServiceIdentities: (token) => request('/admin/security/service-identities', { token }),
+  createServiceIdentity: (payload, token) => request('/admin/security/service-identities', { method: 'POST', body: payload, token }),
+  setServiceIdentityActive: (id, isActive, token) => request(`/admin/security/service-identities/${id}`, { method: 'PATCH', body: { isActive }, token }),
+  getServiceCallEvents: (params, token) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params || {}).filter(([, v]) => v))).toString();
+    return request(`/admin/security/service-calls${qs ? `?${qs}` : ''}`, { token });
+  },
+  getIpBans: (token) => request('/admin/security/ip-bans', { token }),
+  getWafBlocks: (params, token) => {
+    const qs = new URLSearchParams(Object.fromEntries(Object.entries(params || {}).filter(([, v]) => v))).toString();
+    return request(`/admin/security/waf-blocks${qs ? `?${qs}` : ''}`, { token });
+  },
   // Glow Dashboard Phase 4 item 2 - "Disputes & Reports" summary tile.
   getDisputesReportsSummary: (token) => request('/admin/disputes-reports-summary', { token }),
   // Glow Dashboard Phase 4 item 3 - "Tenant Growth" summary tile.
@@ -1043,6 +1107,8 @@ export const api = {
     return request(`/manager-account/my-logs${qs ? `?${qs}` : ''}`, { token });
   },
   listAllLandlords: (token) => request('/admin/landlords', { token }),
+  // FREE TRIAL (free-trial-build-plan.md, Phase 7): trial-abuse review report.
+  getTrialAbuseReport: (token) => request('/admin/landlords/trial-abuse-report', { token }),
   // FEATURE (spec item 10): landlords who started but never finished
   // registration/setup, with which step they stopped at.
   getIncompleteSignups: (token) => request('/admin/landlords/incomplete-signups', { token }),
@@ -1071,6 +1137,8 @@ export const api = {
   bulkDeleteLandlordAccounts: (landlordIds, password, token, extra = {}) => request('/admin/landlords/bulk', { method: 'DELETE', body: { landlordIds, password, ...extra }, token }),
   editLandlordSubscription: (landlordId, payload, token) => request(`/admin/landlords/${landlordId}/subscription`, { method: 'PATCH', body: payload, token }),
   getLandlordProperties: (landlordId, token) => request(`/admin/landlords/${landlordId}/properties`, { token }),
+  deleteLandlordProperty: (landlordId, propertyId, password, token, extra = {}) =>
+    request(`/admin/landlords/${landlordId}/properties/${propertyId}`, { method: 'DELETE', body: { password, ...extra }, token }),
   getLandlordManagers: (landlordId, token) => request(`/admin/landlords/${landlordId}/managers`, { token }),
   setManagerStatus: (managerId, payload, token) => request(`/admin/managers/${managerId}/status`, { method: 'PATCH', body: payload, token }),
   deleteManagerAccount: (managerId, password, token, extra = {}) => request(`/admin/managers/${managerId}`, { method: 'DELETE', body: { password, ...extra }, token }),

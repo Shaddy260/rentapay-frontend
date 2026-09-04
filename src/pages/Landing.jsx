@@ -102,7 +102,13 @@ export default function Landing() {
           <span className="landing__audience-icon">🏢</span>
           <h3>Landlords &amp; managers</h3>
           <p>Add properties and units, track who&apos;s paid, send reminders, and reconcile every rent payment&nbsp;- or connect your own Till/Paybill and let it collect and confirm itself, automatically, for good.</p>
-          <Link to="/register" className="landing__audience-link">Sign up as a landlord →</Link>
+          <Link
+            to="/register/setup?as=landlord"
+            className="landing__audience-link"
+            onClick={() => { if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('rentapay_signup_gate_passed', 'true'); }}
+          >
+            Sign up as a landlord →
+          </Link>
         </div>
         <div className="landing__audience-card">
           <span className="landing__audience-icon">🧾</span>

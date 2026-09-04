@@ -29,6 +29,7 @@ export default function AddUnit() {
   const [requiresDeposit, setRequiresDeposit] = useState(false);
   const [depositAmountExpected, setDepositAmountExpected] = useState('');
   const [unitLimit, setUnitLimit] = useState(null);
+  const [isTrial, setIsTrial] = useState(false);
   const [currentCount, setCurrentCount] = useState(null);
   const [properties, setProperties] = useState([]);
   // FIX (direct request: "every apartment be solely independent... I
@@ -59,6 +60,11 @@ export default function AddUnit() {
     Promise.all([api.getSubscriptionStatus(token, propertyId || undefined), api.listUnits(token, propertyId || undefined), api.listProperties(token)])
       .then(([sub, unitsRes, propsRes]) => {
         setUnitLimit(sub.unit_limit);
+        // FREE TRIAL (free-trial-build-plan.md, Phase 3): only ever
+        // true when this is scoped to the landlord as a whole (a trial
+        // only ever covers the first property), which is exactly when
+        // getSubscriptionStatus returns is_trial in the first place.
+        setIsTrial(!!sub.is_trial);
         setCurrentCount((unitsRes.units || []).length);
         setProperties(propsRes.properties || []);
       })
@@ -167,14 +173,18 @@ export default function AddUnit() {
       <Link to="/dashboard" className="add-tenant-back">← Back to dashboard</Link>
       <h1>Add a new unit</h1>
       {unitLimit != null && (
-        <p className="add-tenant-subtitle">{currentCount} of {unitLimit} units used on your current subscription.</p>
+        <p className="add-tenant-subtitle">
+          {isTrial ? `Free trial: showing ${currentCount} of ${unitLimit} units used. Subscribe to add more.` : `${currentCount} of ${unitLimit} units used on your current subscription.`}
+        </p>
       )}
 
       {error && <div className="add-tenant-error">{error}</div>}
 
       {atLimit ? (
         <div className="add-tenant-error">
-          You've reached your subscription's unit limit ({unitLimit}). Increase your unit count on your subscription to add more.
+          {isTrial
+            ? `You're on a free trial, limited to ${unitLimit} units. Subscribe to add more units and unlock the plan you need.`
+            : `You've reached your subscription's unit limit (${unitLimit}). Increase your unit count on your subscription to add more.`}
           <div className="u-mt-4">
             <Button variant="primary" onClick={() => navigate('/subscription')}>Manage subscription</Button>
           </div>

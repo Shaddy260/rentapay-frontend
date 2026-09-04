@@ -35,6 +35,13 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // PAGINATION: the backend now returns a page at a time (see
+  // community.controller.js) instead of every post ever made. `page`/
+  // `hasMore` track where we are; `loadingMore` distinguishes the
+  // initial spinner from the "Load more" button's own busy state.
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -68,10 +75,12 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
 
   const load = useCallback(() => {
     setLoading(true);
-    api.listCommunityPosts(kind, token, propertyId)
+    api.listCommunityPosts(kind, token, propertyId, 1)
       .then((res) => {
         const loadedPosts = res.posts || [];
         setPosts(loadedPosts);
+        setPage(1);
+        setHasMore(!!res.hasMore);
         // NOTIFICATION COUNTER (direct request): viewing this panel is
         // what "reads" it - mark every post just fetched as seen, then
         // tell the sidebar badge to refresh so it drops immediately
@@ -90,6 +99,31 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
   useEffect(() => {
     load();
   }, [load]);
+
+  // "Load more" - appends the next page rather than replacing what's
+  // shown, so switching to paginated fetching doesn't truncate what a
+  // landlord/tenant currently sees; they just have to ask for older
+  // posts explicitly.
+  function loadMore() {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    api.listCommunityPosts(kind, token, propertyId, nextPage)
+      .then((res) => {
+        const newPosts = res.posts || [];
+        setPosts((prev) => [...prev, ...newPosts]);
+        setPage(nextPage);
+        setHasMore(!!res.hasMore);
+        const postIds = newPosts.map((p) => p.id);
+        if (postIds.length) {
+          api.markCommunityRead(postIds, token)
+            .then(() => window.dispatchEvent(new Event('rentapay:community-read')))
+            .catch(() => {});
+        }
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoadingMore(false));
+  }
 
   async function submitPost(e) {
     e.preventDefault();
@@ -394,6 +428,14 @@ export default function CommunityPanel({ token, canModerate = false, propertyId 
             </li>
           ))}
         </ul>
+      )}
+
+      {hasMore && (
+        <div className="community-panel__load-more">
+          <Button type="button" variant="secondary" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? 'Loading…' : 'Load more'}
+          </Button>
+        </div>
       )}
 
       {lightbox && (

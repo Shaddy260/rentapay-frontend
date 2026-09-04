@@ -14,6 +14,7 @@ import AdminCredentialsPanel from '../components/AdminCredentialsPanel.jsx';
 import GeneralManagersPanel from '../components/GeneralManagersPanel.jsx';
 import AdminChangePasswordPanel from '../components/AdminChangePasswordPanel.jsx';
 import AdminRevokeSessionPanel from '../components/AdminRevokeSessionPanel.jsx';
+import AdminSecurityPanel from '../components/AdminSecurityPanel.jsx';
 import AdminHelpContactSettings from '../components/AdminHelpContactSettings.jsx';
 import SupportChatWidget from '../components/SupportChatWidget.jsx';
 import SupportAnalyticsPanel from '../components/SupportAnalyticsPanel.jsx';
@@ -110,6 +111,19 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const token = localStorage.getItem('rentapay_token');
   const role = localStorage.getItem('rentapay_role'); // 'admin' | 'general_manager' - GM shares this exact dashboard (Section 5)
+  // CLIENT-SIDE HARDENING: the real access control is already
+  // server-side (every /api/admin/* route requires verifyToken +
+  // requireRole('admin','general_manager') - see admin.routes.js), so
+  // this can't be bypassed by editing localStorage. But without this
+  // check, anyone signed in as ANY role who navigates straight to
+  // /admin-dashboard would still mount this whole component: the
+  // sidebar/tab chrome would render immediately (metrics API calls
+  // would then fail with 403, which - before this fix - was NOT
+  // treated the same as 401 below, so the page just sat there showing
+  // an error banner instead of leaving). Checking the role locally,
+  // before anything renders, means a non-admin session never sees the
+  // admin shell at all - it's bounced straight to /login.
+  const isAuthorizedRole = role === 'admin' || role === 'general_manager';
   // FIX ("download the app should be a TWA, not a PWA"): this used to
   // drive the beforeinstallprompt PWA flow via useInstallPrompt(); now
   // it just always offers the real signed APK download (unless
@@ -121,7 +135,7 @@ export default function AdminDashboard() {
   const APK_DOWNLOAD_PATH = '/downloads/app-release-signed.apk';
   const [showIOSInstallSteps, setShowIOSInstallSteps] = useState(false);
 
-  const [metrics, setMetrics] = useState(() => readAdminMetricsCache());
+  const [metrics, setMetrics] = useState(() => (isAuthorizedRole ? readAdminMetricsCache() : null));
   const [systemHealth, setSystemHealth] = useState(null);
   const [disputesReports, setDisputesReports] = useState(null);
   const [tenantGrowth, setTenantGrowth] = useState(null);
@@ -154,7 +168,7 @@ export default function AdminDashboard() {
   // PHASE 11 - carries a {baId, date} from the BA Security Report's
   // "Review" links into the Reconciliation tool's form, pre-filled.
   const [baReconcilePrefill, setBaReconcilePrefill] = useState(null);
-  const [loading, setLoading] = useState(() => !readAdminMetricsCache());
+  const [loading, setLoading] = useState(() => isAuthorizedRole && !readAdminMetricsCache());
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -167,7 +181,14 @@ export default function AdminDashboard() {
   const [incompleteSignupsLoaded, setIncompleteSignupsLoaded] = useState(false);
 
   const [landlordSearch, setLandlordSearch] = useState('');
-  const [landlordStatusFilter, setLandlordStatusFilter] = useState('all'); // 'all' | 'active' | 'suspended'
+  const [landlordStatusFilter, setLandlordStatusFilter] = useState('all'); // 'all' | 'active' | 'suspended' | 'trial'
+  // FREE TRIAL (free-trial-build-plan.md, Phase 7): loaded lazily,
+  // only once the "All landlords" tab has actually been opened - same
+  // pattern as incompleteSignups above, so this never costs a request
+  // on admin sessions that never visit the tab.
+  const [trialAbuseReport, setTrialAbuseReport] = useState(null);
+  const [trialAbuseReportLoading, setTrialAbuseReportLoading] = useState(false);
+  const [trialAbuseReportError, setTrialAbuseReportError] = useState('');
   const [drillDownHighlightEmail, setDrillDownHighlightEmail] = useState('');
   // Deep-link support: when a tenant is tapped in global search, we jump to
   // the units drilldown filtered/highlighted to that tenant's unit (Level A -
@@ -437,7 +458,14 @@ export default function AdminDashboard() {
   // first time each tab is opened - exactly like the Help Requests
   // tab already did.
   function load() {
-    if (!token) {
+    if (!token || !isAuthorizedRole) {
+      // No token, OR a token for a role that isn't admin/general_manager
+      // (e.g. a landlord/tenant who guessed or bookmarked this URL).
+      // Clear any stale cached metrics from a previous admin session on
+      // this browser so a later unauthorized visit can't display them
+      // even for an instant, then bounce out before any admin API is
+      // ever called.
+      writeAdminMetricsCache(null);
       navigate('/login');
       return;
     }
@@ -470,10 +498,17 @@ export default function AdminDashboard() {
         if (byKey.activity) setActivityLog(byKey.activity.logs || []);
       })
       .catch((err) => {
-        if (err instanceof ApiError && err.status === 401) {
+        // Treat 403 (authenticated but not admin/general_manager - e.g.
+        // role was tampered with client-side, or a permission was
+        // revoked mid-session) exactly the same as 401 (no/expired
+        // session): clear local session state and bounce to /login
+        // rather than leaving the admin shell sitting on screen behind
+        // an error banner, which is what happened before this fix.
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
           localStorage.removeItem('rentapay_token');
       localStorage.removeItem('rentapay_refresh_token');
           localStorage.removeItem('rentapay_role');
+          writeAdminMetricsCache(null);
           navigate('/login');
           return;
         }
@@ -539,6 +574,20 @@ export default function AdminDashboard() {
   }, [loadSidebarCounts]);
 
   useSharedPoll(loadSidebarCounts, 20000);
+
+  // FREE TRIAL (free-trial-build-plan.md, Phase 7, optional/recommended
+  // part): on-demand rather than auto-loaded with the rest of the tab -
+  // this report only matters when someone's actually checking for
+  // abuse, so there's no reason to spend a request on every visit to
+  // the "All landlords" tab.
+  function loadTrialAbuseReport() {
+    setTrialAbuseReportLoading(true);
+    setTrialAbuseReportError('');
+    api.getTrialAbuseReport(token)
+      .then((res) => setTrialAbuseReport(res.flagged || []))
+      .catch((err) => setTrialAbuseReportError(err.message))
+      .finally(() => setTrialAbuseReportLoading(false));
+  }
 
   useEffect(() => {
     if (activeTab === 'help') loadHelpRequests(helpFilter);
@@ -664,6 +713,21 @@ export default function AdminDashboard() {
     });
   }
 
+  // Delete one apartment out of a landlord's Properties panel - same
+  // admin-password/GM-PIN confirmation as handleDeleteManager below,
+  // just scoped to a property instead of a manager account. Works
+  // whether the landlord has one apartment or several.
+  function handleDeleteProperty(propertyId, propertyName, landlordId) {
+    setDangerError('');
+    setDangerPassword('');
+    setPendingDangerAction({
+      type: 'delete-property',
+      propertyId,
+      landlordId,
+      label: `Permanently delete the apartment "${propertyName || 'this apartment'}"`,
+    });
+  }
+
   function handleDeleteManager(managerId, managerName, landlordId) {
     setDangerError('');
     setDangerPassword('');
@@ -780,6 +844,21 @@ export default function AdminDashboard() {
             setLandlordManagersById((prev) => ({ ...prev, [landlordId]: res.managers || [] }));
           } catch {
             // Non-fatal, same as above - deletion already succeeded.
+          }
+        }
+      } else if (pendingDangerAction.type === 'delete-property') {
+        const res = await api.deleteLandlordProperty(pendingDangerAction.landlordId, pendingDangerAction.propertyId, dangerPassword, token);
+        setNotice(res.message || 'Apartment deleted.');
+        // Refresh just this landlord's properties list (bypass cache),
+        // same as delete-manager above.
+        const landlordId = pendingDangerAction.landlordId;
+        if (landlordId) {
+          try {
+            const res2 = await api.getLandlordProperties(landlordId, token);
+            setLandlordPropertiesById((prev) => ({ ...prev, [landlordId]: res2.properties || [] }));
+          } catch {
+            // Non-fatal - the panel will just show stale data until
+            // it's collapsed/reopened; the deletion already succeeded.
           }
         }
       } else if (pendingDangerAction.type === 'resume-lockdown') {
@@ -1024,6 +1103,7 @@ export default function AdminDashboard() {
             group: 'System',
             items: [
               { key: 'credentials', label: 'First-Time Credentials', icon: '🔑', onClick: () => setActiveTab('credentials') },
+              { key: 'security', label: 'Risk Events & Service Identities', icon: '🛡️', onClick: () => setActiveTab('security') },
               { key: 'activity', label: 'Activity Log', icon: '🕒', onClick: () => setActiveTab('activity') },
             ],
           },
@@ -1068,6 +1148,43 @@ export default function AdminDashboard() {
           <button className="admin-header__logout" onClick={handleLogout}>Log out</button>
         </div>
       </header>
+
+      {/* FIX (direct request): these three groups used to live inside
+          the Overview tab only, so an admin who lands on e.g. Help or
+          Payments never saw them and pending items could sit
+          unreviewed for days. Now global, rendered on every tab (not
+          just Overview), same sidebarCounts values the sidebar badges
+          already used. Split into three separate groups per direct
+          request, each its own visually distinct banner rather than
+          one combined list: ownership proof first, manual payments
+          second (both "priority" variant, each its own group per
+          IncomingItemsBanner's variant contract), everything else
+          third. */}
+      <div className="admin-global-banners">
+        <IncomingItemsBanner
+          variant="priority"
+          items={[
+            { key: 'landlord-ownership', icon: '🛡️', label: 'Landlords awaiting ownership verification', count: sidebarCounts.landlordOwnership, onClick: () => setActiveTab('landlord-ownership') },
+          ]}
+        />
+
+        <IncomingItemsBanner
+          variant="priority"
+          items={[
+            { key: 'landlord-payments', icon: '💳', label: 'Pending landlord manual payments awaiting confirmation', count: sidebarCounts.landlordPayments, onClick: () => setActiveTab('manual-subscription-payments') },
+          ]}
+        />
+
+        <IncomingItemsBanner
+          items={[
+            { key: 'help', icon: '❓', label: 'Open help requests', count: sidebarCounts.help, onClick: () => setActiveTab('help') },
+            { key: 'messages', icon: '💬', label: 'Unread messages', count: sidebarCounts.messages, onClick: () => navigate('/messages') },
+            { key: 'rating-flags', icon: '🚩', label: 'Rating flags awaiting review', count: sidebarCounts.ratingFlags, onClick: () => setActiveTab('rating-flags') },
+            { key: 'reported-accounts', icon: '⛔', label: 'Open account reports', count: sidebarCounts.reportedAccounts, onClick: () => setActiveTab('reported-accounts') },
+            { key: 'gm-pending-actions', icon: '✅', label: 'General Manager actions awaiting your confirmation', count: sidebarCounts.gmPendingActions, onClick: () => setActiveTab('gm-pending-actions') },
+          ]}
+        />
+      </div>
 
       {/* FIX (direct request): Global Search used to live inline in the
           header row, where it got squeezed to a near-unusable sliver
@@ -1175,7 +1292,7 @@ export default function AdminDashboard() {
             <h2>Confirm with your admin password</h2>
             <p style={{ color: '#666', fontSize: '0.9rem' }}>
               {pendingDangerAction.label}
-              {pendingDangerAction.type === 'delete-landlord' || pendingDangerAction.type === 'bulk-delete-landlords' || pendingDangerAction.type === 'delete-manager'
+              {pendingDangerAction.type === 'delete-landlord' || pendingDangerAction.type === 'bulk-delete-landlords' || pendingDangerAction.type === 'delete-manager' || pendingDangerAction.type === 'delete-property'
                 ? '. This is irreversible - re-enter your admin password to proceed.'
                 : '. Re-enter your admin password to proceed.'}
             </p>
@@ -1235,6 +1352,7 @@ export default function AdminDashboard() {
             <AdminCredentialsPanel token={token} />
           </>
         )}
+        {activeTab === 'security' && <AdminSecurityPanel token={token} role={role} />}
         {activeTab === 'general-managers' && <GeneralManagersPanel token={token} initialSearch={gmSearchPrefill} />}
         {activeTab === 'gm-pending-actions' && <GmPendingActionsPanel token={token} onReviewed={loadSidebarCounts} />}
         {activeTab === 'rating-flags' && <AdminRatingFlags token={token} />}
@@ -1508,25 +1626,10 @@ export default function AdminDashboard() {
 
             {/* FEATURE (direct request - payments banner separate and
                 prioritized, own dismiss state, not mixed into the
-                general list): same split as the landlord/manager/
-                caretaker Dashboard.jsx. */}
-            <IncomingItemsBanner
-              variant="priority"
-              items={[
-                { key: 'landlord-payments', icon: '💳', label: 'Pending landlord manual payments awaiting confirmation', count: sidebarCounts.landlordPayments, onClick: () => setActiveTab('manual-subscription-payments') },
-                { key: 'gm-pending-actions', icon: '✅', label: 'General Manager actions awaiting your confirmation', count: sidebarCounts.gmPendingActions, onClick: () => setActiveTab('gm-pending-actions') },
-              ]}
-            />
+                general list): moved to a global position under the
+                header (see right after <header> above) so it shows on
+                every tab, not just here. */}
 
-            <IncomingItemsBanner
-              items={[
-                { key: 'help', icon: '❓', label: 'Open help requests', count: sidebarCounts.help, onClick: () => setActiveTab('help') },
-                { key: 'messages', icon: '💬', label: 'Unread messages', count: sidebarCounts.messages, onClick: () => navigate('/messages') },
-                { key: 'rating-flags', icon: '🚩', label: 'Rating flags awaiting review', count: sidebarCounts.ratingFlags, onClick: () => setActiveTab('rating-flags') },
-                { key: 'landlord-ownership', icon: '🛡️', label: 'Landlords awaiting ownership verification', count: sidebarCounts.landlordOwnership, onClick: () => setActiveTab('landlord-ownership') },
-                { key: 'reported-accounts', icon: '⛔', label: 'Open account reports', count: sidebarCounts.reportedAccounts, onClick: () => setActiveTab('reported-accounts') },
-              ]}
-            />
 
             <section className="admin-section admin-section--danger">
               <h2>Emergency lockdown</h2>
@@ -1594,6 +1697,7 @@ export default function AdminDashboard() {
               >
                 <option value="all">All statuses</option>
                 <option value="active">Active only</option>
+                <option value="trial">On trial</option>
                 <option value="suspended">Suspended only</option>
               </select>
               <input
@@ -1639,6 +1743,45 @@ export default function AdminDashboard() {
               )}
             </div>
             {filteredLandlords.length === 0 && <p className="admin-section__hint">No landlords match "{landlordSearch}".</p>}
+
+            {/* FREE TRIAL (free-trial-build-plan.md, Phase 7, optional/
+                recommended part): flags any phone/email that shows up
+                more than once in trial_eligibility_log - a secondary,
+                human-reviewed net for anything the exact-match check in
+                registerLandlord() didn't catch (e.g. a near-duplicate
+                email). Never auto-blocks anyone - review only. */}
+            <div className="admin-trial-abuse-report">
+              <button type="button" className="ghost-link" disabled={trialAbuseReportLoading} onClick={loadTrialAbuseReport}>
+                {trialAbuseReportLoading ? 'Checking…' : 'Check for trial abuse'}
+              </button>
+              {trialAbuseReportError && <p className="admin-section__hint admin-section__hint--error">{trialAbuseReportError}</p>}
+              {trialAbuseReport && trialAbuseReport.length === 0 && (
+                <p className="admin-section__hint">No duplicate phone/email numbers found in the trial log - nothing to review.</p>
+              )}
+              {trialAbuseReport && trialAbuseReport.length > 0 && (
+                <div className="admin-trial-abuse-report__groups">
+                  <p className="admin-section__hint">
+                    {trialAbuseReport.length} {trialAbuseReport.length === 1 ? 'match' : 'matches'} flagged for manual review - none of these were auto-blocked.
+                  </p>
+                  {trialAbuseReport.map((group, idx) => (
+                    <div className="admin-trial-abuse-report__group" key={`${group.matchType}-${group.matchValue}-${idx}`}>
+                      <p className="admin-trial-abuse-report__group-title">
+                        Same {group.matchType} used {group.entries.length} times: <strong>{group.matchValue}</strong>
+                      </p>
+                      <ul>
+                        {group.entries.map((entry) => (
+                          <li key={entry.logId}>
+                            {entry.landlord ? entry.landlord.full_name : '(account since deleted)'} — {new Date(entry.createdAt).toLocaleDateString('en-GB')}
+                            {entry.landlord && ` — ${entry.landlord.subscription_status}${entry.landlord.is_trial ? ' (trial)' : ''}`}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="admin-table-wrapper">
             <table className="admin-table">
               <thead>
@@ -1769,12 +1912,14 @@ export default function AdminDashboard() {
                             <div className="admin-table-wrapper">
                               <table className="admin-table admin-table--nested">
                                 <thead>
-                                  <tr><th>#</th><th>Property</th><th>Location</th><th>Units</th><th>Plan</th><th>Status</th><th>Expires</th></tr>
+                                  <tr><th>#</th><th>Property</th><th>Location</th><th>Units</th><th>Plan</th><th>Status</th><th>Expires</th><th></th></tr>
                                 </thead>
                                 <tbody>
                                   {/* getLandlordProperties orders by created_at ascending, so
                                       index position IS signup order - 1st, 2nd, 3rd property
-                                      added, etc. */}
+                                      added, etc. Each apartment gets its own Delete action
+                                      here - a landlord with more than one property can have
+                                      any single one removed without touching the others. */}
                                   {landlordPropertiesById[l.id].map((p, idx) => (
                                     <tr
                                       key={p.id}
@@ -1787,6 +1932,9 @@ export default function AdminDashboard() {
                                       <td>{p.subscription_period_months ? `${p.subscription_period_months} mo` : '-'}</td>
                                       <td><span className={`admin-status admin-status--${p.subscription_status}`}>{p.subscription_status || '-'}</span></td>
                                       <td>{p.subscription_expires_at ? new Date(p.subscription_expires_at).toLocaleDateString('en-GB') : '-'}</td>
+                                      <td className="admin-table__actions">
+                                        <button disabled={busy} className="admin-table__delete" onClick={() => handleDeleteProperty(p.id, p.name, l.id)}>Delete</button>
+                                      </td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1990,14 +2138,16 @@ export default function AdminDashboard() {
                   onClick={() =>
                     downloadCsv(
                       'rentapay-activity-log',
-                      ['Date', 'Time', 'Actor', 'Action', 'Target'],
+                      ['Date', 'Time', 'Actor', 'Action', 'Reason', 'Target', 'IP'],
                       activityGroups.flatMap((group) =>
                         group.logs.map((log) => [
                           group.label,
                           new Date(log.created_at).toLocaleTimeString('en-GB'),
                           log.actor_type,
                           log.action,
+                          log.reason || '',
                           log.target_type || '',
+                          log.ip_address || '',
                         ])
                       )
                     )
@@ -2027,14 +2177,18 @@ export default function AdminDashboard() {
                 {expandedActivityDays.includes(group.dateKey) && (
                   <div className="admin-table-wrapper">
                   <table className="admin-table">
-                    <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th></th></tr></thead>
+                    <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>IP</th><th></th></tr></thead>
                     <tbody>
                       {group.logs.map((log) => (
                         <tr key={log.id}>
                           <td>{new Date(log.created_at).toLocaleTimeString('en-GB')}</td>
                           <td>{log.actor_type}</td>
-                          <td>{log.action}</td>
+                          <td>
+                            {log.action}
+                            {log.reason && <span className="admin-table__subtext"> ({log.reason})</span>}
+                          </td>
                           <td>{log.target_type || '-'}</td>
+                          <td>{log.ip_address || '-'}</td>
                           <td><button onClick={() => handleDeleteActivityEntry(log.id)}>Delete</button></td>
                         </tr>
                       ))}

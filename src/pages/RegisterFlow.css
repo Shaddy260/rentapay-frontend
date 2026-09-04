@@ -195,26 +195,47 @@
 /* FIX (direct request: "ensure they are visible, nothing should be
    hidden, whether in light or dark mode"): the glass text-color
    override above forces white text at the whole-panel level, but
-   later wizard steps (property setup, extra charges) use their own
-   dense data cards - cost-summary, unit-ledger, charge-unit-card,
-   duplicate-units-row - that keep their own light card background
-   (var(--color-surface-raised) etc) intentionally, since they carry
-   tabular data best kept on a plain readable surface. Left alone
-   those would now be white text on a near-white card. Scoping their
-   text back to the site's normal ink colors so they stay legible
-   regardless of the glass panel or the app's light/dark theme. */
+   later wizard steps (property setup, extra charges, manual payment)
+   use their own dense data cards - cost-summary, unit-ledger,
+   charge-unit-card, duplicate-units-row, payment-details-card - that
+   keep their own light card background (var(--color-surface-raised)
+   etc) intentionally, since they carry tabular data best kept on a
+   plain readable surface. Left alone those would now be white text
+   on a near-white card. Scoping their text back to the site's normal
+   ink colors so they stay legible regardless of the glass panel or
+   the app's light/dark theme. */
 .register-page__panel .cost-summary,
 .register-page__panel .unit-ledger,
 .register-page__panel .charge-unit-card,
-.register-page__panel .duplicate-units-row {
+.register-page__panel .duplicate-units-row,
+.register-page__panel .payment-details-card {
   color: var(--color-ink);
 }
 
 .register-page__panel .cost-summary *,
 .register-page__panel .unit-ledger *,
 .register-page__panel .charge-unit-card *,
-.register-page__panel .duplicate-units-row * {
+.register-page__panel .duplicate-units-row *,
+.register-page__panel .payment-details-card * {
   color: inherit;
+}
+
+/* FIX (found while auditing the above: "the field to enter the
+   number of units to duplicate is not visible, the number entered is
+   not seen"): `.register-page__panel .form-field input { color:#fff }`
+   further up this file has higher specificity (two classes + an
+   element) than the plain `.duplicate-units-row *` rule above (two
+   classes + a universal selector counts for nothing), so it was
+   still winning and forcing the duplicate-count input back to white
+   text on this light card - invisible until you highlighted it. Same
+   risk for any other input that ever lands inside one of these light
+   cards. Matching that selector's exact specificity so this always
+   wins for inputs/selects inside a light card, regardless of order. */
+.register-page__panel .duplicate-units-row .form-field input,
+.register-page__panel .duplicate-units-row .form-field select,
+.register-page__panel .payment-details-card .form-field input,
+.register-page__panel .payment-details-card .form-field select {
+  color: var(--color-ink);
 }
 
 .register-page__panel .unit-ledger__row-amount,
@@ -256,6 +277,19 @@
   font-size: var(--text-sm);
   margin: 0 0 var(--space-6) 0;
   line-height: 1.6;
+}
+
+.register-page__intro--role-notice {
+  background: var(--color-surface-raised, #fffbeb);
+  border: 1px solid var(--color-border, #fde68a);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--color-ink, inherit);
+}
+
+.register-page__intro--role-notice a {
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .register-page__referral-banner {

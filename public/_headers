@@ -24,3 +24,23 @@
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Security headers for the static SPA host (backend already sets its
+# own via helmet - see backend/src/server.js). Cloudflare Pages (and
+# Netlify) read this same /_headers file format for every response.
+#
+# script-src/style-src need 'unsafe-inline' because this app ships one
+# inline <script> in index.html (the admin/manager manifest-swap - see
+# that file's comment) and Vite/React inject inline styles at runtime;
+# tightening those to a nonce/hash would need a build-step change, not
+# just a headers file, so this is the honest baseline for how the app
+# is actually built today rather than a CSP that would just break it.
+# connect-src covers same-origin API calls, Sentry error reporting,
+# and Google Fonts; adjust if VITE_API_BASE_URL ever points at a
+# different origin than this site.
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.sentry.io https://*.ingest.sentry.io; frame-ancestors 'none'; base-uri 'self'; object-src 'none'

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { fieldErrorsFromApi } from '../utils/validators.js';
 import { useAppNavigate as useNavigate } from '../hooks/useAppNavigate.js';
 import StepRail from '../components/StepRail.jsx';
@@ -237,6 +238,26 @@ export default function RegisterFlow() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // HARDENING (direct request): the role gate (RegisterRoleGate.jsx)
+  // marks sessionStorage right before sending someone to this wizard,
+  // for exactly the two paths meant to reach it (choosing Landlord, or
+  // choosing Property Manager -> independently). Anyone reaching this
+  // URL WITHOUT that mark, typed directly or an old bookmarked link,
+  // never went through the gate's "which of these are you" question,
+  // so they're sent back to it instead of falling straight into
+  // account creation. Someone genuinely resuming (persisted wizard
+  // progress, or the login-driven resume above) already proved who
+  // they are by logging in or by being mid-flow, so neither of those
+  // is blocked by this check.
+  useEffect(() => {
+    if (persisted || resumingLoggedInLandlord) return;
+    if (typeof sessionStorage === 'undefined' || sessionStorage.getItem('rentapay_signup_gate_passed') !== 'true') {
+      navigate('/register');
+    }
+    // Only ever needs to run once, right as the page mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // PHASE 4 (BA referral-link signup): read ?ref=<code> from the URL
   // once on mount and resolve it to a display name ("Referred by
   // <name>") - never just echo the raw code back.
@@ -255,6 +276,18 @@ export default function RegisterFlow() {
   // These are two different UX contracts, not one field with a
   // pre-fill - hence the separate `referralFromLink` flag rather than
   // just checking "does the URL still have ?ref".
+  // Set by the signup role gate (RegisterRoleGate.jsx) via ?as=landlord
+  // or ?as=manager before ever reaching this wizard. Everything about
+  // the wizard and the account it creates is identical either way.
+  // The only difference is how the portal addresses the person
+  // afterward (see roleLabel.js), which is why this is sent through to
+  // registerLandlord as accountLabel rather than kept purely local.
+  const accountLabel = useMemo(() => {
+    if (typeof window === 'undefined') return 'landlord';
+    return new URLSearchParams(window.location.search).get('as') === 'manager' ? 'property_manager' : 'landlord';
+  }, []);
+  const isPropertyManagerSignup = accountLabel === 'property_manager';
+
   const referralFromLink = useMemo(() => {
     if (typeof window === 'undefined') return false;
     return !!new URLSearchParams(window.location.search).get('ref');
@@ -319,6 +352,11 @@ export default function RegisterFlow() {
   const [landlordId, setLandlordId] = useState(persisted?.landlordId ?? null);
   const [checkoutRequestId, setCheckoutRequestId] = useState(persisted?.checkoutRequestId ?? null);
   const [amountDue, setAmountDue] = useState(persisted?.amountDue ?? null);
+  // FREE TRIAL (free-trial-build-plan.md, Phase 2): true once
+  // registerLandlord() responds with { trial: true }. Skips the whole
+  // Payment step and shows trial specific copy on the step right after.
+  const [isTrial, setIsTrial] = useState(persisted?.isTrial ?? false);
+  const [trialUnitLimit, setTrialUnitLimit] = useState(persisted?.trialUnitLimit ?? null);
   // Payment (STK push / manual instructions) is only started once, when
   // the landlord lands on the Payment step after verifying their email -
   // this flag stops a page refresh from re-triggering a second STK
@@ -384,7 +422,14 @@ export default function RegisterFlow() {
         // the person entirely on a network hiccup.
         console.warn('Could not fetch real unit limit, falling back to form.unitsCount:', err.message);
       });
-  }, []);
+    // FREE TRIAL (Phase 3): a trial signup only gets its token minted
+    // partway through this page (right after the details step, see
+    // doHandleSubmitDetails), well after this effect's first run at
+    // mount would have found none. Re-running whenever stepIndex moves
+    // on catches that token as soon as it exists, so the real, capped
+    // trial unit_limit (not whatever unitsCount was typed on step 0)
+    // is what actually gets enforced on the Units step below.
+  }, [stepIndex]);
 
   // Persist the values that actually matter for resuming after a
   // refresh. NOT persisting `password` in plaintext past step 1 would
@@ -400,9 +445,11 @@ export default function RegisterFlow() {
       amountDue,
       paymentInitiated,
       defaultPropertyId,
+      isTrial,
+      trialUnitLimit,
       form: { fullName: form.fullName, phone: form.phone, whatsappNumber: form.whatsappNumber, email: form.email, unitsCount: form.unitsCount, periodMonths: form.periodMonths },
     });
-  }, [stepIndex, landlordId, checkoutRequestId, amountDue, paymentInitiated, defaultPropertyId, form.fullName, form.phone, form.email, form.unitsCount, form.periodMonths]);
+  }, [stepIndex, landlordId, checkoutRequestId, amountDue, paymentInitiated, defaultPropertyId, isTrial, trialUnitLimit, form.fullName, form.phone, form.email, form.unitsCount, form.periodMonths]);
 
   // FIX (direct request: "after manual confirmation by admin the page
   // does not automatically proceed... even after reloading several
@@ -576,12 +623,24 @@ export default function RegisterFlow() {
         email: form.email,
         password: form.password,
         gender: form.gender || undefined,
+        accountLabel,
         unitsCount: Number(form.unitsCount),
         periodMonths: Number(form.periodMonths),
         refCode: referralCode.trim() || undefined,
         emailVerification: emailVerify.verificationToken,
       });
       setLandlordId(res.landlordId);
+      // FREE TRIAL (free-trial-build-plan.md, Phase 2): no payment page
+      // is shown at all for a trial eligible signup. The backend already
+      // minted a session token in the same response (no separate login
+      // call needed), so this goes straight to the property step.
+      if (res.trial) {
+        setIsTrial(true);
+        setTrialUnitLimit(res.unitLimit ?? null);
+        storeSessionTokens(res.token, res.refreshToken);
+        setStepIndex(2);
+        return;
+      }
       setAmountDue(res.amountDue);
       // DIRECT REQUEST (same-page verification): email is already
       // confirmed by the time this call succeeds, so "Submit" now
@@ -1036,8 +1095,9 @@ export default function RegisterFlow() {
     const effectiveLimit = unitLimit ?? Number(form.unitsCount) ?? null;
     if (effectiveLimit != null && units.length >= effectiveLimit) {
       setError(
-        `You've reached your subscription limit of ${effectiveLimit} unit${effectiveLimit === 1 ? '' : 's'}. ` +
-          `To add more, increase your unit count on your subscription first.`
+        isTrial
+          ? `You're on a free trial, limited to ${effectiveLimit} units. Subscribe to add more units and unlock the plan you need.`
+          : `You've reached your subscription limit of ${effectiveLimit} unit${effectiveLimit === 1 ? '' : 's'}. To add more, increase your unit count on your subscription first.`
       );
       return;
     }
@@ -1081,8 +1141,10 @@ export default function RegisterFlow() {
     if (effectiveLimit != null && units.length + count > effectiveLimit) {
       const slotsLeft = Math.max(0, effectiveLimit - units.length);
       setError(
-        `That would add ${count} units, but your subscription only has ${slotsLeft} unit slot${slotsLeft === 1 ? '' : 's'} left ` +
-          `(limit ${effectiveLimit}, ${units.length} already added). Lower the number, or increase your unit count on your subscription first.`
+        isTrial
+          ? `You're on a free trial, limited to ${effectiveLimit} units. That would add ${count} units, but only ${slotsLeft} slot${slotsLeft === 1 ? '' : 's'} are left. Subscribe to add more units and unlock the plan you need.`
+          : `That would add ${count} units, but your subscription only has ${slotsLeft} unit slot${slotsLeft === 1 ? '' : 's'} left ` +
+            `(limit ${effectiveLimit}, ${units.length} already added). Lower the number, or increase your unit count on your subscription first.`
       );
       return;
     }
@@ -1309,6 +1371,22 @@ export default function RegisterFlow() {
           {stepIndex === 0 && (
             <>
               <h1>Let&apos;s get you set up</h1>
+              <p className="register-page__intro register-page__intro--role-notice">
+                {isPropertyManagerSignup ? (
+                  <>
+                    This creates a <strong>Property Manager</strong> account for someone managing a property independently, not as staff under a landlord.
+                    If you manage a property under a landlord as their manager or caretaker, ask that landlord to add you instead.
+                    You will receive login details by email to <Link to="/login">log in</Link>.
+                  </>
+                ) : (
+                  <>
+                    This creates a <strong>Landlord</strong> account.
+                    Are you a tenant? You do not need to sign up here.
+                    Ask your landlord to send you the onboarding link or add you directly,
+                    and you will receive login details by email to <Link to="/login">log in</Link> instead.
+                  </>
+                )}
+              </p>
               {referredByName && (
                 <div className="register-page__referral-banner">
                   Referred by <strong>{referredByName}</strong>
@@ -1447,7 +1525,7 @@ export default function RegisterFlow() {
                       <input id="unitsCount" type="number" min="1" required value={form.unitsCount} onChange={(e) => updateForm('unitsCount', e.target.value)} />
                     </div>
                     <div className="form-field">
-                      <label className="form-field__label" htmlFor="periodMonths">Subscription period (months)<InfoTip text="Any length you want - discounts apply automatically at 3, 6, and 12 months." /></label>
+                      <label className="form-field__label" htmlFor="periodMonths">Subscription period (months)</label>
                       <input
                         id="periodMonths"
                         type="number"
@@ -1579,9 +1657,14 @@ export default function RegisterFlow() {
           {/* STEP 2: Setup Wizard Step 1 - Property */}
           {stepIndex === 2 && (
             <>
-              <span className="success-badge">✓ Payment confirmed</span>
+              <span className="success-badge">{isTrial ? '✓ Free trial started' : '✓ Payment confirmed'}</span>
               <h1>Tell us about your property</h1>
-              <p className="register-page__intro">Setup Wizard - Step 1 of 4</p>
+              <p className="register-page__intro">Setup Wizard, Step 1 of 4</p>
+              {isTrial && (
+                <p className="register-page__intro">
+                  Welcome! You're on a 7 day free trial, capped at {trialUnitLimit || 10} units. Subscribe anytime to add more units and unlock the plan you need.
+                </p>
+              )}
               <form onSubmit={handlePropertySubmit} className="register-page__fields">
                 <div className="form-field">
                   <label className="form-field__label" htmlFor="estateName">Estate name</label>
@@ -1736,7 +1819,7 @@ export default function RegisterFlow() {
             <>
               <h1>Add your units</h1>
               <p className="register-page__intro">
-                Setup Wizard - Step 3 of 4. Each unit gets a permanent payment code automatically.
+                Setup Wizard, Step 3 of 4. Each unit gets a permanent payment code automatically.
                 {' '}
                 {(unitLimit ?? form.unitsCount) != null && (
                   <strong>
@@ -1744,6 +1827,11 @@ export default function RegisterFlow() {
                   </strong>
                 )}
               </p>
+              {isTrial && (
+                <p className="register-page__intro">
+                  Free trial: capped at {unitLimit ?? trialUnitLimit ?? 10} units. Subscribe anytime to add more.
+                </p>
+              )}
 
               <form onSubmit={handleAddUnit} className="add-unit-row">
                 <div className="form-field">

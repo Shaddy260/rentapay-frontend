@@ -339,21 +339,25 @@
 }
 
 .login-page__signup {
+  /* BUGFIX: this panel has a dark glass background, but this rule was
+     using --color-ink-soft (a dark gray meant for light backgrounds),
+     making the text invisible. Only the --create-account modifier
+     overrode it, so any .login-page__signup line without that modifier
+     (e.g. "Looking for a vacant unit? Browse listings") was unreadable. */
   text-align: center;
   font-size: var(--text-sm);
-  color: var(--color-ink-soft);
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
+}
+
+.login-page__signup a {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .login-page__signup--create-account {
   font-size: var(--text-base);
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.login-page__signup--create-account a {
-  color: #fff;
-  font-weight: 600;
-  text-decoration: underline;
 }
 
 .login-page__footer-links {

@@ -19,3 +19,10 @@
   font-size: var(--text-xs);
   color: var(--color-ink-soft);
 }
+
+.mini-line-chart__grid {
+  stroke: var(--color-ink-soft);
+  stroke-opacity: 0.08;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}

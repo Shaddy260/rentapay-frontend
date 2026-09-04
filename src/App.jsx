@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { ToastProvider } from './components/Toast.jsx';
 import InactivityLogout from './components/InactivityLogout.jsx';
 import OfflineBanner from './components/OfflineBanner.jsx';
+import StepUpChallengeModal from './components/StepUpChallengeModal.jsx';
 import ApkInstallRedirect from './components/ApkInstallRedirect.jsx';
 import UpdateChecker from './components/UpdateChecker.jsx';
 import ForceUpdateGate from './components/ForceUpdateGate.jsx';
@@ -42,7 +43,7 @@ import DownloadEffect from './components/DownloadEffect.jsx';
 // enforces a once-per-24h cap per subscriber so an active rental
 // market doesn't spam someone with a push every time any unit
 // anywhere goes vacant.
-const PUBLIC_ENGAGEMENT_PATHS = ['/', '/login', '/find-a-house', '/register', '/terms', '/privacy', '/status'];
+const PUBLIC_ENGAGEMENT_PATHS = ['/', '/login', '/find-a-house', '/register', '/register/setup', '/terms', '/privacy', '/status'];
 
 function PublicEngagementWidgets() {
   const location = useLocation();
@@ -65,6 +66,7 @@ function PublicEngagementWidgets() {
 // slower together.
 const VerifyAccount = lazy(() => import('./pages/VerifyAccount.jsx'));
 const VerifyLoginTotp = lazy(() => import('./pages/VerifyLoginTotp.jsx'));
+const VerifyLoginStepUp = lazy(() => import('./pages/VerifyLoginStepUp.jsx'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword.jsx'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
 const PublicListings = lazy(() => import('./pages/PublicListings.jsx'));
@@ -77,6 +79,7 @@ const BaPayoutSubmit = lazy(() => import('./pages/BaPayoutSubmit.jsx'));
 const LandlordLeadForm = lazy(() => import('./pages/LandlordLeadForm.jsx'));
 const BaTerms = lazy(() => import('./pages/BaTerms.jsx'));
 const RegisterFlow = lazy(() => import('./pages/RegisterFlow.jsx'));
+const RegisterRoleGate = lazy(() => import('./pages/RegisterRoleGate.jsx'));
 const AdminPortalAccess = lazy(() => import('./pages/AdminPortalAccess.jsx'));
 // SECTION 3 (General Manager dedicated login) - own screen, own URL,
 // separate from AdminPortalAccess and from the shared Login above.
@@ -142,6 +145,7 @@ export default function App() {
     <ToastProvider>
       <BrowserRouter>
         <OfflineBanner />
+        <StepUpChallengeModal />
         {/* FEATURE (direct request): plays a small animated confirmation
             badge next to any element marked data-download-fx, but only
             while dark mode is active - light mode is untouched. See
@@ -163,6 +167,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/verify-account" element={<VerifyAccount />} />
           <Route path="/verify-login-totp" element={<VerifyLoginTotp />} />
+          <Route path="/verify-login-step-up" element={<VerifyLoginStepUp />} />
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/find-a-house" element={<PublicListings />} />
@@ -183,7 +188,8 @@ export default function App() {
           <Route path="/ba-payout-edit" element={<BaPayoutSubmit />} />
           <Route path="/partner-with-us" element={<LandlordLeadForm />} />
           <Route path="/ba-terms" element={<BaTerms />} />
-          <Route path="/register" element={<RegisterFlow />} />
+          <Route path="/register" element={<RegisterRoleGate />} />
+          <Route path="/register/setup" element={<RegisterFlow />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/learn" element={<Navigate to="/resources" replace />} />

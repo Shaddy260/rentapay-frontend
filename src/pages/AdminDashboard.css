@@ -28,6 +28,19 @@
   z-index: 30;
 }
 
+/* FIX (direct request): ownership verification, manual payments, and
+   the general notice group all needed to be visible from any admin
+   tab, not just Overview, and to stay visible while scrolling too.
+   Sticks directly under the header (itself sticky at top: 0). Padding
+   here (not on the header) keeps the header's own height untouched. */
+.admin-global-banners {
+  position: sticky;
+  top: 64px;
+  z-index: 29;
+  padding: var(--space-3) var(--space-6) 0;
+  background: var(--color-page-bg, var(--color-surface));
+}
+
 .admin-header__left {
   display: flex;
   align-items: center;
@@ -373,6 +386,22 @@
 .admin-status--active { background: var(--color-success-bg); color: var(--color-mpesa-dark); }
 .admin-status--suspended { background: var(--color-error-bg); color: var(--color-error); }
 .admin-status--pending, .admin-status--warning { background: #FBF3EC; color: var(--color-accent); }
+/* FREE TRIAL (free-trial-build-plan.md, Phase 7) - distinct color for
+   landlords currently on trial so they stand out from a paid 'active'
+   subscription at a glance. */
+.admin-status--trial { background: #EAF1FF; color: #3B5FE0; }
+/* 'grace' and 'expired' were introduced by add-grace-period-subscription-status.sql
+   and add-expired-subscription-status.sql but never got their own badge
+   color, so they fell back to the table's unstyled default text - fixed
+   here while touching this block for the trial badge above. */
+.admin-status--grace { background: #FBF3EC; color: var(--color-accent); }
+.admin-status--expired { background: var(--color-error-bg); color: var(--color-error); }
+
+.admin-trial-abuse-report { margin: var(--space-3) 0; }
+.admin-trial-abuse-report__groups { margin-top: var(--space-2); display: flex; flex-direction: column; gap: var(--space-3); }
+.admin-trial-abuse-report__group { background: var(--color-error-bg); border-radius: var(--radius-md, 8px); padding: var(--space-3); }
+.admin-trial-abuse-report__group-title { font-weight: 600; margin: 0 0 var(--space-2); }
+.admin-trial-abuse-report__group ul { margin: 0; padding-left: var(--space-4, 20px); }
 /* Phase 8 - Today's Onboarded Landlords: "via <BA>" vs "Organic" tag. */
 .admin-status--via-ba { background: var(--color-success-bg); color: var(--color-mpesa-dark); }
 .admin-status--organic { background: var(--color-hairline); color: var(--color-text-secondary, #667); }
@@ -696,6 +725,22 @@ body.admin-drilldown-open {
 
 [data-theme='dark'] .admin-status--pending, .admin-status--warning {
   background: #5e3008;
+}
+
+/* FREE TRIAL (free-trial-build-plan.md, Phase 7) - dark-mode variants
+   for the trial/grace/expired badges added above, same pattern as the
+   pending/warning override just above. */
+[data-theme='dark'] .admin-status--trial {
+  background: #1f2f66;
+  color: #b9c8ff;
+}
+
+[data-theme='dark'] .admin-status--grace {
+  background: #5e3008;
+}
+
+[data-theme='dark'] .admin-status--expired {
+  background: #660f00;
 }
 
 [data-theme='dark'] .lockdown-active {

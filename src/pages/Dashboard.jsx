@@ -674,16 +674,34 @@ export default function Dashboard() {
   // still-active property below, renewing, or logging out.
   if (subscriptionExpired) {
     const otherProperties = properties.filter((p) => p.id !== activePropertyId);
+    // FREE TRIAL (free-trial-build-plan.md, Phase 6): the exact same
+    // lock gate a lapsed paid subscription uses, just with different
+    // headline/body copy when this expiry was a trial ending rather
+    // than a real subscription lapsing. Everything else below (switch
+    // property list, Renew now button, logout, help) is unchanged.
+    const isTrialExpired = subscriptionExpired && sub.isTrial && !sub.scopedToPropertyId;
     return (
       <div className="subscription-lock-gate">
         <div className="subscription-lock-gate__card">
-          <h1>{sub.scopedToPropertyId ? 'This apartment\u2019s subscription has ended' : 'Your RentaPay subscription has ended'}</h1>
+          <h1>
+            {isTrialExpired
+              ? isManager
+                ? "The landlord's free trial has ended"
+                : 'Your free trial has ended'
+              : sub.scopedToPropertyId
+                ? 'This apartment\u2019s subscription has ended'
+                : 'Your RentaPay subscription has ended'}
+          </h1>
           <p>
             {isManager
-              ? "The landlord's RentaPay subscription has ended. All access is locked, including yours, until it's renewed - contact them to renew it."
-              : sub.scopedToPropertyId
-                ? "All access to this apartment is locked until it's renewed - its dashboard, units, and payments are unavailable until then."
-                : "All access to RentaPay is locked until you renew - your dashboard, units, messages, and everything else are unavailable until then."}
+              ? isTrialExpired
+                ? "The landlord's free trial has ended. All access is locked, including yours, until they subscribe. Contact them to let them know."
+                : "The landlord's RentaPay subscription has ended. All access is locked, including yours, until it's renewed - contact them to renew it."
+              : isTrialExpired
+                ? "Your 7 day free trial has ended. Subscribe now to continue using RentaPay. Your dashboard, units, messages, and everything else are unavailable until you subscribe."
+                : sub.scopedToPropertyId
+                  ? "All access to this apartment is locked until it's renewed - its dashboard, units, and payments are unavailable until then."
+                  : "All access to RentaPay is locked until you renew - your dashboard, units, messages, and everything else are unavailable until then."}
           </p>
           <InfoTip text={<>
             Everything is saved and waiting exactly as you left it, and your tenants' portals keep working normally in the meantime.
@@ -862,7 +880,7 @@ export default function Dashboard() {
           <button type="button" className="portal-topbar__hamburger" aria-label="Menu" onClick={() => setSidebarOpen(true)}>☰</button>
           <div className="dashboard-header__brand-block">
             <div className="dashboard-header__brand">RentaPay</div>
-            <div className="dashboard-header__role-label">{roleLabel(role, roleLevel, summary?.viewerGender)}</div>
+            <div className="dashboard-header__role-label">{roleLabel(role, roleLevel, summary?.viewerGender, summary?.viewerAccountLabel)}</div>
           </div>
         </div>
 

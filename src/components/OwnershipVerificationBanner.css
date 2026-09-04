@@ -77,3 +77,14 @@
   background: #650601;
   color: #e6aea7;
 }
+
+/* FIX (direct request): inline success confirmation shown inside the
+   submit modal for the ~1.4s before it auto-closes, so a landlord
+   sees clear confirmation the upload went through instead of an
+   empty-looking form that invites a repeat tap. */
+.ownership-verification-banner__success {
+  font-weight: 600;
+  color: #1a7a3a;
+  text-align: center;
+  padding: var(--space-4) 0;
+}

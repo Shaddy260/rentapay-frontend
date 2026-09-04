@@ -144,19 +144,7 @@ export default function Terms() {
           and use most of the same day to day tools a landlord uses for the properties they have
           been given access to.
         </p>
-        <h3>3.3 General Manager</h3>
-        <p>
-          A general manager account is a more senior, trusted management role that a landlord may
-          choose to create, intended for someone who effectively runs the operational side of a
-          landlord's business across some or all of the landlord's properties. A general manager
-          protects sensitive actions behind their own personal four digit Operations PIN, set
-          during onboarding and changeable at any time from settings, which is separate from their
-          login password and is required again before certain higher risk actions can be
-          completed. A landlord retains the ability to review a general manager's actions through
-          an activity log, and certain general manager actions can be reviewed and, where
-          appropriate, reverted by the landlord.
-        </p>
-        <h3>3.4 Caretaker</h3>
+        <h3>3.3 Caretaker</h3>
         <p>
           A caretaker account is a more limited manager role, typically used for on site staff.
           A caretaker is usually able to confirm payments, submit meter readings, handle
@@ -165,7 +153,7 @@ export default function Terms() {
           billing, or seeing portfolio wide financial reports, unless the landlord has specifically
           extended additional permissions to that caretaker.
         </p>
-        <h3>3.5 Tenant</h3>
+        <h3>3.4 Tenant</h3>
         <p>
           A tenant account is associated with one specific rented unit at a time. A tenant can view
           their own balance and payment history, submit proof of a rent payment they have made
@@ -177,7 +165,7 @@ export default function Terms() {
           tenant cannot see another tenant's balance, payment history, or personal details, even
           within the same property.
         </p>
-        <h3>3.6 Brand Ambassador</h3>
+        <h3>3.5 Brand Ambassador</h3>
         <p>
           A Brand Ambassador is an independent representative who has agreed to a separate
           arrangement with RentaPay to introduce new landlords to the platform in exchange for a
@@ -189,7 +177,7 @@ export default function Terms() {
           Brand Ambassador's own conduct when contacting a prospective landlord remains that Brand
           Ambassador's responsibility.
         </p>
-        <h3>3.7 Account Security and Shared Identifiers</h3>
+        <h3>3.6 Account Security and Shared Identifiers</h3>
         <p>
           A phone number or an email address may only be associated with one active account of a
           given role at a time. RentaPay uses these identifiers, together with other technical
@@ -484,8 +472,10 @@ export default function Terms() {
         </p>
         <p>
           RentaPay does not verify the accuracy of listing details a landlord chooses to publish,
-          and is not responsible for a landlord's failure to keep a public listing up to date, for
-          example failing to mark a unit as no longer vacant once it has actually been let.
+          such as the rent amount or deposit requirements shown. A unit's vacant/occupied status is
+          not something a landlord sets by hand on the listing itself: it updates automatically
+          within RentaPay whenever a tenant moves out of that unit or a new tenant is confirmed
+          into it, and a unit only appears on these public pages while it is genuinely vacant.
           RentaPay is also not a party to, and does not facilitate or guarantee, any tenancy
           agreement that results from a contact made through a public listing.
         </p>
@@ -854,12 +844,16 @@ export default function Terms() {
           For quick reference, here is a short recap of the roles described fully in Section 3. A
           landlord owns a property listing and has full visibility and control over it. A property
           manager is added by a landlord to help run one or more properties, with permissions the
-          landlord sets. A general manager is a senior, trusted management role protected by its
-          own Operations PIN, with actions that remain reviewable by the landlord. A caretaker is a
-          more limited, typically on site role focused on payments, meter readings, and maintenance.
-          A tenant is tied to one specific unit and can see only their own records. A Brand
-          Ambassador introduces new landlords under a separate arrangement and sees only their own
-          introductions. This summary does not replace Section 3, which remains the authoritative
+          landlord sets. A caretaker is a more limited, typically on site role focused on
+          confirming payments, meter readings, maintenance, and day to day tenant contact, without
+          access to more sensitive financial controls such as changing rent amounts, editing
+          subscription billing, or seeing portfolio wide financial reports, unless the landlord
+          has specifically extended that access. A tenant is tied to one specific unit and can see only their own records. A
+          Brand Ambassador introduces new landlords under a separate arrangement and sees only their
+          own introductions. A general manager, where a landlord chooses to create one, is a
+          senior, trusted management role protected by its own Operations PIN, with actions that
+          remain reviewable by the landlord; see Section 28 for the authoritative description of
+          that role. This summary does not replace Section 3, which remains the authoritative
           description of each role's permissions.
         </p>
 
