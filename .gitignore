@@ -1,24 +1,17 @@
 # Dependencies - reinstalled from package-lock.json, never committed.
 node_modules/
-
 # Build output.
 dist/
-
 # Secrets - never commit real credentials.
 .env
 .env.local
 .env.*.local
-
+.env.*
+!.env.example
 *.log
-
+.DS_Store
 # IMPORTANT: package-lock.json is intentionally NOT ignored.
 # It pins exact dependency versions across every machine/deploy that
 # installs this app - without it, "works on my machine" bugs and
 # version-drift vulnerabilities become possible. Always commit it
 # alongside any package.json change. See ../backend/SECURITY-MAINTENANCE.md.
-node_modules/
-dist/
-.env
-.env.*
-!.env.example
-.DS_Store
