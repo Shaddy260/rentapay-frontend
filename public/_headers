@@ -35,12 +35,24 @@
 # tightening those to a nonce/hash would need a build-step change, not
 # just a headers file, so this is the honest baseline for how the app
 # is actually built today rather than a CSP that would just break it.
-# connect-src covers same-origin API calls, Sentry error reporting,
-# and Google Fonts; adjust if VITE_API_BASE_URL ever points at a
-# different origin than this site.
+# connect-src covers same-origin API calls, the actual backend origins
+# (Fly.io app + the api.rentapay.co.ke custom domain - keep BOTH until
+# every deploy env is confirmed to use only one), Sentry error
+# reporting, and Google Sign-In's own endpoints. script-src/frame-src
+# need Google's accounts.google.com for the Sign-In button's script
+# and popup. Cloudflare's own analytics beacon is allowed too, since
+# Cloudflare Pages injects it automatically regardless of this file.
+#
+# FIX (Sept 2026 - direct request: "Could not reach RentaPay" showing
+# even though the backend was verified healthy): connect-src was
+# missing the backend's own origins entirely, so EVERY fetch to the
+# API - login included - was being silently blocked by the browser
+# itself before it ever left the machine. This looked exactly like a
+# network/DNS/backend outage from the user's side, but was actually
+# this file being too strict for where the API actually lives.
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rentapay-backend.fly.dev https://api.rentapay.co.ke https://*.sentry.io https://*.ingest.sentry.io; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rentapay-backend.fly.dev https://api.rentapay.co.ke https://accounts.google.com https://*.sentry.io https://*.ingest.sentry.io https://static.cloudflareinsights.com; frame-src https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
