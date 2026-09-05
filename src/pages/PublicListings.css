@@ -1,0 +1,559 @@
+.public-listings {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+/* Terms & Conditions gate - same rotating photo background + glass
+   card treatment as the login page (HeroPhotoBackground, reused). */
+.public-listings-gate {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #14201a;
+  padding: var(--space-4);
+}
+.public-listings-gate__photo-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+.public-listings-gate__photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 1.6s ease-in-out;
+}
+.public-listings-gate__photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 16, 12, 0.55) 0%, rgba(10, 16, 12, 0.7) 60%, rgba(10, 16, 12, 0.85) 100%);
+}
+.public-listings-gate__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-8) var(--space-6);
+  background: rgba(20, 30, 24, 0.45);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  text-align: center;
+}
+.public-listings-gate__brand {
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+}
+.public-listings-gate__panel h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin: var(--space-3) 0 var(--space-2);
+}
+.public-listings-gate__panel p {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-5);
+}
+.public-listings-gate__panel p a {
+  color: #fff;
+  text-decoration: underline;
+}
+.public-listings-gate__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: var(--space-5);
+  font-size: var(--text-sm);
+}
+.public-listings-gate__checkbox input {
+  width: 16px;
+  height: 16px;
+}
+.public-listings-gate__panel .btn-primary {
+  width: 100%;
+}
+
+.public-listings__email-box {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.1), rgba(46, 125, 50, 0.04));
+  border: 2px solid #2E7D32;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(46, 125, 50, 0.15);
+}
+.public-listings__email-box label {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f7a3f;
+  margin-bottom: 8px;
+}
+.public-listings__email-box input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1.5px solid #bcd9c4;
+  box-sizing: border-box;
+}
+.public-listings__email-box input:focus {
+  outline: none;
+  border-color: #2E7D32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+}
+.public-listings__email-input--error {
+  border-color: var(--color-error, #c0392b) !important;
+}
+.public-listings__email-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-error, #c0392b);
+}
+.public-listings__header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.public-listings__brand {
+  font-weight: 700;
+  color: var(--color-primary, #2E7D32);
+  text-decoration: none;
+}
+.public-listings__header h1 {
+  margin: 8px 0 4px;
+}
+.public-listings__header p {
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+/* FEATURE (direct request): persistent fraud-report notice on the
+   public listings feed - this is the one page a scammer impersonating
+   a landlord/caretaker is most likely to be encountered on, since
+   it's open to anyone with no account or vetting. Deliberately always
+   visible (not dismissible) rather than a one-time toast, so it's
+   still there for someone browsing on their fifth visit, not just
+   their first. */
+.public-listings__fraud-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--color-warning-bg, #fff4e5);
+  border: 1px solid var(--color-warning-border, #f0c36d);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-ink, #4a3200);
+}
+.public-listings__fraud-banner-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.public-listings__fraud-banner strong {
+  display: block;
+  margin-bottom: 2px;
+}
+.public-listings__fraud-banner a {
+  color: var(--color-primary, #2E7D32);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.public-listings__search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 20px 0 28px;
+}
+.public-listings__search-input {
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  width: 100%;
+  max-width: 520px;
+  font-size: 1em;
+}
+.public-listings__search-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #2E7D32);
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
+}
+.public-listings__grid {
+  display: grid;
+  /* Sized so ~4 cards comfortably fit per row on a typical desktop
+     viewport, while still wrapping down responsively on smaller
+     screens instead of ever stretching a single card full-width. */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.public-listings__card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-surface-raised);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  /* Uniform glowing edge accent on the right side of every card - a
+     consistent visual/design touch applied to all listings equally
+     (not a "premium" indicator; every unit is the same tier). */
+  box-shadow: 3px 0 12px -2px rgba(46, 125, 50, 0.45);
+  transition: box-shadow 0.2s ease;
+}
+.public-listings__card::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  right: -1px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(46, 125, 50, 0), rgba(46, 125, 50, 0.9), rgba(46, 125, 50, 0));
+  filter: blur(1px);
+  pointer-events: none;
+}
+.public-listings__card:hover {
+  box-shadow: 4px 0 18px -1px rgba(46, 125, 50, 0.6);
+}
+.public-listings__photo {
+  /* DIRECT REQUEST: banner was too tall (4:3 at full card width made
+     it dominate the card, especially on a single-column mobile
+     layout). 16/3 is roughly a quarter of the old height at the same
+     width. */
+  aspect-ratio: 16 / 3;
+  background: #f2f2f2;
+  position: relative;
+  width: 100%;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  display: block;
+}
+.public-listings__photo:disabled {
+  cursor: default;
+}
+.public-listings__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.public-listings__photo-count {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.78em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.public-listings__photo-location {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  max-width: calc(100% - 16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.78em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.public-listings__maps-link {
+  display: inline-block;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #1f6f5c;
+  text-decoration: none;
+  margin: 4px 0 8px;
+}
+.public-listings__maps-link:hover {
+  text-decoration: underline;
+}
+.public-listings__photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4em;
+  color: #ccc;
+}
+.public-listings__info {
+  padding: 12px 14px 16px;
+}
+.public-listings__info h3 {
+  margin: 0 0 4px;
+  font-size: 1.05em;
+}
+.public-listings__location {
+  color: var(--color-ink-soft);
+  font-size: 0.85em;
+  margin: 0 0 6px;
+}
+.public-listings__rent {
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+.public-listings__description {
+  font-size: 0.9em;
+  color: var(--text-secondary, #555);
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+.public-listings__contact-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #25D366;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.public-listings__contact-btn:disabled {
+  opacity: 0.7;
+}
+
+/* FEATURE (direct request): collapsible per-property grouping, with
+   the property's tenant-reviewed reputation shown at the section
+   header, and per-unit listing-status/deposit badges. */
+.public-listings__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.public-listings__property-group {
+  border: 1px solid var(--color-hairline, #e2e2df);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.public-listings__property-header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--color-surface-soft, #f7f7f5);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.95em;
+}
+.public-listings__property-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.public-listings__property-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.public-listings__property-header-text strong {
+  font-size: 1.02em;
+  line-height: 1.3;
+}
+.public-listings__property-header-text .public-listings__location {
+  margin: 0;
+}
+.public-listings__property-toggle {
+  font-size: 0.8em;
+  color: var(--color-ink-soft);
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.public-listings__unit-count {
+  color: var(--color-ink-soft);
+  font-size: 0.85em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.public-listings__property-group--single {
+  border: none;
+}
+.public-listings__property-group--single .public-listings__card {
+  border-radius: 10px;
+}
+.public-listings__card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-hairline, #e2e2df);
+}
+.public-listings__card-meta strong {
+  font-size: 1.02em;
+}
+.public-listings__card-meta .public-listings__location {
+  margin: 0;
+}
+.public-listings__reputation {
+  font-weight: 600;
+  color: #b8860b;
+  white-space: nowrap;
+  font-size: 0.9em;
+}
+.public-listings__reputation em {
+  font-weight: 400;
+  font-style: normal;
+  color: var(--color-ink-soft);
+}
+.public-listings__reputation--none {
+  color: var(--color-ink-soft);
+  font-weight: 400;
+}
+.public-listings__property-group .public-listings__grid {
+  padding: 14px 16px 16px;
+}
+.public-listings__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.public-listings__status-badge,
+.public-listings__deposit-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.public-listings__status-badge--active {
+  background: #e6f4ea;
+  color: #1e7a34;
+}
+.public-listings__status-badge--booked {
+  background: #fdecea;
+  color: #b23b2e;
+}
+.public-listings__status-badge--planned {
+  background: #fff4e0;
+  color: #9a6300;
+}
+.public-listings__deposit-badge--required {
+  background: #eef1fb;
+  color: #37437a;
+}
+.public-listings__deposit-badge--none {
+  background: #f0f0ee;
+  color: #666;
+}
+
+/* DIRECT REQUEST: contact picker (landlord / manager / caretaker) so
+   a tenant can choose who to WhatsApp instead of always being
+   silently routed to whichever one the backend used to pick first. */
+.public-listings__contact-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.public-listings__contact-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border: 1px solid var(--color-hairline, #E4DFD8);
+  border-radius: var(--radius-md, 10px);
+  background: var(--color-surface-raised, #fff);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.public-listings__contact-option:hover {
+  background: var(--color-surface-sunken, #F5F5F0);
+}
+
+.public-listings__terms-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.public-listings__terms-checkbox input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .public-listings__photo {
+  background: var(--color-surface-raised);
+}
+
+[data-theme='dark'] .public-listings__status-badge--active {
+  background: #145226;
+  color: #a7e7b6;
+}
+
+[data-theme='dark'] .public-listings__status-badge--booked {
+  background: #660b00;
+  color: #e6aea7;
+}
+
+[data-theme='dark'] .public-listings__status-badge--planned {
+  background: #664200;
+  color: #f7d597;
+}
+
+[data-theme='dark'] .public-listings__deposit-badge--required {
+  background: #0a1d5c;
+  color: #b0b8de;
+}
+
+[data-theme='dark'] .public-listings__deposit-badge--none {
+  background: var(--color-surface-raised);
+  color: #cfbebe;
+}

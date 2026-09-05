@@ -1,0 +1,43 @@
+<svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif">
+  <rect width="1200" height="720" fill="#FAF7F2"/>
+  <rect width="1200" height="64" fill="#0F3D3E"/>
+  <text x="32" y="40" fill="#FFFFFF" font-size="22" font-weight="700" font-family="Fraunces, Georgia, serif">RentaPay</text>
+  <text x="150" y="40" fill="#E8A574" font-size="13" font-weight="600" letter-spacing="1">TENANT</text>
+  <circle cx="1140" cy="32" r="16" fill="#1A5C5D"/>
+  <text x="1140" y="37" fill="#fff" font-size="13" text-anchor="middle">JW</text>
+
+  <!-- centered card, phone-ish -->
+  <rect x="380" y="110" width="440" height="560" rx="18" fill="#FFFFFF" stroke="#DCD5C8"/>
+
+  <text x="600" y="160" fill="#5C6663" font-size="13" text-anchor="middle">Sunrise Apartments — Unit A3</text>
+  <text x="600" y="192" fill="#1B2421" font-size="20" font-weight="700" text-anchor="middle" font-family="Fraunces, Georgia, serif">Rent due 5th of each month</text>
+
+  <rect x="420" y="222" width="360" height="120" rx="10" fill="#0F3D3E"/>
+  <text x="600" y="264" fill="#DCD5C8" font-size="13" text-anchor="middle">Amount due</text>
+  <text x="600" y="308" fill="#FFFFFF" font-size="30" font-weight="700" text-anchor="middle">KES 25,000</text>
+
+  <rect x="420" y="360" width="360" height="46" rx="8" fill="#3DA535"/>
+  <text x="600" y="389" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">Pay with M-Pesa</text>
+
+  <text x="600" y="432" fill="#5C6663" font-size="12" text-anchor="middle">or record a cash / bank payment with your caretaker</text>
+
+  <line x1="420" y1="456" x2="780" y2="456" stroke="#DCD5C8"/>
+  <text x="420" y="486" fill="#1B2421" font-size="14" font-weight="700">Payment history</text>
+
+  <text x="420" y="516" fill="#1B2421" font-size="13">Jul 3, 2026</text>
+  <text x="700" y="516" fill="#1B2421" font-size="13" text-anchor="end">KES 25,000</text>
+  <rect x="716" y="502" width="64" height="20" rx="10" fill="#EAF4E8"/>
+  <text x="748" y="516" fill="#2E7D32" font-size="11" font-weight="600" text-anchor="middle">Receipt</text>
+
+  <text x="420" y="548" fill="#1B2421" font-size="13">Jun 4, 2026</text>
+  <text x="700" y="548" fill="#1B2421" font-size="13" text-anchor="end">KES 25,000</text>
+  <rect x="716" y="534" width="64" height="20" rx="10" fill="#EAF4E8"/>
+  <text x="748" y="548" fill="#2E7D32" font-size="11" font-weight="600" text-anchor="middle">Receipt</text>
+
+  <rect x="420" y="576" width="360" height="1" fill="#F3F4F6"/>
+  <circle cx="440" cy="606" r="10" fill="#C1622D"/>
+  <text x="440" y="611" fill="#fff" font-size="11" text-anchor="middle">?</text>
+  <text x="460" y="611" fill="#1B2421" font-size="13">Need help? Call, WhatsApp, or email support</text>
+
+  <text x="780" y="654" fill="#B0A996" font-size="11" text-anchor="end">Illustrative preview — fictional data</text>
+</svg>

@@ -1,0 +1,187 @@
+.help-button {
+  /* FIX (direct request: "help button... not visible in white theme
+     but in dark theme it appears"): this renders inside the shared
+     .portal-topbar, whose background is var(--color-surface-raised) -
+     white in light theme, dark in dark theme. The old rule hardcoded
+     white text/border, so it vanished against the white light-theme
+     topbar and only ever looked right by accident in dark mode. Using
+     the same tokens as the other topbar controls (e.g. quick-action-btn)
+     keeps it visible either way. */
+  background: transparent;
+  border: 1px solid var(--color-hairline);
+  color: var(--color-primary);
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.help-button:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+/* FIX (direct request: "help button... in dark theme it isn't
+   visible" - Dashboard's quick-action version): Dashboard renders
+   this button with renderAs="quick-action-btn help-button" so it
+   keeps the shared quick-actions layout (padding/border/hover from
+   .quick-action-btn) but this more specific selector wins on color,
+   overriding quick-action-btn's --color-primary-dark (a near-black
+   teal that's invisible against the dark theme's dark surfaces)
+   without changing the color of any other quick-action button. */
+.quick-action-btn.help-button {
+  color: var(--color-primary);
+}
+
+.login-page__help-link {
+  background: none;
+  border: none;
+  color: var(--color-primary, #0F3D3E);
+  font-size: var(--text-sm);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: var(--space-2, 0.5rem);
+}
+.login-page__help-link:hover {
+  color: var(--color-accent, #C1622D);
+}
+
+.help-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 36, 33, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* FIX: this modal is portaled to document.body and can be opened
+     from the SubscriptionLockGate screen (Dashboard.jsx / the
+     standalone SubscriptionLockGate.jsx), which renders at
+     z-index: 2000 (see SubscriptionLockGate.css). At the old
+     z-index: 950 this overlay/card painted BEHIND the lock screen -
+     "Get help" appeared to do nothing because the modal was there,
+     just invisible and unclickable underneath the lock card. Raised
+     above every other overlay in the app (lock gate 2000, dropdowns/
+     toasts lower still) so Help always renders on top no matter which
+     screen it's opened from. */
+  z-index: 2100;
+  padding: var(--space-4);
+}
+
+.help-modal-card {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+.help-modal-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.help-modal-card__close {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+
+.help-channels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.help-channel {
+  display: block;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-hairline);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--color-ink);
+  background: var(--color-surface-raised);
+}
+
+.help-channel:hover {
+  border-color: var(--color-primary);
+}
+
+/* Was a solid --color-success-bg block behind --color-mpesa-dark text -
+   readable in isolation but, sitting directly above the plain Call/
+   Email rows, read as "the help UI has a green background" and lost
+   all contrast once the same green tokens got dark-theme values.
+   Kept as a slim brand-colored left edge instead of a full fill, so
+   it's still identifiable as WhatsApp but the row itself uses the
+   same always-legible text/background as every other channel. */
+.help-channel--whatsapp {
+  border-left: 3px solid var(--color-mpesa);
+}
+
+.help-modal-or {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin-bottom: var(--space-2);
+}
+
+.help-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.help-form input, .help-form textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+}
+
+.help-form button {
+  margin-top: var(--space-2);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 0.6rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.help-form__error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.help-chat-cta {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2) 0 0;
+}
+
+.help-success {
+  text-align: center;
+}
+
+.help-success button {
+  margin-top: var(--space-3);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}

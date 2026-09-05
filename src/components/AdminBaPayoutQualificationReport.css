@@ -1,0 +1,203 @@
+.admin-ba-qr__generate-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-qr__period-input {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-qr__period-label {
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-muted, #888);
+}
+
+.admin-ba-qr__error {
+  color: #A33;
+  margin-bottom: 12px;
+}
+
+.admin-ba-qr__empty {
+  color: var(--color-muted, #888);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-qr__body {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.admin-ba-qr__sidebar {
+  flex: 0 0 220px;
+}
+
+.admin-ba-qr__sidebar h4 {
+  margin: 0 0 8px;
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-muted, #888);
+}
+
+.admin-ba-qr__report-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 420px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.admin-ba-qr__report-btn {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--color-border, #E4DFD8);
+  background: var(--color-surface, #fff);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-ba-qr__report-btn span {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-muted, #888);
+}
+
+.admin-ba-qr__report-btn--active {
+  border-color: var(--color-ink, #22282A);
+  background: var(--color-ink-tint, #f4f2ee);
+}
+
+.admin-ba-qr__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-ba-qr__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.admin-ba-qr__summary-totals {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.admin-ba-qr__export-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-ba-qr__qualifies {
+  color: #2e7d32;
+}
+
+.admin-ba-qr__not-qualifies {
+  color: #e65100;
+}
+
+.admin-ba-qr__amount-owed {
+  color: var(--color-ink, #22282A);
+}
+
+.admin-ba-qr__ba-block {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.admin-ba-qr__ba-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.admin-ba-qr__code {
+  color: var(--color-muted, #888);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-ba-qr__ba-stats {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-muted, #888);
+  margin-top: 2px;
+}
+
+.admin-ba-qr__landlords {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-border, #E4DFD8);
+}
+
+.admin-ba-qr__landlord {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 0.6fr 0.9fr 0.9fr 1fr;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: var(--text-sm, 0.9375rem);
+  border-left: 3px solid transparent;
+  align-items: center;
+}
+
+.admin-ba-qr__landlord--qualifies {
+  border-left-color: #2e7d32;
+  background: rgba(46, 125, 50, 0.06);
+}
+
+.admin-ba-qr__landlord--not-qualifies {
+  border-left-color: #e65100;
+  background: rgba(230, 81, 0, 0.06);
+}
+
+.admin-ba-qr__landlord-status {
+  font-size: var(--text-xs, 0.8125rem);
+}
+
+.admin-ba-qr__landlord--qualifies .admin-ba-qr__landlord-status {
+  color: #2e7d32;
+}
+
+.admin-ba-qr__landlord--not-qualifies .admin-ba-qr__landlord-status {
+  color: #e65100;
+}
+
+@media (max-width: 700px) {
+  .admin-ba-qr__body {
+    flex-direction: column;
+  }
+  .admin-ba-qr__sidebar {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+  .admin-ba-qr__landlord {
+    grid-template-columns: 1fr 1fr;
+  }
+  .admin-ba-qr__summary-totals {
+    gap: 10px;
+  }
+}

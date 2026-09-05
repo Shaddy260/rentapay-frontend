@@ -1,0 +1,105 @@
+.unit-info-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  cursor: pointer;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+
+.unit-info-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* DIRECT REQUEST: same "border draw" hover animation used on the
+   dashboard unit tiles and settings cards (see UnitTile.css/
+   Settings.css) - a thin accent border draws in from the top-right
+   and bottom-left corners on hover. This is the tenant portal's own
+   "Unit information" card, which doesn't share the UnitTile component
+   the landlord/manager/caretaker dashboards use, so it gets the same
+   pseudo-element rule here directly. */
+.unit-info-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--color-accent) 0 0),
+    linear-gradient(to bottom, var(--color-accent) 0 0),
+    linear-gradient(to left, var(--color-accent) 0 0),
+    linear-gradient(to top, var(--color-accent) 0 0);
+  background-repeat: no-repeat;
+  background-size: 0% 2px, 2px 0%, 0% 2px, 2px 0%;
+  background-position: top right, top right, bottom left, bottom left;
+  transition: background-size 0.5s ease;
+}
+.unit-info-card:hover::after,
+.unit-info-card:focus-visible::after {
+  background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .unit-info-card::after { transition: none; }
+}
+
+.unit-info-card__icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.unit-info-card__text {
+  flex: 1;
+}
+
+.unit-info-card__text h3 {
+  margin: 0 0 2px;
+  font-size: var(--text-base);
+  color: var(--color-ink);
+}
+
+.unit-info-card__text p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.unit-info-card__chevron {
+  font-size: 1.4rem;
+  color: var(--color-ink-soft);
+}
+
+.unit-info-modal__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 380px) {
+  .unit-info-modal__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.unit-info-modal__label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}
+
+.unit-info-modal__subhead {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-3);
+}

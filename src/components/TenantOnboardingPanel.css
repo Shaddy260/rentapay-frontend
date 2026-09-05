@@ -1,0 +1,304 @@
+.onboarding-panel {
+  margin: 1rem 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.onboarding-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.onboarding-popup {
+  background: var(--color-surface-raised, #fff);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.onboarding-popup h3 {
+  margin: 0 0 0.5rem;
+}
+
+.onboarding-popup p {
+  margin: 0 0 1rem;
+  color: var(--color-ink-soft, #555);
+}
+
+.onboarding-popup__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.onboarding-link-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.onboarding-link-bar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.onboarding-link-bar__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 220px;
+}
+
+.onboarding-link-bar__hint {
+  font-size: 0.85rem;
+  color: var(--color-ink-soft, #6b7280);
+}
+
+.onboarding-link-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 320px;
+}
+
+.onboarding-link-bar__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-hairline, #d1d5db);
+  font-size: 0.85rem;
+  background: var(--color-surface-raised, #fff);
+  color: var(--color-ink);
+}
+
+.onboarding-requests__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.onboarding-requests__header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.onboarding-requests__badge {
+  background: #d64545;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  min-width: 1.4rem;
+  text-align: center;
+}
+
+.onboarding-requests__toggle {
+  background: none;
+  border: none;
+  color: var(--color-accent, #2563eb);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.onboarding-requests__empty {
+  color: var(--color-ink-soft, #6b7280);
+  font-size: 0.9rem;
+}
+
+.onboarding-requests__scroll {
+  max-height: 360px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.onboarding-requests__scroll + .onboarding-requests__scroll {
+  margin-top: 12px;
+}
+
+.onboarding-request-card {
+  border: 1px solid var(--color-hairline, #e2e6ea);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--color-surface-raised, #fff);
+}
+
+.onboarding-request-card--resolved {
+  opacity: 0.75;
+}
+
+.onboarding-request-card--resolved.is-selected {
+  opacity: 1;
+  border-color: var(--color-accent, #2b6777);
+  background: var(--color-accent-tint, #eef6f7);
+}
+
+.onboarding-request-card__checkbox {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.onboarding-requests__resolved-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-ink-soft, #6b7280);
+}
+
+.onboarding-requests__resolved-count {
+  font-weight: 600;
+}
+
+.onboarding-requests__resolved-hint {
+  font-style: italic;
+}
+
+.onboarding-request-card__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.9rem;
+  font-size: 0.88rem;
+}
+
+.onboarding-request-card__summary strong {
+  width: 100%;
+  font-size: 1rem;
+}
+
+.onboarding-request-card__status {
+  font-size: 0.82rem;
+  color: var(--color-ink-soft, #6b7280);
+}
+
+.onboarding-request-card__status--superseded {
+  color: #b45309;
+}
+
+.onboarding-request-card__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.onboarding-request-card__edit {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.onboarding-request-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--color-ink-soft, #6b7280);
+}
+
+.onboarding-request-card__field input {
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-hairline, #d1d5db);
+  font-size: 0.9rem;
+}
+
+.onboarding-request-card__field-locked {
+  background: var(--color-surface-subtle, #f3f4f6);
+  color: var(--color-ink-soft, #6b7280);
+  cursor: not-allowed;
+}
+
+/* DIRECT REQUEST: highlight the self-reported deposit figure - in
+   both the summary chip row and the edit grid - so it's the one
+   field a reviewer's eye is drawn to check/correct, not just another
+   line blending into the rest of the details. */
+.onboarding-request-card__deposit {
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 0.1rem 0.5rem;
+}
+
+.onboarding-request-card__field--deposit {
+  color: #92400e;
+}
+
+.onboarding-request-card__field--deposit span {
+  font-weight: 700;
+}
+
+.onboarding-request-card__field--deposit input {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+
+.onboarding-request-card__edit .onboarding-request-card__actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .onboarding-requests__badge {
+  background: #5d0909;
+  color: #cfbebe;
+}
+
+[data-theme='dark'] .onboarding-request-card__deposit {
+  background: #665200;
+  color: #f0bd9e;
+}
+
+[data-theme='dark'] .onboarding-request-card__field--deposit input {
+  background: #665200;
+}

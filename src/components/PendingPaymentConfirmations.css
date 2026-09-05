@@ -1,0 +1,271 @@
+.ppc-status-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.ppc-status-tabs__item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.9rem;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  color: var(--color-ink-soft);
+}
+
+.ppc-status-tabs__item.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.ppc-status-tabs__download {
+  margin-left: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: 0.35rem 0.8rem;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  color: var(--color-ink);
+}
+
+.ppc-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ppc-group__label {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  margin: var(--space-4) 0 0 0;
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.ppc-card--resubmitted {
+  border-color: #D9A521;
+}
+
+.ppc-card__resubmitted-banner {
+  background: #FFF6E0;
+  color: #8A6200;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+}
+
+.ppc-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ppc-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.ppc-card__duplicate-banner {
+  background: #FBEAE9;
+  color: #B3261E;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.ppc-card__mismatch-banner {
+  background: #FFF4E0;
+  color: #8A5A00;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.ppc-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ppc-card__info {
+  flex: 1;
+}
+
+.ppc-card__name {
+  font-weight: 600;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ppc-card__target-badge {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-surface-alt, #f0f0f0);
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+
+.ppc-card__target-badge--water {
+  background: #e6f4fb;
+  color: #0d6187;
+}
+
+.ppc-card__target-badge--electricity {
+  background: #fff4d9;
+  color: #8a6300;
+}
+
+.ppc-card__target-badge--rent {
+  background: #eef0ff;
+  color: #3a3fb0;
+}
+
+.ppc-card__unit {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+
+.ppc-card__submitted {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+
+.ppc-card__details {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: var(--text-sm);
+}
+
+.ppc-card__details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ppc-card__details > div span:first-child {
+  color: var(--color-ink-soft);
+}
+
+.ppc-card__actions {
+  margin-top: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.ppc-card__reject-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.ppc-card__reject-form input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+/* Multi-select delete (spec: Pending Payment Confirmations Card,
+   long-press-to-select). */
+.ppc-multiselect-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+  background: var(--color-surface-sunken, #f4f6f5);
+  border-radius: var(--radius-sm);
+  flex-wrap: wrap;
+}
+
+.ppc-multiselect-bar__count {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.ppc-card--selected {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+  background: rgba(193, 98, 45, 0.05);
+}
+
+.ppc-card__checkbox {
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.ppc-card__checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .ppc-card__resubmitted-banner {
+  background: #664800;
+  color: #f7db97;
+}
+
+[data-theme='dark'] .ppc-card__duplicate-banner {
+  background: #600b06;
+  color: #eba6a2;
+}
+
+[data-theme='dark'] .ppc-card__mismatch-banner {
+  background: #664200;
+  color: #f7d597;
+}
+
+[data-theme='dark'] .ppc-card__target-badge--water {
+  background: #054261;
+  color: #9ed6f0;
+}
+
+[data-theme='dark'] .ppc-card__target-badge--electricity {
+  background: #664800;
+  color: #f7dc97;
+}
+
+[data-theme='dark'] .ppc-card__target-badge--rent {
+  background: #000c66;
+  color: #abade3;
+}

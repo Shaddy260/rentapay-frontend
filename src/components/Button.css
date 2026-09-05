@@ -1,0 +1,120 @@
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: 600;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-md);
+  border: none;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+/* CONSISTENT HOVER ANIMATION (direct request): every button on the
+   platform shares this same "center expanding line" treatment - a
+   pair of hairlines that draw outward from the middle of the top and
+   bottom edges on hover/focus, then retract on mouse-leave. Lives
+   once here in the shared Button component so every button variant
+   everywhere in the app inherits it automatically - no per-page
+   button styling should reimplement this. */
+.btn::before,
+.btn::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.85);
+  transition: width 0.3s ease, left 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.btn::before {
+  top: 0;
+}
+
+.btn::after {
+  bottom: 0;
+}
+
+.btn:hover:not(:disabled)::before,
+.btn:hover:not(:disabled)::after,
+.btn:focus-visible::before,
+.btn:focus-visible::after {
+  width: 100%;
+  left: 0;
+}
+
+.btn--ghost::before,
+.btn--ghost::after {
+  background: var(--color-primary);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-primary-light);
+}
+
+.btn--mpesa {
+  background: var(--color-mpesa);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--mpesa:hover:not(:disabled) {
+  background: var(--color-mpesa-dark);
+}
+
+.btn--danger {
+  background: #B3261E;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #8c1e18;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-ink-soft);
+  border: 1.5px solid var(--color-hairline);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  border-color: var(--color-ink-soft);
+  color: var(--color-ink);
+}
+
+.btn__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}

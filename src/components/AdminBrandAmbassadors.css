@@ -1,0 +1,234 @@
+.admin-ba__link-card {
+  border: 1px solid var(--color-border, #E4DFD8);
+  background: var(--color-surface-soft, #FAF7F2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.admin-ba__link-card-title {
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.admin-ba__link-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.admin-ba__link-row input {
+  flex: 1;
+  min-width: 220px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.admin-ba__filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-ba__filter--status {
+  margin-top: 4px;
+}
+
+.admin-ba__filter-btn {
+  border: 1px solid var(--color-border, #E4DFD8);
+  background: var(--color-surface, #fff);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: var(--text-sm, 0.9375rem);
+  cursor: pointer;
+}
+
+.admin-ba__filter-btn--active {
+  background: var(--color-ink, #22282A);
+  color: #fff;
+  border-color: var(--color-ink, #22282A);
+}
+
+.admin-ba__error {
+  color: #A33;
+  margin-bottom: 12px;
+}
+
+.admin-ba__empty {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.admin-ba__approved-banner {
+  background: #eef8f0;
+  border: 1px solid #bfe6c8;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.admin-ba__approved-banner button {
+  margin-top: 6px;
+  border: none;
+  background: none;
+  color: var(--color-ink-soft, #5C6663);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.admin-ba__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-ba__item {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.admin-ba__item--overdue {
+  border-color: #e0a94a;
+  background: #fff9ee;
+}
+
+.admin-ba__item--highlight {
+  border-color: #2f7d5a;
+  background: #eef8f2;
+  box-shadow: 0 0 0 2px rgba(47, 125, 90, 0.25);
+}
+
+.admin-ba__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-ba__name {
+  font-weight: 600;
+}
+
+.admin-ba__overdue-flag {
+  font-size: 0.75rem;
+  color: #a3620c;
+  background: #ffedcc;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.admin-ba__meta {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: 0.9rem;
+  margin: 4px 0;
+}
+
+.admin-ba__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-ba__actions input {
+  flex: 1;
+  min-width: 160px;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.admin-ba__status {
+  font-size: 0.75rem;
+  border-radius: 999px;
+  padding: 2px 10px;
+  text-transform: capitalize;
+}
+
+.admin-ba__status--active { background: #e3f5e6; color: #1e7a34; }
+.admin-ba__status--pending_approval { background: #fff3d6; color: #93690c; }
+.admin-ba__status--rejected { background: #fde3e3; color: #a33; }
+.admin-ba__status--suspended { background: #fde3e3; color: #a33; }
+.admin-ba__status--inactive { background: #eee; color: #666; }
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .admin-ba__link-row input {
+  background: var(--color-surface-raised);
+}
+
+[data-theme='dark'] .admin-ba__approved-banner {
+  background: #135320;
+}
+
+[data-theme='dark'] .admin-ba__item--overdue {
+  background: #664200;
+}
+
+[data-theme='dark'] .admin-ba__item--highlight {
+  background: #13532d;
+}
+
+[data-theme='dark'] .admin-ba__overdue-flag {
+  background: #664200;
+  color: #f1cd9d;
+}
+
+[data-theme='dark'] .admin-ba__status--active {
+  background: #11551c;
+  color: #a7e7b6;
+}
+
+[data-theme='dark'] .admin-ba__status--pending_approval {
+  background: #664800;
+  color: #f1d79d;
+}
+
+[data-theme='dark'] .admin-ba__status--rejected {
+  background: #660000;
+  color: #e4a9a9;
+}
+
+[data-theme='dark'] .admin-ba__status--suspended {
+  background: #660000;
+  color: #e4a9a9;
+}
+
+[data-theme='dark'] .admin-ba__status--inactive {
+  background: var(--color-surface-raised);
+  color: #cfbebe;
+}
+
+/* Phase 3 - Glow Card summary header (RentaPay-Glow-Dashboard-Build-
+   Spec.md §4 Phase 3). */
+.admin-ba__glow-summary {
+  margin-bottom: var(--space-5, 24px);
+}

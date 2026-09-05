@@ -1,0 +1,119 @@
+.chat-thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  height: 100%;
+}
+
+.chat-thread-list__hint {
+  color: #8a8578;
+  font-size: 0.85rem;
+  padding: 10px;
+}
+
+.chat-thread-list__error {
+  color: #b3261e;
+  font-size: 0.85rem;
+  padding: 10px;
+}
+
+.chat-thread-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--color-surface-raised);
+  border: 1px solid #ece9e2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.chat-thread-item--active {
+  border-color: #1f6f5c;
+  background: #eef8f4;
+}
+
+.chat-thread-item__main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-thread-item__name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #2b2b2b;
+}
+
+.chat-thread-item__tag {
+  font-weight: 600;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #1f6f5c;
+  background: #e5f2ee;
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-left: 4px;
+}
+
+.chat-thread-item__preview {
+  font-size: 0.78rem;
+  color: #8a8578;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.chat-thread-item__badge {
+  background: #d9534f;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .chat-thread-item--active {
+  background: #135339;
+}
+
+[data-theme='dark'] .chat-thread-item__tag {
+  background: var(--color-surface-raised);
+  color: #a8e5d7;
+}
+
+[data-theme='dark'] .chat-thread-item__badge {
+  background: #5d0b09;
+  color: #cfbebe;
+}

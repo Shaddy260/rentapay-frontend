@@ -1,0 +1,35 @@
+.kpi-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 1024px) {
+  .kpi-mini-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.kpi-mini-grid__card {
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpi-mini-grid__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.kpi-mini-grid__value {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.kpi-mini-grid__caption {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
