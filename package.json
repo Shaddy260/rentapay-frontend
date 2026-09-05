@@ -1,0 +1,25 @@
+{
+  "name": "rentapay-frontend",
+  "private": true,
+  "version": "6.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/write-build-id.js && node scripts/write-admin-path.js && node scripts/write-manager-path.js && vite build",
+    "preview": "vite preview",
+    "audit": "npm audit --audit-level=moderate",
+    "audit:fix": "npm audit fix"
+  },
+  "dependencies": {
+    "@sentry/react": "^8.42.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
+    "react-router-dom": "^6.30.6",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^6.4.3"
+  }
+}

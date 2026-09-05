@@ -1,0 +1,50 @@
+.skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.skeleton-card {
+  border: 1px solid var(--color-hairline, #DCD5C8);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--color-surface-raised, #FFFFFF);
+}
+
+.skeleton-bar {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--color-hairline, #DCD5C8) 25%, #EFEAE0 37%, var(--color-hairline, #DCD5C8) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+.skeleton-bar--title {
+  height: 18px;
+  width: 70%;
+}
+
+.skeleton-bar--short {
+  width: 40%;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-bar {
+    animation: none;
+  }
+}

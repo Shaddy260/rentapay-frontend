@@ -1,0 +1,70 @@
+.countdown {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
+
+.countdown--expired {
+  color: #d64545;
+  font-weight: 600;
+  display: inline;
+}
+
+.countdown__sep {
+  opacity: 0.35;
+  font-weight: 600;
+  align-self: center;
+}
+
+.countdown__chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  background: rgba(15, 61, 62, 0.07);
+  border-radius: var(--radius-sm, 6px);
+  padding: 3px 5px 2px;
+  min-width: 30px;
+}
+
+.countdown__value {
+  font-family: var(--font-display, serif);
+  font-weight: 700;
+  font-size: 0.95em;
+  color: var(--color-primary, #0F3D3E);
+}
+
+.countdown__label {
+  font-size: 0.58em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-soft, #5C6663);
+  margin-top: 1px;
+}
+
+.countdown__chip--pulse .countdown__value {
+  animation: countdown-tick 1s ease-in-out infinite;
+}
+
+@keyframes countdown-tick {
+  0% { opacity: 1; transform: scale(1); }
+  40% { opacity: 0.55; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* On dark surfaces (e.g. the subscription bar's urgent state), swap to
+   light-on-dark chips instead of the default teal-on-cream. */
+.subscription-bar--urgent .countdown__chip,
+.dashboard-header .countdown__chip {
+  background: rgba(255, 255, 255, 0.14);
+}
+.subscription-bar--urgent .countdown__value,
+.dashboard-header .countdown__value {
+  color: #fff;
+}
+.subscription-bar--urgent .countdown__label,
+.dashboard-header .countdown__label {
+  color: rgba(255, 255, 255, 0.7);
+}

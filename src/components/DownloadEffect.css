@@ -1,0 +1,79 @@
+[data-theme='dark'] .download-effect-badge {
+  position: fixed;
+  width: 26px;
+  height: 26px;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.download-effect-badge {
+  display: none;
+}
+
+[data-theme='dark'] .download-effect-badge {
+  display: block;
+}
+
+[data-theme='dark'] .download-effect-badge__ring {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  border: 1.5px solid var(--color-primary);
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+  animation: download-effect-pop 1.2s ease forwards;
+}
+
+[data-theme='dark'] .download-effect-badge__arrow,
+[data-theme='dark'] .download-effect-badge__check {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+[data-theme='dark'] .download-effect-badge__arrow {
+  animation: download-effect-arrow 1.2s ease forwards;
+}
+
+[data-theme='dark'] .download-effect-badge__check {
+  opacity: 0;
+  animation: download-effect-check 1.2s ease forwards;
+}
+
+@keyframes download-effect-pop {
+  0% { transform: scale(0); opacity: 0; }
+  16% { transform: scale(1.15); opacity: 1; }
+  26% { transform: scale(1); opacity: 1; }
+  84% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.85); opacity: 0; }
+}
+
+@keyframes download-effect-arrow {
+  0% { opacity: 0; transform: translate(-50%, -60%); }
+  18% { opacity: 1; transform: translate(-50%, -50%); }
+  38% { opacity: 1; transform: translate(-50%, -38%); }
+  48% { opacity: 0; transform: translate(-50%, -28%); }
+  100% { opacity: 0; }
+}
+
+@keyframes download-effect-check {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  48% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  60% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  74% { transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='dark'] .download-effect-badge__ring,
+  [data-theme='dark'] .download-effect-badge__arrow,
+  [data-theme='dark'] .download-effect-badge__check {
+    animation-duration: 0.01ms !important;
+  }
+}

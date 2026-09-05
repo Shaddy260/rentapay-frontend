@@ -1,0 +1,90 @@
+.ownership-verification-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff8e6;
+  border: 1px solid #f0dfa6;
+  color: #6b5510;
+}
+
+.ownership-verification-banner--pending {
+  background: #eef4ff;
+  border-color: #c7d9f7;
+  color: #2c4a86;
+}
+
+.ownership-verification-banner--rejected {
+  background: #fdeceb;
+  border-color: #f2c2bd;
+  color: #8a2f24;
+}
+
+.ownership-verification-banner__text {
+  flex: 1;
+  min-width: 220px;
+  line-height: 1.4;
+}
+
+.ownership-verification-banner__modal-hint {
+  margin: 0 0 14px;
+  color: var(--color-text-muted, #6b6558);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ownership-verification-banner__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .ownership-verification-banner {
+  background: #664900;
+  color: #ecdaa1;
+}
+
+[data-theme='dark'] .ownership-verification-banner--pending {
+  background: #002466;
+  color: #abbde3;
+}
+
+[data-theme='dark'] .ownership-verification-banner--rejected {
+  background: #650601;
+  color: #e6aea7;
+}
+
+/* FIX (direct request): inline success confirmation shown inside the
+   submit modal for the ~1.4s before it auto-closes, so a landlord
+   sees clear confirmation the upload went through instead of an
+   empty-looking form that invites a repeat tap. */
+.ownership-verification-banner__success {
+  font-weight: 600;
+  color: #1a7a3a;
+  text-align: center;
+  padding: var(--space-4) 0;
+}

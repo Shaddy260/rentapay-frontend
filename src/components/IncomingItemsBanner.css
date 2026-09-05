@@ -1,0 +1,83 @@
+.incoming-items-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.incoming-items-banner__item {
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-radius: var(--radius-md, 10px);
+  font-size: var(--text-sm, 0.9rem);
+  background: var(--color-warning-bg, #FFF6E0);
+  color: var(--color-warning, #B8860B);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body, inherit);
+}
+.incoming-items-banner__item:hover { filter: brightness(0.97); }
+
+.incoming-items-banner__count {
+  background: var(--color-warning, #B8860B);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-weight: 700;
+  font-size: var(--text-xs, 0.75rem);
+  flex-shrink: 0;
+}
+
+/* FEATURE (direct request): pending payments needs to read as its own
+   distinct, prioritized banner - visually separate from the general
+   notifications group, not just another item in the same list. Solid
+   primary brand color instead of the shared warning-amber, and a
+   thicker/bolder look so it stands out as the priority one. */
+.incoming-items-banner--priority .incoming-items-banner__item {
+  background: var(--color-primary, #0F3D3E);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+}
+.incoming-items-banner--priority .incoming-items-banner__item:hover {
+  filter: brightness(1.1);
+}
+.incoming-items-banner--priority .incoming-items-banner__count {
+  background: #fff;
+  color: var(--color-primary, #0F3D3E);
+}
+
+/* Visual gap between the priority group and the general group when
+   both are rendered back to back, so they read as two separate
+   banners rather than one continuous stack. */
+.incoming-items-banner--priority {
+  margin-bottom: 0.75rem;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .incoming-items-banner--priority .incoming-items-banner__count {
+  background: var(--color-surface-raised);
+}

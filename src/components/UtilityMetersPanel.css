@@ -1,0 +1,303 @@
+/* Fallback base styles - .statistics-panel/.form-error aren't defined
+   in global.css (other panels like DisputesPanel rely on them only
+   incidentally being styled by whatever page happens to be mounted
+   alongside them); defining them here keeps this panel looking right
+   on its own regardless of what else is on the page. */
+.statistics-panel {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.form-error,
+.modal-error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9em;
+  margin: 8px 0;
+}
+
+.utility-meters-panel textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--color-hairline);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  resize: vertical;
+}
+
+.utility-meters-panel select {
+  width: 100%;
+  font-size: var(--text-base, 1rem);
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--color-hairline);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+}
+
+.utility-meter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* THE FIX: two side-by-side tables (water / electricity) on wide
+   screens, stacked on mobile - matches the direct request to
+   "arrange them in two tables... to avoid confusion." */
+.utility-meter-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+@media (min-width: 720px) {
+  .utility-meter-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.utility-meter-column__title {
+  font-size: var(--text-md, 1rem);
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--color-ink);
+}
+
+.utility-meter-column .utility-meter-list {
+  margin-top: 0;
+}
+
+.utility-meter-card--row {
+  padding: 12px 14px;
+}
+
+/* DIRECT REQUEST: "when a unit has no tenant... the meter just gets
+   greyed and nothing should be keyed in." Applied consistently
+   wherever a meter can be acted on - the main row list and the bulk
+   reading entry list alike. */
+.utility-meter-card--vacant {
+  opacity: 0.6;
+  background: var(--color-surface-alt, #f4f4f4);
+}
+
+.utility-meter-card__vacant-note {
+  margin-top: 4px;
+  font-size: var(--text-sm, 0.85rem);
+  color: var(--color-ink-soft);
+  font-style: italic;
+}
+
+.utility-bulk-reading-row--vacant {
+  opacity: 0.6;
+  background: var(--color-surface-alt, #f4f4f4);
+}
+
+/* DIRECT REQUEST: makes "not yet billed" readings impossible to miss
+   - amber/warning styling so it reads as "needs your action", not
+   just another info row. */
+.utility-pending-review-banner {
+  margin: 12px 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ffc107;
+}
+
+.utility-pending-review-banner__header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: #8a6100;
+  margin-bottom: 8px;
+}
+
+.utility-pending-review-banner__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.utility-pending-review-banner__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-hairline);
+  font-size: var(--text-sm, 0.9rem);
+}
+
+
+/* separate shortcut section above the tables (see MeterRow /
+   bothMetersByMeterId in UtilityMetersPanel.jsx). */
+.utility-meter-card__both {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: var(--text-sm, 0.85rem);
+}
+
+.utility-meter-card__delete {
+  color: #b3261e;
+}
+
+.utility-meter-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-hairline);
+  border-radius: 12px;
+  background: var(--color-surface-raised);
+  flex-wrap: wrap;
+}
+
+.utility-meter-card__main {
+  display: flex;
+
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.utility-meter-card__title {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.utility-meter-card__units {
+  color: var(--color-ink-soft);
+  font-size: 0.9em;
+}
+
+.utility-meter-card__rate {
+  color: var(--color-ink-soft);
+  font-size: 0.9em;
+}
+
+.utility-meter-card__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.utility-meter-badge {
+  font-size: 0.75em;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  color: var(--color-ink-soft);
+}
+
+.utility-meter-badge--shared {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent);
+  color: var(--color-ink);
+}
+
+.utility-unit-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--color-hairline);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.utility-unit-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+/* THE FIX (direct request: "the other details are beyond the
+   screen... so that there's no much scrolling"): this had a flat
+   max-width: 640px with no viewport cap at all - on a phone (CSS
+   viewport width usually 360-400px), that's not "a bit wide", it's
+   nearly double the screen, guaranteed to run content off the right
+   edge exactly like the screenshot showed. min() keeps the roomier
+   640px for wide/desktop review or history screens that actually
+   benefit from it, while never exceeding the phone's own width. */
+.utility-history-modal {
+  max-width: min(640px, calc(100vw - 32px));
+  width: 100%;
+}
+
+/* DIRECT REQUEST: "the other details are beyond the screen... so
+   that there's no much scrolling." Stacked cards for the bulk
+   reading entry list, replacing a wide table that ran off narrow
+   phone screens - every element here wraps to the modal's own width
+   instead of forcing horizontal scroll. */
+.utility-bulk-reading-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.utility-bulk-reading-row {
+  border: 1px solid var(--color-hairline);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.utility-bulk-reading-row__meter {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.utility-bulk-reading-row__unit {
+  font-weight: 400;
+  font-size: var(--text-sm, 0.85rem);
+  color: var(--color-ink-soft);
+}
+
+.utility-bulk-reading-row__inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.utility-bulk-reading-row__inputs input[type="number"] {
+  flex: 1;
+  min-width: 90px;
+}
+
+.utility-bulk-reading-row__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+  font-size: var(--text-sm, 0.85rem);
+  white-space: nowrap;
+}
+
+.utility-bulk-reading-row__previous {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--color-hairline);
+}

@@ -1,0 +1,205 @@
+/* ===================================================================
+   Automatic rent collection wizard - reuses the app's existing
+   settings-card / form-field / btn language; no separate "wizard
+   skin". Mobile-first (primary device for both landlords and tenants
+   in this market) with a restrained glow accent on the primary
+   action of each step, matching the app's teal/clay palette rather
+   than a generic neon glow.
+   =================================================================== */
+
+.arc-wizard__muted {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.arc-wizard__step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.arc-wizard__question {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.arc-wizard__branch-heading {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+/* One question, one action per screen - answers stack as full-width
+   tappable rows rather than a dropdown, so they're easy to hit on a
+   phone. */
+.arc-wizard__answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.arc-wizard__answer {
+  text-align: left;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-hairline);
+  background: var(--color-surface-raised);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  min-height: 48px; /* comfortable tap target on mobile */
+}
+
+.arc-wizard__answer:hover,
+.arc-wizard__answer:focus-visible {
+  border-color: var(--color-primary);
+  background: rgba(15, 61, 62, 0.04);
+}
+
+.arc-wizard__answer:active {
+  transform: scale(0.99);
+}
+
+.arc-wizard__steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.arc-wizard__sequencing-note {
+  margin-top: var(--space-1);
+  padding-left: var(--space-1);
+  border-left: 2px solid var(--color-hairline);
+}
+
+.arc-wizard__why-paybill {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+
+.arc-wizard__fee-note {
+  background: var(--color-success-bg);
+  color: var(--color-primary-dark);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin: 0;
+}
+
+.arc-wizard__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------
+   Glow accent - a soft outer ring in the app's own primary/clay
+   hue, restrained (not flashy), keeping the eye on the one thing
+   the landlord should do next at each step. Layers ON TOP of the
+   shared .btn--primary styling via className merge on Button, so
+   it never duplicates the base button rules.
+   -------------------------------------------------------------- */
+.arc-wizard__glow-cta {
+  box-shadow: var(--shadow-sm), 0 0 0 0 rgba(193, 98, 45, 0.0);
+  animation: arc-glow-pulse 2.6s ease-in-out infinite;
+}
+
+.arc-wizard__glow-cta:disabled {
+  animation: none;
+}
+
+@keyframes arc-glow-pulse {
+  0%, 100% { box-shadow: var(--shadow-sm), 0 0 0 0 rgba(193, 98, 45, 0.28); }
+  50% { box-shadow: var(--shadow-sm), 0 0 14px 3px rgba(193, 98, 45, 0.28); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arc-wizard__glow-cta { animation: none; }
+}
+
+/* --------------------------------------------------------------
+   Status states (active / failed)
+   -------------------------------------------------------------- */
+.arc-wizard__status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.arc-wizard__status-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  margin: 0;
+}
+
+.arc-wizard__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.arc-wizard__dot--active {
+  background: var(--color-mpesa);
+  box-shadow: 0 0 0 3px rgba(61, 165, 53, 0.18);
+}
+
+.arc-wizard__dot--failed {
+  background: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(179, 38, 30, 0.15);
+}
+
+.arc-wizard__verifying {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-ink-soft);
+}
+
+.arc-wizard__spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-hairline);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: arc-spin 0.8s linear infinite;
+}
+
+@keyframes arc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------
+   Responsive - mobile is the primary device here. Above small
+   mobile widths the answer list and form get a touch more
+   breathing room, but nothing here assumes desktop-first.
+   -------------------------------------------------------------- */
+@media (min-width: 640px) {
+  .arc-wizard__answers {
+    gap: var(--space-2);
+  }
+  .arc-wizard__actions {
+    flex-wrap: nowrap;
+  }
+}
