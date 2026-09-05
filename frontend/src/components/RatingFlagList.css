@@ -1,0 +1,133 @@
+.rating-flag-list {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border, #E4DFD8);
+}
+
+.rating-flag-list h4 {
+  margin: 0 0 4px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.rating-flag-list__intro {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-xs, 0.8125rem);
+  margin: 0 0 12px;
+}
+
+.rating-flag-list__notice {
+  background: #F0F7F1;
+  color: #2E5B3A;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: var(--text-xs, 0.8125rem);
+  margin: 0 0 12px;
+}
+
+.rating-flag-list__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rating-flag-list__item {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.rating-flag-list__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rating-flag-list__stars .star {
+  color: var(--color-border, #D8D2C8);
+}
+.rating-flag-list__stars .star--filled {
+  color: #E0A526;
+}
+
+.rating-flag-list__category {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-ink-soft, #5C6663);
+  text-transform: capitalize;
+}
+
+.rating-flag-list__date {
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-ink-soft, #5C6663);
+  margin-left: auto;
+}
+
+.rating-flag-list__comment {
+  margin: 8px 0 8px;
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-ink, #22282A);
+  font-style: italic;
+}
+
+.rating-flag-list__status {
+  font-size: var(--text-xs, 0.8125rem);
+  margin: 6px 0 0;
+  font-weight: 600;
+}
+.rating-flag-list__status--flagged { color: #8A6D1D; }
+.rating-flag-list__status--upheld { color: #5C6663; }
+.rating-flag-list__status--removed { color: #A33; }
+
+.rating-flag-list__flag-form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rating-flag-list__flag-form textarea {
+  width: 100%;
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 6px;
+  padding: 8px;
+  font: inherit;
+  resize: vertical;
+}
+
+.rating-flag-list__flag-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.rating-flag-list__error {
+  color: #A33;
+  font-size: var(--text-xs, 0.8125rem);
+  margin: 0;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .rating-flag-list__notice {
+  background: var(--color-surface-raised);
+  color: #b2dcbd;
+}

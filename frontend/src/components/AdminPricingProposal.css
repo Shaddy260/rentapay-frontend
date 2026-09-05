@@ -1,0 +1,62 @@
+.admin-pricing-proposal__margin-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: var(--space-3, 12px) 0 var(--space-4, 16px);
+  max-width: 420px;
+}
+
+.admin-pricing-proposal__margin-row label {
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-ink-soft, #666);
+}
+
+.admin-pricing-proposal__margin-row input[type='range'] {
+  width: 100%;
+}
+
+.admin-pricing-proposal__table-wrap {
+  overflow-x: auto;
+  margin-bottom: var(--space-3, 12px);
+}
+
+.admin-pricing-proposal__table {
+  width: 100%;
+  max-width: 480px;
+  border-collapse: collapse;
+}
+
+.admin-pricing-proposal__table th,
+.admin-pricing-proposal__table td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-hairline, #DCD5C8);
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.admin-pricing-proposal__table th {
+  font-weight: 600;
+  color: var(--color-ink-soft, #666);
+}
+
+.admin-pricing-proposal__proposed-cell {
+  font-weight: 700;
+  color: var(--color-primary, #0F3D3E);
+}
+
+.admin-pricing-proposal__inputs {
+  margin-top: var(--space-3, 12px);
+}
+
+.admin-pricing-proposal__inputs summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-primary, #0F3D3E);
+  margin-bottom: var(--space-2, 8px);
+}
+
+/* Phase 3 - Glow Card treatment for the "Raw inputs used" details
+   block (RentaPay-Glow-Dashboard-Build-Spec.md §4 Phase 3). */
+.admin-pricing-proposal__glow-inputs {
+  margin-top: var(--space-3, 12px);
+}

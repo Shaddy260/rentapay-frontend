@@ -1,0 +1,51 @@
+.dispute-charge-btn {
+  border: 1px solid var(--color-hairline);
+  background: transparent;
+  color: var(--color-ink-soft);
+  font-size: var(--text-xs);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.dispute-charge-btn:hover {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.dispute-charge-btn--active,
+.dispute-charge-btn--active:hover {
+  border-color: var(--color-error);
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.dispute-charge-prompt {
+  max-width: 420px;
+}
+
+.dispute-charge-prompt__hint {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-3);
+}
+
+.dispute-charge-prompt textarea {
+  width: 100%;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  resize: vertical;
+}
+
+.dispute-charge-prompt__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}

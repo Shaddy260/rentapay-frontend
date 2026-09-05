@@ -1,0 +1,188 @@
+/* FIX (direct request): sized to match the landlord portal's
+   GlobalSearch exactly (same 260px width, same input font-size/
+   padding - see GlobalSearch.css) now that this renders in its own
+   dedicated row (admin-search-bar in AdminDashboard.css) instead of
+   fighting other header controls for space. */
+.admin-global-search {
+  position: relative;
+  width: 260px;
+  max-width: 100%;
+}
+
+.admin-global-search__input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  font-size: 0.88rem;
+  box-sizing: border-box;
+}
+
+/* FIX (direct request): a search result (e.g. a landlord's email)
+   needs room to actually read - full name, email, phone, badges -
+   without wrapping into a cramped column just because the search box
+   above it is intentionally compact (260px, matching the landlord
+   portal). The dropdown is sized independently of the input: wider
+   than the box that opens it, capped so it never runs off the edge
+   of the screen, and falls back to full-width on mobile (see the
+   @media block below) same as the input already does. */
+.admin-global-search__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 420px;
+  max-width: calc(100vw - 2 * var(--space-4, 16px));
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e1d8);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+  z-index: 60;
+  max-height: 360px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.admin-global-search__result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border, #e5e1d8);
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-global-search__result:last-child {
+  border-bottom: none;
+}
+
+.admin-global-search__result:hover {
+  background: var(--color-surface-muted, #f7f4ec);
+}
+
+.admin-global-search__result-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.admin-global-search__result-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.admin-global-search__result-meta {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #8a8374);
+}
+
+.admin-global-search__result-context {
+  font-size: 0.74rem;
+  color: var(--color-text-muted, #8a8374);
+  font-style: italic;
+}
+
+.admin-global-search__badge {
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--color-surface-muted, #f0ede3);
+  color: var(--color-text-muted, #6b6455);
+}
+
+.admin-global-search__badge--landlord { background: #e6f0ff; color: #1a4fa0; }
+.admin-global-search__badge--tenant { background: #eaf7ea; color: #1e7a34; }
+.admin-global-search__badge--unit { background: #e6f7f5; color: #147a70; }
+.admin-global-search__badge--property { background: #fef6e0; color: #8a6d00; }
+.admin-global-search__badge--manager { background: #fff3e0; color: #9a5b00; }
+.admin-global-search__badge--general_manager { background: #f3e8ff; color: #6a2bb5; }
+.admin-global-search__badge--brand_ambassador { background: #ffe9ef; color: #b1235a; }
+.admin-global-search__badge--page { background: #eef2ff; color: #3346a0; }
+
+.admin-global-search__result--page {
+  background: var(--color-surface-muted, #fbfaf6);
+}
+.admin-global-search__result--page .admin-global-search__result-name::before {
+  content: '→ ';
+  color: var(--color-text-muted, #8a8374);
+}
+
+.admin-global-search__empty {
+  padding: 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #8a8374);
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .admin-global-search {
+    width: 100%;
+  }
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .admin-global-search__badge--landlord {
+  background: #002966;
+  color: #a2bfec;
+}
+
+[data-theme='dark'] .admin-global-search__badge--tenant {
+  background: #125412;
+  color: #a7e7b6;
+}
+
+[data-theme='dark'] .admin-global-search__badge--unit {
+  background: #0f574f;
+  color: #a2ece4;
+}
+
+[data-theme='dark'] .admin-global-search__badge--property {
+  background: #664b00;
+  color: #f7e397;
+}
+
+[data-theme='dark'] .admin-global-search__badge--manager {
+  background: #663f00;
+  color: #f7d097;
+}
+
+[data-theme='dark'] .admin-global-search__badge--general_manager {
+  background: #310066;
+  color: #c4a6e8;
+}
+
+[data-theme='dark'] .admin-global-search__badge--brand_ambassador {
+  background: #66001c;
+  color: #eaa4bf;
+}
+
+[data-theme='dark'] .admin-global-search__badge--page {
+  background: #001866;
+  color: #aab4e4;
+}

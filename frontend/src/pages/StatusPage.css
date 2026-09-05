@@ -1,0 +1,310 @@
+/* ===================================================================
+   Status page redesign: grouped tables instead of one flat list,
+   built from the same RentaPay tokens (tokens.css) the rest of the
+   app uses - deep teal primary, warm paper surface, clay accent -
+   so this reads as part of RentaPay rather than a generic status
+   widget dropped in from elsewhere.
+   ================================================================= */
+
+.status-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: var(--space-8) var(--space-4);
+}
+
+.status-page__card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-6) var(--space-5);
+  max-width: 720px;
+  width: 100%;
+  height: fit-content;
+  box-shadow: var(--shadow-md);
+}
+
+/* ---- Header ------------------------------------------------------ */
+
+.status-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.status-page__card h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.status-page__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.status-page__badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.status-page__badge--checking { background: var(--color-surface-subtle); color: var(--color-ink-soft); }
+.status-page__badge--ok { background: var(--color-success-bg); color: var(--color-success); }
+.status-page__badge--degraded { background: rgba(184, 134, 11, 0.12); color: var(--color-warning); }
+.status-page__badge--down { background: var(--color-danger-bg); color: var(--color-danger); }
+
+.status-page__badge--checking .status-page__badge-dot { animation: status-page-pulse 1.2s ease-in-out infinite; }
+
+@keyframes status-page-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+/* ---- Broken-components summary banner ----------------------------- */
+
+.status-page__broken-summary {
+  background: var(--color-danger-bg);
+  border: 1px solid rgba(179, 38, 30, 0.25);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+.status-page__broken-summary strong {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-body);
+}
+.status-page__broken-summary ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.status-page__broken-summary li {
+  margin-bottom: 3px;
+  line-height: 1.5;
+}
+.status-page__broken-name {
+  font-weight: 700;
+}
+
+/* ---- Grouped tables ------------------------------------------------ */
+
+.status-page__groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-bottom: var(--space-5);
+}
+
+.status-page__group-title {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+  margin: 0 0 var(--space-2);
+}
+
+.status-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface-raised);
+}
+
+.status-page__table tr {
+  border-bottom: 1px solid var(--color-hairline);
+  transition: background-color 0.15s ease;
+}
+.status-page__table tr:last-child {
+  border-bottom: none;
+}
+.status-page__table tr:hover {
+  background: var(--color-surface-soft);
+}
+
+.status-page__row--bad {
+  background: var(--color-danger-bg);
+}
+.status-page__row--bad:hover {
+  background: var(--color-danger-bg);
+}
+
+.status-page__table td {
+  padding: var(--space-3) var(--space-4);
+  vertical-align: middle;
+}
+
+.status-page__cell-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.status-page__check-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+.status-page__check-description {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  line-height: 1.4;
+}
+
+.status-page__cell-status {
+  text-align: right;
+  white-space: nowrap;
+  width: 1%;
+}
+
+.status-page__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.status-page__pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.status-page__pill--ok {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.status-page__pill--bad {
+  background: rgba(179, 38, 30, 0.12);
+  color: var(--color-danger);
+}
+
+/* ---- Hint text ------------------------------------------------------ */
+
+.status-page__hint {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+  margin: 0 0 var(--space-5);
+}
+
+/* ---- Footer ---------------------------------------------------------- */
+
+.status-page__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.status-page__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+
+.status-page__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.status-page__refresh {
+  padding: 9px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.status-page__refresh:hover {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.status-page__back {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  text-decoration: none;
+}
+.status-page__back:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* ---- Responsive: mobile ------------------------------------------------ */
+
+@media (max-width: 560px) {
+  .status-page {
+    padding: var(--space-4) var(--space-3);
+  }
+  .status-page__card {
+    padding: var(--space-5) var(--space-4) var(--space-4);
+  }
+  .status-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .status-page__table td {
+    padding: var(--space-3);
+  }
+  .status-page__cell-status {
+    text-align: left;
+  }
+  .status-page__table tr {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .status-page__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .status-page__actions {
+    justify-content: space-between;
+  }
+  .status-page__refresh {
+    flex: 1;
+  }
+}

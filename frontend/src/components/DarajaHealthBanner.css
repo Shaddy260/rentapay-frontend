@@ -1,0 +1,71 @@
+.daraja-health-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin: 0 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.daraja-health-banner__icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.daraja-health-banner__text {
+  flex: 1;
+}
+
+.daraja-health-banner--ok {
+  background: #eaf7ea;
+  border: 1px solid #c8e8c8;
+  color: #1e7a34;
+}
+
+.daraja-health-banner--pending {
+  background: #eef4ff;
+  border: 1px solid #c7d9f7;
+  color: #2c4a86;
+}
+
+.daraja-health-banner--down {
+  background: #fdeceb;
+  border: 1px solid #f2c2bd;
+  color: #8a2f24;
+}
+
+
+/* ===================================================================
+   DARK MODE OVERRIDES (auto-generated pass, direct request: "when in
+   dark mode, nothing renders bright")
+   ===================================================================
+   Every selector below previously had a hardcoded light background
+   (a literal hex/white value, not a --color-* token) that never
+   responded to the [data-theme='dark'] toggle - see tokens.css's
+   "HONEST LIMITATION" note. Neutral light surfaces (white/near-white
+   panels, cards, inputs) now fall back to var(--color-surface-raised)
+   so they match every other themed card. Tinted status/badge colors
+   (success/warning/error/info pills) keep their original hue but
+   swap to a dark, saturated background with a lightened matching
+   text color, so the semantic meaning (green=active, red=rejected,
+   etc.) is preserved while staying legible on a dark surface. Light
+   mode is completely untouched - these rules only apply under
+   [data-theme='dark'].
+   ================================================================= */
+
+[data-theme='dark'] .daraja-health-banner--ok {
+  background: #125412;
+  color: #a7e7b6;
+}
+
+[data-theme='dark'] .daraja-health-banner--pending {
+  background: #002466;
+  color: #abbde3;
+}
+
+[data-theme='dark'] .daraja-health-banner--down {
+  background: #650601;
+  color: #e6aea7;
+}

@@ -1,0 +1,287 @@
+.settings-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.settings-back {
+  display: inline-block;
+  margin-bottom: var(--space-4);
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  font-size: var(--text-sm);
+}
+
+.settings-banner {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+}
+.settings-banner--ok {
+  background: var(--color-success-bg);
+  color: var(--color-primary-dark);
+}
+.settings-banner--error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.settings-card {
+  position: relative;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+  overflow: visible;
+}
+
+/* DIRECT REQUEST: "border draw" hover animation on every settings
+   card, matching the reference clip - on hover, a thin accent border
+   draws itself in from the top-right corner (top edge + right edge
+   growing outward together) and the bottom-left corner (bottom edge +
+   left edge growing outward together), meeting at the two remaining
+   corners. Pure CSS via one pseudo-element with four background
+   layers animated on background-size - no extra markup needed, so it
+   applies to every existing settings-card across the landlord, tenant,
+   and manager/caretaker portals (all three reuse this same class) with
+   this one rule. Disabled entirely for anyone who has asked their
+   system for reduced motion.
+   Sits on ::after (not ::before) and pointer-events: none, so it never
+   interferes with any button/link inside the card. */
+.settings-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--color-accent) 0 0),
+    linear-gradient(to bottom, var(--color-accent) 0 0),
+    linear-gradient(to left, var(--color-accent) 0 0),
+    linear-gradient(to top, var(--color-accent) 0 0);
+  background-repeat: no-repeat;
+  background-size: 0% 2px, 2px 0%, 0% 2px, 2px 0%;
+  background-position: top right, top right, bottom left, bottom left;
+  transition: background-size 0.5s ease;
+}
+.settings-card:hover::after,
+.settings-card:focus-within::after {
+  background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-card::after { transition: none; }
+}
+
+.settings-error {
+  color: var(--color-error);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-3);
+}
+
+.danger-zone {
+  border: 1px solid var(--color-error, #c0392b);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.danger-zone h3 {
+  color: var(--color-error, #c0392b);
+  margin-top: 0;
+}
+
+.danger-zone ul {
+  margin: var(--space-3) 0;
+  padding-left: 1.25rem;
+}
+
+/* Settings/Financial Statistics spec, section 2.1: cluster headers
+   ("Team & Access" / "Account") give the page a lightweight visual
+   hierarchy instead of one long undifferentiated scroll of
+   same-weight cards. Smaller and quieter than an <h1>, but distinct
+   from a card's own <h2> so it reads as a grouping label, not another
+   section. */
+.settings-cluster-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+  margin: 0 0 var(--space-3) 2px;
+}
+
+/* Real UI categories (direct request) - a tab bar above the settings
+   clusters, instead of the clusters just running one after another in
+   a single scroll. Hidden categories stay mounted (display: none only)
+   so nothing about their data-loading effects has to change. */
+.settings-category-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-border, #e5e5e5);
+  margin: var(--space-4, 16px) 0 var(--space-5, 20px);
+}
+.settings-category-tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 14px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.settings-category-tab--active {
+  color: var(--color-primary, #1a73e8);
+  border-bottom-color: var(--color-primary, #1a73e8);
+}
+.settings-category--hidden { display: none; }
+
+/* Spec 2.2: the tenant-contact-routing card gets its own slightly
+   distinct treatment (a touch more emphasis than a plain card) since
+   it controls something tenant-facing, plus a one-line explanation of
+   the default right under the header. */
+.settings-card--routing {
+  border-color: var(--color-primary, var(--color-hairline));
+}
+
+.settings-card__hint {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-4);
+}
+
+.settings-card h2 {
+  font-size: var(--text-lg);
+  margin-bottom: 4px;
+}
+
+.settings-card__caption {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
+.settings-empty {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.settings-manager-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.settings-manager-row {
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.settings-manager-row__name {
+  margin-bottom: 6px;
+  font-size: var(--text-sm);
+}
+
+.settings-manager-row__display,
+.settings-manager-row__edit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.settings-manager-row__edit {
+  align-items: stretch;
+}
+
+.settings-manager-row__edit input {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+}
+
+.settings-manager-row__empty {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+.settings-manager-row__edit textarea {
+  flex: 1;
+  min-width: 220px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  font: inherit;
+  resize: vertical;
+}
+
+.settings-manager-row__rules-preview {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.settings-manager-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.settings-payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 360px;
+}
+
+.settings-payment-form__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.settings-property-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.settings-property-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: 0.35rem 0.6rem;
+}
+
+@media (max-width: 480px) {
+  .settings-page {
+    padding: var(--space-4);
+  }
+
+  .settings-payment-form__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settings-manager-role-tag {
+  margin-left: var(--space-2);
+  font-size: var(--text-xs);
+  opacity: 0.7;
+  text-transform: capitalize;
+}

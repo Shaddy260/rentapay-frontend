@@ -1,0 +1,192 @@
+.my-reputation-panel {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 560px;
+}
+
+.my-reputation-panel__intro,
+.my-reputation-panel__empty {
+  color: var(--color-ink-soft, #5C6663);
+  font-size: var(--text-sm, 0.9375rem);
+  margin: 0 0 16px;
+}
+
+.my-reputation-panel__summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.my-reputation-panel__big-stars {
+  font-size: 1.6rem;
+  display: inline-flex;
+}
+
+.my-reputation-panel__big-stars .star {
+  color: var(--color-border, #D8D2C8);
+}
+
+.my-reputation-panel__big-stars .star--filled {
+  color: #E0A526;
+}
+
+.my-reputation-panel__score {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-ink, #22282A);
+}
+
+.my-reputation-panel__meta {
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-ink-soft, #5C6663);
+  width: 100%;
+}
+
+.my-reputation-panel__categories {
+  border-top: 1px solid var(--color-border, #E4DFD8);
+  padding-top: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.my-reputation-panel__category-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.my-reputation-panel__category-label {
+  text-transform: capitalize;
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.my-reputation-panel__comments {
+  border-top: 1px solid var(--color-border, #E4DFD8);
+  padding-top: 12px;
+}
+
+.my-reputation-panel__comments h4 {
+  margin: 0 0 10px;
+  font-size: var(--text-sm, 0.9375rem);
+}
+
+.my-reputation-panel__comment {
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--color-border, #E4DFD8);
+}
+
+.my-reputation-panel__comment:last-child {
+  border-bottom: none;
+}
+
+.my-reputation-panel__comment-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: var(--text-xs, 0.8125rem);
+  color: #E0A526;
+  margin-bottom: 4px;
+}
+
+.my-reputation-panel__comment-landlord {
+  color: var(--color-ink-soft, #5C6663);
+}
+
+.my-reputation-panel__comment-category {
+  color: var(--color-ink-soft, #5C6663);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-left: auto;
+}
+
+.my-reputation-panel__comment p {
+  margin: 0;
+  font-size: var(--text-sm, 0.9375rem);
+  color: var(--color-ink, #22282A);
+}
+
+.my-reputation-panel__notice {
+  background: var(--color-success-bg, #eaf7ea);
+  color: var(--color-mpesa-dark, #1a7a1a);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm, 6px);
+  font-size: var(--text-sm, 0.9375rem);
+  margin: 12px 0 0;
+}
+
+.my-reputation-panel__flag-btn {
+  margin-top: 6px;
+  background: none;
+  border: 1px solid var(--color-danger, #B3261E);
+  color: var(--color-danger, #B3261E);
+  border-radius: var(--radius-sm, 6px);
+  padding: 4px 9px;
+  font-size: var(--text-xs, 0.8125rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.my-reputation-panel__flag-btn:hover {
+  background: rgba(179, 38, 30, 0.08);
+}
+
+.my-reputation-panel__flag-status {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: var(--text-xs, 0.8125rem);
+  color: var(--color-ink-soft, #5C6663);
+  font-style: italic;
+}
+
+.my-reputation-panel__flag-form {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 360px;
+}
+
+.my-reputation-panel__flag-form textarea {
+  border: 1px solid var(--color-border, #E4DFD8);
+  border-radius: var(--radius-sm, 6px);
+  padding: 6px 8px;
+  font-size: var(--text-sm, 0.9375rem);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.my-reputation-panel__flag-error {
+  color: var(--color-danger, #B3261E);
+  font-size: var(--text-xs, 0.8125rem);
+  margin: 0;
+}
+
+.my-reputation-panel__flag-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.my-reputation-panel__flag-actions button {
+  border-radius: var(--radius-sm, 6px);
+  padding: 6px 12px;
+  font-size: var(--text-sm, 0.9375rem);
+  cursor: pointer;
+  border: 1px solid var(--color-border, #E4DFD8);
+  background: var(--color-surface-raised, #fff);
+  color: var(--color-ink, #22282A);
+}
+
+.my-reputation-panel__flag-submit {
+  background: var(--color-accent) !important;
+  border-color: var(--color-accent) !important;
+  color: white;
+  font-weight: 600;
+}

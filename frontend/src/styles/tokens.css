@@ -1,0 +1,248 @@
+/* ===================================================================
+   RentaPay Design Tokens
+   ===================================================================
+   Subject: Kenyan landlords registering + paying via M-Pesa STK push.
+   This is a trust + clarity problem, not a delight problem.
+
+   Palette:
+   - Deep teal-green primary  (#0F3D3E) - growth/money, not generic fintech-green
+   - Warm off-white surface   (#FAF7F2) - paper-like, not stark white
+   - Clay/terracotta accent   (#C1622D) - active states, progress
+   - M-Pesa green             (#3DA535) - RESERVED only for actual M-Pesa
+     actions/badges, so the "M-Pesa moment" is visually distinct from
+     RentaPay's own UI. This separation matters for trust.
+   - Ink (text)               (#1B2421)
+   - Hairline                 (#DCD5C8)
+   ================================================================= */
+
+:root {
+  /* Color */
+  --color-primary: #0F3D3E;
+  --color-primary-light: #1A5C5D;
+  --color-primary-dark: #082726;
+  --color-surface: #FAF7F2;
+  --color-surface-raised: #FFFFFF;
+  --color-accent: #C1622D;
+  --color-accent-light: #E8A574;
+  --color-mpesa: #3DA535;
+  --color-mpesa-dark: #2D7D27;
+  --color-ink: #1B2421;
+  --color-ink-soft: #5C6663;
+  --color-hairline: #DCD5C8;
+  --color-error: #B3261E;
+  --color-error-bg: #FBEAE9;
+  --color-success-bg: #EAF4E8;
+
+  /* REDESIGN (Premium Redesign Plan, Phase 7 consistency pass):
+     the gold accent used for primary CTAs on landing, signup, and
+     login was previously only defined as a local custom property
+     scoped to .landing, so signup/login carried the same values as
+     hardcoded hex duplicates instead of a shared source. Promoted
+     here so all three (and the cream #F8E1C7 signup/login surface)
+     read from one definition. */
+  --gold: #C9A24B;
+  --gold-light: #E8CE8B;
+  --gold-dark: #8F7226;
+  --gold-soft-bg: rgba(201, 162, 75, 0.12);
+  --color-signup-surface: #F8E1C7;
+
+  /* Type */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  /* Layout */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --space-10: 4rem;
+
+  --shadow-sm: 0 1px 2px rgba(15, 61, 62, 0.06);
+  --shadow-md: 0 4px 16px rgba(15, 61, 62, 0.10);
+  --shadow-lg: 0 12px 32px rgba(15, 61, 62, 0.14);
+
+  --max-width: 1080px;
+
+  /* Aliases. A number of component stylesheets reference these names
+     (--color-bg, --color-border, --color-text, --color-danger, etc.)
+     which never had a definition anywhere in this file - they always
+     silently fell back to each rule's own hardcoded fallback color,
+     which is why large parts of the app didn't visibly change under
+     dark mode even though the toggle itself worked correctly. Defining
+     them here, aliased to the tokens above, is what actually connects
+     those components to the theme. */
+  --color-bg: var(--color-surface);
+  --color-border: var(--color-hairline);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-ink-soft);
+  --color-text-secondary: var(--color-ink-soft);
+  --color-danger: var(--color-error);
+  --color-danger-bg: var(--color-error-bg);
+  --color-success: #2E7D32;
+  --color-warning: #B8860B;
+  --color-on-primary: #FFFFFF;
+  --color-accent-dark: #9A4C20;
+  --color-accent-soft: #FFF4E5;
+  --color-primary-tint: #EAF4F3;
+  --color-surface-muted: #F7F4EC;
+  --color-surface-soft: #F7F7F5;
+  --color-surface-subtle: #F3F4F6;
+  --color-surface-sunken: rgba(0, 0, 0, 0.05);
+
+  /* FEATURE (direct request: "liquid glass" nav bar - both modes).
+     Light mode's own glass tint - a frosted light pill instead of the
+     dark one below. */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-shadow: rgba(15, 61, 62, 0.18);
+
+  /* GLOW CARD DESIGN SYSTEM (RentaPay-Glow-Dashboard-Build-Spec.md §1.2):
+     section accent colors for the Admin/GM "Glow Card" dashboard
+     redesign. Each accent has a low-opacity "-a" variant for
+     shadows/borders, and a "-text" variant for anywhere the accent is
+     used as text color (some raw accents, e.g. amber, don't hit
+     4.5:1 against --color-surface-raised in light mode - the -text
+     variant is a darkened stand-in used only for text). Light-mode
+     values here are tuned against the warm off-white surface; dark
+     mode below reuses the reel-accurate saturated hues since the dark
+     surface is what the reference reels were designed against. */
+  --glow-blue: #2F63C9;
+  --glow-blue-a: rgba(76, 141, 255, 0.25);
+  --glow-blue-text: #2650A0;
+  --glow-teal: #1F9C82;
+  --glow-teal-a: rgba(47, 217, 180, 0.25);
+  --glow-teal-text: #187C68;
+  --glow-amber: #B87F1E;
+  --glow-amber-a: rgba(232, 169, 61, 0.25);
+  --glow-amber-text: #8F6216;
+  --glow-purple: #7454D6;
+  --glow-purple-a: rgba(155, 124, 240, 0.25);
+  --glow-purple-text: #5C3FB0;
+  --glow-green: #2E9350;
+  --glow-green-a: rgba(79, 201, 122, 0.25);
+  --glow-green-text: #23763F;
+  --glow-red: var(--color-error);
+  --glow-red-a: rgba(229, 118, 109, 0.25);
+  --glow-red-text: #A0342C;
+}
+
+/* Very subtle graph-paper grid texture behind Glow Card dashboards,
+   dark mode only per spec (§1.1) - opacity kept low enough to read as
+   a faint backdrop, never competing with card content. Applied via a
+   class on the dashboard's page wrapper, not globally, so pages that
+   don't use the Glow Card treatment are untouched. */
+.glow-dashboard-bg {
+  background-image: none;
+}
+[data-theme='dark'] .glow-dashboard-bg {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(241, 238, 231, 0.05) 0px, rgba(241, 238, 231, 0.05) 1px, transparent 1px, transparent 32px),
+    repeating-linear-gradient(90deg, rgba(241, 238, 231, 0.05) 0px, rgba(241, 238, 231, 0.05) 1px, transparent 1px, transparent 32px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===================================================================
+   DARK MODE
+   ===================================================================
+   FEATURE (direct request: "dark mode"). Scoped to a [data-theme="dark"]
+   attribute set on <html> by ThemeToggle.jsx (persisted to
+   localStorage), not @media (prefers-color-scheme) - the person picks
+   it explicitly rather than it silently following OS settings, which
+   matters for a payments app where a sudden appearance change while
+   someone's mid-STK-push could be disorienting.
+
+   HONEST LIMITATION: this repalette only reaches UI built from these
+   --color-* tokens. Anywhere a component/CSS file uses a hardcoded hex
+   value directly (there are a fair number, scattered across per-page
+   .css files and a few inline styles) will NOT flip with the toggle -
+   converting every one of those to a token is a larger, separate pass.
+   This gives correct dark-mode coverage for anything already following
+   the design system, and is the foundation to convert stragglers onto.
+   ================================================================= */
+[data-theme='dark'] {
+  --color-primary: #3DA88A;
+  --color-primary-light: #52C4A3;
+  --color-primary-dark: #1F5C4C;
+  --color-surface: #14201E;
+  --color-surface-raised: #1C2C29;
+  --color-accent: #E0935E;
+  --color-accent-light: #F0B98C;
+  --color-mpesa: #4FC13F;
+  --color-mpesa-dark: #3DA535;
+  --color-ink: #F1EEE7;
+  --color-ink-soft: #B7C1BC;
+  --color-hairline: #33443F;
+  --color-error: #E5766D;
+  --color-error-bg: #3A211F;
+  --color-success-bg: #1F3320;
+
+  --color-bg: var(--color-surface);
+  --color-border: var(--color-hairline);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-ink-soft);
+  --color-text-secondary: var(--color-ink-soft);
+  --color-danger: var(--color-error);
+  --color-danger-bg: var(--color-error-bg);
+  --color-success: #6FCF7C;
+  --color-warning: #E0B34D;
+  --color-on-primary: #0B211D;
+  --color-accent-dark: #B96F3D;
+  --color-accent-soft: rgba(224, 147, 94, 0.15);
+  --color-primary-tint: rgba(61, 168, 138, 0.12);
+  --color-surface-muted: #1A2926;
+  --color-surface-soft: #1A2926;
+  --color-surface-subtle: #1A2926;
+  --color-surface-sunken: rgba(255, 255, 255, 0.06);
+
+  /* FEATURE (direct request: "liquid glass" nav bar in dark mode).
+     Scoped to dark mode only - light mode's nav keeps its plain solid
+     bar exactly as it was. These feed BottomNav.css's dark-mode-only
+     override block. */
+  --glass-bg: rgba(30, 34, 32, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: rgba(0, 0, 0, 0.45);
+
+  /* Glow Card accents, dark mode - the reel-accurate saturated hues
+     from the spec, since the dark near-black surface is what they
+     were designed to glow against. -text variants are close to the
+     raw accent here since contrast against the dark surface is
+     already comfortable. */
+  --glow-blue: #4C8DFF;
+  --glow-blue-a: rgba(76, 141, 255, 0.35);
+  --glow-blue-text: #7FACFF;
+  --glow-teal: #2FD9B4;
+  --glow-teal-a: rgba(47, 217, 180, 0.35);
+  --glow-teal-text: #5EE6C8;
+  --glow-amber: #E8A93D;
+  --glow-amber-a: rgba(232, 169, 61, 0.35);
+  --glow-amber-text: #F0C374;
+  --glow-purple: #9B7CF0;
+  --glow-purple-a: rgba(155, 124, 240, 0.35);
+  --glow-purple-text: #B6A0F5;
+  --glow-green: #4FC97A;
+  --glow-green-a: rgba(79, 201, 122, 0.35);
+  --glow-green-text: #78D89B;
+  --glow-red: #E5766D;
+  --glow-red-a: rgba(229, 118, 109, 0.35);
+  --glow-red-text: #EE9A93;
+}

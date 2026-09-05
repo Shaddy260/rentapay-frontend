@@ -1,0 +1,61 @@
+/* REDESIGN (Premium Redesign Plan, Phase 1): moved from a small nav
+   pill into a proper footer card - distinct tappable surface with an
+   icon, soft shadow, and clear visual weight, in line with the rest
+   of the premium redesign's card-based language. Reuses the landing
+   page's gold/surface tokens (defined on .landing) so it stays
+   consistent wherever it's rendered. */
+.download-app-card {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.7rem 1.3rem;
+  background: #000;
+  border: 1px solid #000;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  text-decoration: none;
+  color: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.download-app-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+  background: #1a1a1a;
+}
+
+.download-app-card__icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.download-app-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  line-height: 1.2;
+}
+
+.download-app-card__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.2px;
+}
+
+.download-app-card__subtitle {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #e5e5e5;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 560px) {
+  .download-app-card {
+    width: 100%;
+    justify-content: center;
+  }
+}

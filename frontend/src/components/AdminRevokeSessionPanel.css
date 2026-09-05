@@ -1,0 +1,59 @@
+.admin-revoke-session {
+  margin: 8px 0 16px;
+}
+
+.admin-revoke-session__toggle {
+  background: none;
+  border: none;
+  color: var(--color-text-muted, #6b6455);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.admin-revoke-session__form {
+  max-width: 360px;
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  border-radius: 10px;
+  background: var(--color-surface, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-revoke-session__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #6b6455);
+}
+
+.admin-revoke-session__form input {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border, #e5e1d8);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.admin-revoke-session__hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #6b6455);
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+.admin-revoke-session__error {
+  color: #b3261e;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.admin-revoke-session__success {
+  color: #1a7a3d;
+  font-size: 0.8rem;
+  margin: 0;
+}
